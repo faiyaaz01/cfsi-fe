@@ -56,25 +56,6 @@ export const loginWithBackend = async (
       };
     }
 
-    // Check demo student
-    const account = studentAccountsData.find(
-      (acc) => acc.username.toLowerCase() === normalizedUser && acc.password === password
-    );
-
-    if (account) {
-      const student = studentsData.find(
-        (s) => s.certificateNumber.toUpperCase() === account.certificateNumber.toUpperCase()
-      );
-      if (student) {
-        sessionStorage.setItem(STUDENT_SESSION_KEY, account.certificateNumber);
-        return {
-          success: true,
-          role: 'student',
-          student,
-        };
-      }
-    }
-
     return {
       success: false,
       error: err.message || 'Invalid username or password.',
@@ -92,7 +73,7 @@ export const loginStudent = (username: string, password: string): LoginResult =>
   if (!account) {
     return {
       success: false,
-      error: 'Invalid username or password. Please verify credentials or click a demo account below.'
+      error: 'Invalid cadet credentials. Please verify your username and password.'
     };
   }
 
