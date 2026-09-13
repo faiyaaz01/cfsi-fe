@@ -1,3 +1,4 @@
+import { useAuth } from '../context/AuthContext';
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -23,10 +24,7 @@ export const StudentDataPage: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
 
-  const isLogged = Boolean(
-    getLoggedStudentCert() || 
-    (typeof window !== 'undefined' && sessionStorage.getItem('cfsi_admin_logged') === 'true')
-  );
+  const isLogged = Boolean(useAuth().user);
 
   // Filter students based on search query and dropdowns
   const filteredStudents = useMemo(() => {

@@ -31,9 +31,9 @@ export const StudentDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'attendance' | 'results'>('attendance');
   const [attendanceFilter, setAttendanceFilter] = useState<'All' | 'Present' | 'Absent'>('All');
 
-  // If not authenticated, redirect to /login?role=student
+  // If not authenticated, redirect to /login
   if (!student) {
-    return <Navigate to="/login?role=student" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const attendanceRecords = getAttendanceByStudent(student.certificateNumber);
@@ -56,7 +56,7 @@ export const StudentDashboardPage: React.FC = () => {
   const handleLogout = () => {
     logoutStudent();
     toast.info('Signed out of Student Portal');
-    navigate('/login?role=student');
+    navigate('/login');
   };
 
   const handlePrint = () => {

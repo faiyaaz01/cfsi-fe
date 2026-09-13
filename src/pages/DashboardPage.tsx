@@ -51,7 +51,7 @@ import { FlatCard } from '../components/common/FlatCard';
 import { GlassCard } from '../components/common/GlassCard';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 
-const ADMIN_PASSWORD = 'Password@1';
+import { useAuth } from '../context/AuthContext';
 
 // News Schema
 const postSchema = z.object({
@@ -68,11 +68,8 @@ type PostFormValues = z.infer<typeof postSchema>;
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('cfsi_admin_logged') === 'true';
-  });
-  const [passwordInput, setPasswordInput] = useState('');
-  const [authError, setAuthError] = useState('');
+  const {user, logout} = useAuth();
+  const isAuthenticated = user?.role === 'admin';
 
   // Tabs: 'students' | 'attendance' | 'results' | 'news_events' | 'updates' | 'all'
   const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'results' | 'news_events' | 'updates' | 'all'>('students');
@@ -179,25 +176,7 @@ export const DashboardPage: React.FC = () => {
     }
   });
 
-  // Handle Login
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput.trim() === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('cfsi_admin_logged', 'true');
-      setAuthError('');
-      toast.success('Admin Dashboard Unlocked');
-    } else {
-      setAuthError('Invalid administrative credentials. Access restricted.');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem('cfsi_admin_logged');
-    toast.info('Logged out from Admin Dashboard');
-    navigate('/login?role=admin');
-  };
+  const handleLogout = () => { void logout(); navigate('/login'); };
 
   // News Image file select preview
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -524,7 +503,7 @@ export const DashboardPage: React.FC = () => {
 
   // If NOT Authenticated, redirect to unified login portal
   if (!isAuthenticated) {
-    return <Navigate to="/login?role=admin" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -556,7 +535,7 @@ export const DashboardPage: React.FC = () => {
             </Link>
 
             <Link
-              to="/login?role=student"
+              to="/student/dashboard"
               className="px-3.5 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white flex items-center gap-1.5 transition-colors"
             >
               <GraduationCap className="w-3.5 h-3.5" />

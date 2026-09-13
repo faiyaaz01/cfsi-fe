@@ -1,3 +1,4 @@
+import { useAuth, homeFor } from '../../context/AuthContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,9 +23,10 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
 
   const loggedStudent = getLoggedStudent();
-  const isAdminLogged = typeof window !== 'undefined' && sessionStorage.getItem('cfsi_admin_logged') === 'true';
-  const isLogged = Boolean(loggedStudent || isAdminLogged);
-  const portalPath = loggedStudent ? '/student/dashboard' : '/dashboard';
+  const {user} = useAuth();
+  const isAdminLogged = user?.role === 'admin';
+  const isLogged = Boolean(user);
+  const portalPath = user ? homeFor(user) : '/login';
 
   const navContainerRef = useRef<HTMLDivElement>(null);
 

@@ -56,7 +56,7 @@ export const StudentPortalBanner: React.FC = () => {
               {/* Right CTA Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
                 <Link
-                  to="/login?role=student"
+                  to="/login"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs sm:text-sm text-gray-900 bg-white hover:bg-amber-300 transition-all duration-300 shadow-lg hover:scale-105 active:scale-95"
                 >
                   <GraduationCap className="w-4 h-4 text-primary" />

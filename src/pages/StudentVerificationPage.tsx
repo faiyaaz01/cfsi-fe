@@ -1,3 +1,4 @@
+import { useAuth } from '../context/AuthContext';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -34,39 +35,24 @@ export const StudentVerificationPage: React.FC = () => {
   const certFromUrl = searchParams.get('cert');
 
   const loggedStudent = getLoggedStudent();
-  const isAdminLogged = typeof window !== 'undefined' && sessionStorage.getItem('cfsi_admin_logged') === 'true';
-  const isAuthenticated = Boolean(loggedStudent || isAdminLogged);
+  const {user} = useAuth();
+  const isAdminLogged = user?.role === 'admin' || user?.role === 'teacher';
+  const isAuthenticated = Boolean(user);
 
   // Initial search value: either URL param or logged student's cert, or empty
   const initialCert = certFromUrl || (loggedStudent ? loggedStudent.certificateNumber : '');
 
   const [searchInput, setSearchInput] = useState(initialCert);
   const [hasSearched, setHasSearched] = useState(Boolean(initialCert));
-  const [verifiedRecord, setVerifiedRecord] = useState<StudentVerificationRecord | null>(() => {
-    if (initialCert) {
-      return studentsData.find((s) => s.certificateNumber.toUpperCase() === initialCert.toUpperCase()) || null;
-    }
-    return null;
-  });
-
+  const [verifiedRecord, setVerifiedRecord] = useState<StudentVerificationRecord | null>(null);
   useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('Authentication required. Please log in to verify certificates.');
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (certFromUrl) {
-      const found = studentsData.find(
-        (s) => s.certificateNumber.toUpperCase() === certFromUrl.trim().toUpperCase()
-      );
-      if (found) {
-        setSearchInput(found.certificateNumber);
-        setVerifiedRecord(found);
-        setHasSearched(true);
-      }
-    }
-  }, [certFromUrl]);
+    if (!initialCert) return;
+    let active = true;
+    api.verifyCertificate(initialCert).then(res => {
+      if (active) setVerifiedRecord(res.verified ? res.student : null);
+    }).catch(() => { if (active) setVerifiedRecord(null); });
+    return () => { active = false; };
+  }, [initialCert]);
 
   // If not authenticated, redirect to /login
   if (!isAuthenticated) {
@@ -100,39 +86,24 @@ export const StudentVerificationPage: React.FC = () => {
         toast.success('Certificate Verified with CFSI Registry');
         return;
       }
-    } catch {
-      // fallback to local dataset
-    }
-
-    const found = studentsData.find(
-      (s) =>
-        s.certificateNumber.toUpperCase() === query ||
-        s.rollNo.toUpperCase() === query ||
-        s.name.toUpperCase().includes(query)
-    );
-
-    if (found) {
-      setVerifiedRecord(found);
-      triggerConfetti();
-    } else {
       setVerifiedRecord(null);
+    } catch (error) {
+      setVerifiedRecord(null);
+      toast.error(error instanceof Error ? error.message : 'Verification failed');
     }
   };
 
   const quickSearch = async (certNo: string) => {
     setSearchInput(certNo);
     setHasSearched(true);
+    setVerifiedRecord(null);
     try {
       const res = await api.verifyCertificate(certNo);
       if (res.verified && res.student) {
         setVerifiedRecord(res.student);
         triggerConfetti();
-        return;
       }
-    } catch {}
-    const found = studentsData.find((s) => s.certificateNumber === certNo);
-    setVerifiedRecord(found || null);
-    if (found) triggerConfetti();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Verification failed'); }
   };
 
   const handlePrint = () => {

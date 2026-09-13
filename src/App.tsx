@@ -1,3 +1,6 @@
+import { AuthProvider, AuthGuard, GuestGuard } from './context/AuthContext';
+import { UsersPage } from './pages/UsersPage';
+import { PortalPage } from './pages/PortalPage';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -31,7 +34,7 @@ const AppContent: React.FC = () => {
         richColors 
         closeButton 
       />
-      <Router>
+      <Router><AuthProvider>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -43,18 +46,22 @@ const AppContent: React.FC = () => {
             <Route path="courses/:slug" element={<CoursesPage />} />
             <Route path="career" element={<CareerPage />} />
             <Route path="news" element={<NewsPage />} />
-            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="contact" element={<ContactPage />} />
-            <Route path="verify" element={<StudentVerificationPage />} />
-            <Route path="student-data" element={<StudentDataPage />} />
             {/* Unified Combined Login Portal (Admin & Student) */}
-            <Route path="login" element={<LoginPage />} />
-            <Route path="student-login" element={<Navigate to="/login?role=student" replace />} />
-            <Route path="student/dashboard" element={<StudentDashboardPage />} />
+            <Route path="student-login" element={<Navigate to="/login" replace />} />
+            <Route element={<GuestGuard />}><Route path="login" element={<LoginPage />} /></Route>
+            <Route element={<AuthGuard roles={['admin']} />}>
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="users" element={<UsersPage />} />
+            </Route>
+            <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
+            <Route element={<AuthGuard roles={['student']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
+            <Route element={<AuthGuard roles={['admin', 'teacher']} />}><Route path="student-data" element={<StudentDataPage />} /></Route>
+            <Route element={<AuthGuard />}><Route path="verify" element={<StudentVerificationPage />} /></Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
-      </Router>
+      </AuthProvider></Router>
     </>
   );
 };

@@ -50,8 +50,8 @@ export const Topbar: React.FC = () => {
 
           {/* Admin Direct Tab Link */}
           <Link
-            to="/login?role=admin"
-            title="Admin Desk Login"
+            to="/login"
+            title="Institutional Login"
             className="p-1 rounded-md text-white/80 hover:text-white hover:bg-white/15 transition-colors"
           >
             <Lock className="w-3.5 h-3.5" />

@@ -10,7 +10,7 @@ const USER_STORAGE_KEY = 'cfsi_auth_user';
 export interface AuthUser {
   id: string;
   username: string;
-  role: 'admin' | 'student';
+  role: 'admin' | 'teacher' | 'student';
   certificate_number?: string | null;
   full_name?: string | null;
   is_active: boolean;
@@ -19,7 +19,7 @@ export interface AuthUser {
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  role: 'admin' | 'student';
+  role: 'admin' | 'teacher' | 'student';
   user: AuthUser;
 }
 
@@ -67,6 +67,7 @@ export const clearAuth = (): void => {
   } catch {
     // ignore
   }
+  window.dispatchEvent(new Event('auth-cleared'));
 };
 
 /** Core authenticated fetch helper */
@@ -83,19 +84,30 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
   }
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+  if (response.status === 401) clearAuth();
+  return response;
 }
 
 export const api = {
+  async logout() { await fetchWithAuth('/auth/logout', {method: 'POST'}); },
+  async users(method = 'GET', id = '', body?: unknown): Promise<any> {
+    const response = await fetchWithAuth(`/users${id ? '/' + encodeURIComponent(id) : ''}`, {method, ...(body ? {body: JSON.stringify(body)} : {})});
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(typeof error.detail === 'string' ? error.detail : 'Please check the user fields and try again.');
+    }
+    return response.status === 204 ? null : response.json();
+  },
   /** Login with username and password against MongoDB hashed credentials */
   async login(username: string, password: string, role?: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/auth/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, role: role || 'auto' }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({username, password, grant_type: 'password'}),
     });
 
     if (!response.ok) {
@@ -104,6 +116,7 @@ export const api = {
     }
 
     const data: AuthResponse = await response.json();
+    if (role && role !== 'auto' && data.role !== role) throw new Error(`This account does not have ${role} access.`);
     setToken(data.access_token);
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));

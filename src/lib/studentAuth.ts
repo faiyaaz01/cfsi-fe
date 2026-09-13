@@ -1,126 +1,15 @@
-import { studentAccountsData } from '../data/student-accounts';
 import { studentsData } from '../data/students';
 import { StudentVerificationRecord } from '../types';
-import { api, setToken, clearAuth, getStoredUser } from './api';
-
-const STUDENT_SESSION_KEY = 'cfsi_student_cert';
-
-export interface LoginResult {
-  success: boolean;
-  error?: string;
-  student?: StudentVerificationRecord;
-  role?: 'admin' | 'student';
-}
-
-/**
- * Unified async login that authenticates against FastAPI + MongoDB with bcrypt & JWT,
- * with fallback to local seed accounts for maximum reliability.
- */
-export const loginWithBackend = async (
-  username: string,
-  password: string,
-  role?: 'admin' | 'student' | 'auto'
-): Promise<LoginResult> => {
+import { api, clearAuth, getStoredUser } from './api';
+export const loginWithBackend = async (username: string, password: string, role?: string) => {
   try {
-    const authData = await api.login(username, password, role);
-    if (authData.role === 'admin') {
-      sessionStorage.setItem('cfsi_admin_logged', 'true');
-      return {
-        success: true,
-        role: 'admin',
-      };
-    } else {
-      const cert = authData.user.certificate_number;
-      if (cert) {
-        sessionStorage.setItem(STUDENT_SESSION_KEY, cert);
-      }
-      const matched = studentsData.find(
-        (s) => s.certificateNumber.toUpperCase() === (cert || '').toUpperCase()
-      );
-      return {
-        success: true,
-        role: 'student',
-        student: matched,
-      };
-    }
-  } catch (err: any) {
-    // If backend is unreachable or returned error, try client-side demo fallback
-    const normalizedUser = username.trim().toLowerCase();
-
-    // Check admin credentials fallback
-    if ((normalizedUser === 'admin@cfsi.com' || normalizedUser === 'admin') && password === 'Password@1') {
-      sessionStorage.setItem('cfsi_admin_logged', 'true');
-      return {
-        success: true,
-        role: 'admin',
-      };
-    }
-
-    return {
-      success: false,
-      error: err.message || 'Invalid username or password.',
-    };
-  }
+    const data = await api.login(username, password, role);
+    return {success: true, role: data.role, student: studentsData.find(s => s.certificateNumber === data.user.certificate_number), error: ''};
+  } catch (err) { return {success: false, role: undefined, student: undefined, error: err instanceof Error ? err.message : 'Login failed'}; }
 };
-
-/** Synchronous local login helper */
-export const loginStudent = (username: string, password: string): LoginResult => {
-  const normalizedUser = username.trim().toLowerCase();
-  const account = studentAccountsData.find(
-    (acc) => acc.username.toLowerCase() === normalizedUser && acc.password === password
-  );
-
-  if (!account) {
-    return {
-      success: false,
-      error: 'Invalid cadet credentials. Please verify your username and password.'
-    };
-  }
-
-  const student = studentsData.find(
-    (s) => s.certificateNumber.toUpperCase() === account.certificateNumber.toUpperCase()
-  );
-
-  if (!student) {
-    return {
-      success: false,
-      error: 'Student record could not be found for this account.'
-    };
-  }
-
-  sessionStorage.setItem(STUDENT_SESSION_KEY, account.certificateNumber);
-  return {
-    success: true,
-    student,
-    role: 'student',
-  };
-};
-
-export const getLoggedStudentCert = (): string | null => {
-  try {
-    const cert = sessionStorage.getItem(STUDENT_SESSION_KEY);
-    if (cert) return cert;
-    const stored = getStoredUser();
-    return stored?.certificate_number || null;
-  } catch {
-    return null;
-  }
-};
-
-export const getLoggedStudent = (): StudentVerificationRecord | null => {
-  const cert = getLoggedStudentCert();
-  if (!cert) return null;
-  return studentsData.find((s) => s.certificateNumber.toUpperCase() === cert.toUpperCase()) || null;
-};
-
-export const logoutStudent = (): void => {
-  try {
-    sessionStorage.removeItem(STUDENT_SESSION_KEY);
-    clearAuth();
-  } catch {
-    // ignore
-  }
-};
+export const getLoggedStudentCert = () => getStoredUser()?.certificate_number || null;
+export const getLoggedStudent = (): StudentVerificationRecord | null => studentsData.find(s => s.certificateNumber === getLoggedStudentCert()) || null;
+export const logoutStudent = () => { void api.logout().finally(clearAuth); };
 
 export const calculateGrade = (marks: number, max: number = 100): string => {
   if (max <= 0) return 'N/A';
