@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -529,13 +528,13 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="py-12 sm:py-16 bg-gray-50 dark:bg-dark-bg transition-colors duration-300 min-h-screen">
+    <div className="py-12 sm:py-16 bg-gray-50 dark:bg-dark-bg min-h-screen">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Dashboard Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8 mb-8 border-b border-gray-200 dark:border-white/10">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent mb-1">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
               <LayoutDashboard className="w-4 h-4" />
               <span>CFSI Institute Administration</span>
             </div>
@@ -589,7 +588,7 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('students')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
               activeTab === 'students'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
@@ -603,9 +602,9 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('attendance')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
               activeTab === 'attendance'
-                ? 'bg-accent text-white shadow-md'
+                ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
             }`}
           >
@@ -617,9 +616,9 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('results')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
               activeTab === 'results'
-                ? 'bg-accent text-white shadow-md'
+                ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
             }`}
           >
@@ -631,7 +630,7 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('news_events')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors ${
               activeTab === 'news_events'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
@@ -644,7 +643,7 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('updates')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors ${
               activeTab === 'updates'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
@@ -657,7 +656,7 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('all')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors ${
               activeTab === 'all'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
@@ -689,7 +688,7 @@ export const DashboardPage: React.FC = () => {
         {activeTab === 'students' && (
           <div className="space-y-6">
             {/* Top Overview & Registry Metrics Card */}
-            <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
+            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-white/5">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
@@ -708,7 +707,7 @@ export const DashboardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setActiveTab('attendance')}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors flex items-center gap-1.5"
                   >
                     <Clock className="w-3.5 h-3.5" />
                     <span>Mark Daily Muster</span>
@@ -752,17 +751,17 @@ export const DashboardPage: React.FC = () => {
                   <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">100% QR & Barcode Verified</div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-accent/5 dark:bg-white/5 border border-accent/10 dark:border-white/5">
+                <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Muster Logs</div>
-                  <div className="text-2xl font-black text-accent mt-1">
+                  <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
                     {attendance.length}
                   </div>
                   <div className="text-[11px] text-gray-400 mt-0.5">Physical & Theory Drill Slots</div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-purple-500/5 dark:bg-white/5 border border-purple-500/10 dark:border-white/5">
+                <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Recorded Exam Papers</div>
-                  <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
+                  <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
                     {results.length}
                   </div>
                   <div className="text-[11px] text-gray-400 mt-0.5">Subject & Practical Scores</div>
@@ -918,7 +917,7 @@ export const DashboardPage: React.FC = () => {
                                     className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                       attSummary.percentage >= 75
                                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
                                     }`}
                                   >
                                     {attSummary.percentage >= 75 ? (
@@ -942,7 +941,7 @@ export const DashboardPage: React.FC = () => {
                             {/* Exam Papers */}
                             <td className="py-3.5 px-4 text-center">
                               {cadetResults.length > 0 ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20">
                                   <Award className="w-3 h-3" />
                                   <span>{cadetResults.length} Papers</span>
                                 </span>
@@ -967,7 +966,7 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => setSelectedCadetDetail(cadet)}
-                                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-all flex items-center gap-1 shadow-sm"
+                                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1 shadow-sm"
                                   title="Inspect full cadet profile"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
@@ -979,7 +978,7 @@ export const DashboardPage: React.FC = () => {
                                     setMusterSearch(cadet.name);
                                     setActiveTab('attendance');
                                   }}
-                                  className="p-1.5 rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
+                                  className="p-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
                                   title="Mark Muster for this cadet"
                                 >
                                   <Clock className="w-3.5 h-3.5" />
@@ -991,7 +990,7 @@ export const DashboardPage: React.FC = () => {
                                     setResCourse(cadet.course);
                                     setActiveTab('results');
                                   }}
-                                  className="p-1.5 rounded-xl bg-purple-500/10 text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
+                                  className="p-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
                                   title="Record Exam Result for this cadet"
                                 >
                                   <Award className="w-3.5 h-3.5" />
@@ -1016,12 +1015,12 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-6">
             
             {/* Top Muster Control Card */}
-            <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
+            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
               
               {/* Header Title & Date Navigation */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-white/5">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent mb-1">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <FileSpreadsheet className="w-4 h-4" />
                     <span>Daily Muster Roll • 3 Drill Slots Each Day</span>
                   </div>
@@ -1038,7 +1037,7 @@ export const DashboardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handlePrevDay}
-                    className="p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm transition-all"
+                    className="p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm transition-colors"
                     title="Previous Day"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -1057,7 +1056,7 @@ export const DashboardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleNextDay}
-                    className="p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm transition-all"
+                    className="p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm transition-colors"
                     title="Next Day"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -1084,7 +1083,7 @@ export const DashboardPage: React.FC = () => {
                     value={musterSearch}
                     onChange={(e) => setMusterSearch(e.target.value)}
                     placeholder="Search cadet by name, roll, or cert..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
@@ -1093,7 +1092,7 @@ export const DashboardPage: React.FC = () => {
                   <select
                     value={musterCourseFilter}
                     onChange={(e) => setMusterCourseFilter(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="All">All Course Programs ({studentsData.length})</option>
                     <option value="Diploma In Fire Safety">Diploma In Fire Safety</option>
@@ -1112,7 +1111,7 @@ export const DashboardPage: React.FC = () => {
                       value={musterInstructor}
                       onChange={(e) => setMusterInstructor(e.target.value)}
                       placeholder="Signing Instructor"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
@@ -1124,7 +1123,7 @@ export const DashboardPage: React.FC = () => {
                     onClick={() => setShowSlotConfig(!showSlotConfig)}
                     className="w-full py-2.5 px-3 rounded-xl text-xs font-bold border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Clock className="w-3.5 h-3.5 text-accent" />
+                    <Clock className="w-3.5 h-3.5 text-primary" />
                     <span>{showSlotConfig ? 'Hide Topics' : 'Slot Topics'}</span>
                   </button>
                 </div>
@@ -1132,58 +1131,51 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* Slot Topic Settings (Collapsible) */}
-              <AnimatePresence>
-                {showSlotConfig && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden pt-4"
-                  >
-                    <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                        <Flame className="w-3.5 h-3.5 text-accent" />
-                        <span>Configure Daily Topics for {formattedDateLabel}</span>
+              {showSlotConfig && (
+                <div className="pt-4">
+                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <Flame className="w-3.5 h-3.5 text-primary" />
+                      <span>Configure Daily Topics for {formattedDateLabel}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <div>
+                        <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                          Slot 1 (08:00 - 10:00 AM) Topic:
+                        </label>
+                        <input
+                          type="text"
+                          value={slot1Topic}
+                          onChange={(e) => setSlot1Topic(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
+                        />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                        <div>
-                          <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
-                            Slot 1 (08:00 - 10:00 AM) Topic:
-                          </label>
-                          <input
-                            type="text"
-                            value={slot1Topic}
-                            onChange={(e) => setSlot1Topic(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
-                            Slot 2 (10:30 - 01:00 PM) Topic:
-                          </label>
-                          <input
-                            type="text"
-                            value={slot2Topic}
-                            onChange={(e) => setSlot2Topic(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
-                            Slot 3 (02:00 - 05:00 PM) Topic:
-                          </label>
-                          <input
-                            type="text"
-                            value={slot3Topic}
-                            onChange={(e) => setSlot3Topic(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
-                          />
-                        </div>
+                      <div>
+                        <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                          Slot 2 (10:30 - 01:00 PM) Topic:
+                        </label>
+                        <input
+                          type="text"
+                          value={slot2Topic}
+                          onChange={(e) => setSlot2Topic(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                          Slot 3 (02:00 - 05:00 PM) Topic:
+                        </label>
+                        <input
+                          type="text"
+                          value={slot3Topic}
+                          onChange={(e) => setSlot3Topic(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
+                        />
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </div>
+                </div>
+              )}
 
             </FlatCard>
 
@@ -1191,7 +1183,7 @@ export const DashboardPage: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               
               {/* Total Roster */}
-              <GlassCard className="p-3.5 border border-gray-200/80 dark:border-white/10">
+              <GlassCard hoverEffect={false} className="p-3.5 border border-gray-200/80 dark:border-white/10">
                 <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Filtered Roster</div>
                 <div className="text-xl font-heading font-black text-gray-900 dark:text-white mt-1">
                   {musterStats.totalCadets} Cadets
@@ -1200,8 +1192,8 @@ export const DashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Slot 1 Count */}
-              <GlassCard className="p-3.5 border border-gray-200/80 dark:border-white/10">
-                <div className="flex items-center justify-between text-[11px] font-bold text-blue-500 uppercase tracking-wider">
+              <GlassCard hoverEffect={false} className="p-3.5 border border-gray-200/80 dark:border-white/10">
+                <div className="flex items-center justify-between text-[11px] font-bold text-primary uppercase tracking-wider">
                   <span>Slot 1 (Morning PT)</span>
                   <span className="text-[10px] text-gray-400">08:00 - 10:00</span>
                 </div>
@@ -1212,8 +1204,8 @@ export const DashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Slot 2 Count */}
-              <GlassCard className="p-3.5 border border-gray-200/80 dark:border-white/10">
-                <div className="flex items-center justify-between text-[11px] font-bold text-amber-500 uppercase tracking-wider">
+              <GlassCard hoverEffect={false} className="p-3.5 border border-gray-200/80 dark:border-white/10">
+                <div className="flex items-center justify-between text-[11px] font-bold text-primary uppercase tracking-wider">
                   <span>Slot 2 (Theory)</span>
                   <span className="text-[10px] text-gray-400">10:30 - 01:00</span>
                 </div>
@@ -1224,8 +1216,8 @@ export const DashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Slot 3 Count */}
-              <GlassCard className="p-3.5 border border-gray-200/80 dark:border-white/10">
-                <div className="flex items-center justify-between text-[11px] font-bold text-purple-500 uppercase tracking-wider">
+              <GlassCard hoverEffect={false} className="p-3.5 border border-gray-200/80 dark:border-white/10">
+                <div className="flex items-center justify-between text-[11px] font-bold text-primary uppercase tracking-wider">
                   <span>Slot 3 (Apparatus)</span>
                   <span className="text-[10px] text-gray-400">02:00 - 05:00</span>
                 </div>
@@ -1236,15 +1228,15 @@ export const DashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Day Attendance Rate */}
-              <GlassCard className="p-3.5 border border-gray-200/80 dark:border-white/10 col-span-2 md:col-span-1">
-                <div className="flex items-center justify-between text-[11px] font-bold text-accent uppercase tracking-wider">
+              <GlassCard hoverEffect={false} className="p-3.5 border border-gray-200/80 dark:border-white/10 col-span-2 md:col-span-1">
+                <div className="flex items-center justify-between text-[11px] font-bold text-primary uppercase tracking-wider">
                   <span>Day Muster Rate</span>
                   <span>{musterStats.dayRate}%</span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2 mt-2.5 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      musterStats.dayRate >= 75 ? 'bg-emerald-500' : 'bg-amber-500'
+                    className={`h-full rounded-full ${
+                      musterStats.dayRate >= 75 ? 'bg-emerald-500' : 'bg-red-500'
                     }`}
                     style={{ width: `${Math.min(musterStats.dayRate, 100)}%` }}
                   />
@@ -1257,7 +1249,7 @@ export const DashboardPage: React.FC = () => {
             {/* Bulk Actions Bar */}
             <div className="p-4 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-gray-200">
-                <Sparkles className="w-4 h-4 text-accent" />
+                <Sparkles className="w-4 h-4 text-primary" />
                 <span>Quick Bulk Actions for {formattedDateLabel}:</span>
               </div>
 
@@ -1265,21 +1257,21 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleBulkMark('Slot 1', 'Present')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
                 >
                   Mark All Slot 1 (P)
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBulkMark('Slot 2', 'Present')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition-colors"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
                 >
                   Mark All Slot 2 (P)
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBulkMark('Slot 3', 'Present')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500 hover:text-white transition-colors"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
                 >
                   Mark All Slot 3 (P)
                 </button>
@@ -1314,25 +1306,25 @@ export const DashboardPage: React.FC = () => {
                       <th className="py-3.5 px-4 min-w-[160px]">Program & Batch</th>
                       
                       {/* Slot 1 Header */}
-                      <th className="py-3.5 px-3 text-center bg-blue-500/5 dark:bg-blue-500/10 min-w-[140px]">
+                      <th className="py-3.5 px-3 text-center bg-primary/5 dark:bg-primary/10 min-w-[140px]">
                         <div className="flex flex-col items-center">
-                          <span className="font-extrabold text-blue-600 dark:text-blue-400">Slot 1 (Morning PT)</span>
+                          <span className="font-extrabold text-primary">Slot 1 (Morning PT)</span>
                           <span className="text-[9px] font-mono text-gray-400 normal-case">08:00 - 10:00 AM</span>
                         </div>
                       </th>
 
                       {/* Slot 2 Header */}
-                      <th className="py-3.5 px-3 text-center bg-amber-500/5 dark:bg-amber-500/10 min-w-[140px]">
+                      <th className="py-3.5 px-3 text-center bg-primary/5 dark:bg-primary/10 min-w-[140px]">
                         <div className="flex flex-col items-center">
-                          <span className="font-extrabold text-amber-600 dark:text-amber-400">Slot 2 (Theory)</span>
+                          <span className="font-extrabold text-primary">Slot 2 (Theory)</span>
                           <span className="text-[9px] font-mono text-gray-400 normal-case">10:30 AM - 01:00 PM</span>
                         </div>
                       </th>
 
                       {/* Slot 3 Header */}
-                      <th className="py-3.5 px-3 text-center bg-purple-500/5 dark:bg-purple-500/10 min-w-[140px]">
+                      <th className="py-3.5 px-3 text-center bg-primary/5 dark:bg-primary/10 min-w-[140px]">
                         <div className="flex flex-col items-center">
-                          <span className="font-extrabold text-purple-600 dark:text-purple-400">Slot 3 (Apparatus)</span>
+                          <span className="font-extrabold text-primary">Slot 3 (Apparatus)</span>
                           <span className="text-[9px] font-mono text-gray-400 normal-case">02:00 - 05:00 PM</span>
                         </div>
                       </th>
@@ -1409,14 +1401,14 @@ export const DashboardPage: React.FC = () => {
                             </td>
 
                             {/* SLOT 1 TOGGLE */}
-                            <td className="py-3 px-3 bg-blue-500/[0.02] dark:bg-blue-500/[0.04]">
+                            <td className="py-3 px-3">
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 1', 'Present')}
-                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
                                     rec1?.status === 'Present'
-                                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-105'
+                                      ? 'bg-emerald-600 text-white shadow-sm'
                                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
                                   }`}
                                   title="Mark Present for Slot 1"
@@ -1426,9 +1418,9 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 1', 'Absent')}
-                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
                                     rec1?.status === 'Absent'
-                                      ? 'bg-red-600 text-white shadow-md shadow-red-600/30 scale-105'
+                                      ? 'bg-red-600 text-white shadow-sm'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/25 border border-red-500/20'
                                   }`}
                                   title="Mark Absent for Slot 1"
@@ -1439,14 +1431,14 @@ export const DashboardPage: React.FC = () => {
                             </td>
 
                             {/* SLOT 2 TOGGLE */}
-                            <td className="py-3 px-3 bg-amber-500/[0.02] dark:bg-amber-500/[0.04]">
+                            <td className="py-3 px-3">
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 2', 'Present')}
-                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
                                     rec2?.status === 'Present'
-                                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-105'
+                                      ? 'bg-emerald-600 text-white shadow-sm'
                                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
                                   }`}
                                   title="Mark Present for Slot 2"
@@ -1456,9 +1448,9 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 2', 'Absent')}
-                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
                                     rec2?.status === 'Absent'
-                                      ? 'bg-red-600 text-white shadow-md shadow-red-600/30 scale-105'
+                                      ? 'bg-red-600 text-white shadow-sm'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/25 border border-red-500/20'
                                   }`}
                                   title="Mark Absent for Slot 2"
@@ -1469,14 +1461,14 @@ export const DashboardPage: React.FC = () => {
                             </td>
 
                             {/* SLOT 3 TOGGLE */}
-                            <td className="py-3 px-3 bg-purple-500/[0.02] dark:bg-purple-500/[0.04]">
+                            <td className="py-3 px-3">
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 3', 'Present')}
-                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
                                     rec3?.status === 'Present'
-                                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-105'
+                                      ? 'bg-emerald-600 text-white shadow-sm'
                                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
                                   }`}
                                   title="Mark Present for Slot 3"
@@ -1486,9 +1478,9 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 3', 'Absent')}
-                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
                                     rec3?.status === 'Absent'
-                                      ? 'bg-red-600 text-white shadow-md shadow-red-600/30 scale-105'
+                                      ? 'bg-red-600 text-white shadow-sm'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/25 border border-red-500/20'
                                   }`}
                                   title="Mark Absent for Slot 3"
@@ -1510,9 +1502,7 @@ export const DashboardPage: React.FC = () => {
                                     countPresent === 3
                                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                                       : countPresent === 2
-                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
-                                      : countPresent === 1
-                                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                                      ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
                                   }`}
                                 >
@@ -1576,125 +1566,118 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Historical Logs List (Expandable) */}
-            <AnimatePresence>
-              {showHistoricalLogs && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-4 overflow-hidden pt-2"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <h3 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
-                        All Recorded Attendance Logs
-                      </h3>
-                      <span className="text-xs text-gray-400">Search, filter, or delete past drill sessions across all dates</span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                      <div className="relative flex-1 sm:w-60">
-                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          value={attSearchTerm}
-                          onChange={(e) => setAttSearchTerm(e.target.value)}
-                          placeholder="Search cadet or topic..."
-                          className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-accent"
-                        />
-                      </div>
-
-                      <select
-                        value={attFilterStatus}
-                        onChange={(e) => setAttFilterStatus(e.target.value as any)}
-                        className="px-2.5 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
-                      >
-                        <option value="All">All Status</option>
-                        <option value="Present">Present Only</option>
-                        <option value="Absent">Absent Only</option>
-                      </select>
-                    </div>
+            {showHistoricalLogs && (
+              <div className="space-y-4 pt-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
+                      All Recorded Attendance Logs
+                    </h3>
+                    <span className="text-xs text-gray-400">Search, filter, or delete past drill sessions across all dates</span>
                   </div>
 
-                  <div className="space-y-3">
-                    {filteredAttendanceList.length === 0 ? (
-                      <div className="py-8 text-center text-gray-400 text-xs font-semibold">
-                        No logs found matching "{attSearchTerm}".
-                      </div>
-                    ) : (
-                      filteredAttendanceList.map((rec) => {
-                        const student = studentsData.find(
-                          (s) => s.certificateNumber.toUpperCase() === rec.certificateNumber.toUpperCase()
-                        );
-                        return (
-                          <GlassCard
-                            key={rec.id}
-                            hoverEffect={false}
-                            className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10"
-                          >
-                            <div className="space-y-1 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  rec.status === 'Present'
-                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-                                }`}>
-                                  {rec.status === 'Present' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                                  <span>{rec.status}</span>
-                                </span>
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-60">
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={attSearchTerm}
+                        onChange={(e) => setAttSearchTerm(e.target.value)}
+                        placeholder="Search cadet or topic..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
 
-                                {rec.slot && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                                    {rec.slot}
-                                  </span>
-                                )}
-
-                                <span className="text-xs text-gray-500 font-semibold">
-                                  {new Date(rec.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                </span>
-
-                                <span className="text-xs font-mono text-gray-400">
-                                  • {rec.certificateNumber}
-                                </span>
-                              </div>
-
-                              <h4 className="font-bold text-sm text-gray-900 dark:text-white">
-                                {student?.name || rec.certificateNumber}
-                                <span className="font-normal text-xs text-gray-400 ml-2">({rec.course})</span>
-                              </h4>
-
-                              {rec.topicOrModule && (
-                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                                  <span className="text-accent">Drill: </span>{rec.topicOrModule}
-                                </p>
-                              )}
-
-                              {rec.remarks && (
-                                <p className="text-[11px] text-gray-500 italic">
-                                  "{rec.remarks}" {rec.markedBy ? `— by ${rec.markedBy}` : ''}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Delete Log Button */}
-                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteAttendance(rec.id)}
-                                className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                                title="Delete record"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </GlassCard>
-                        );
-                      })
-                    )}
+                    <select
+                      value={attFilterStatus}
+                      onChange={(e) => setAttFilterStatus(e.target.value as any)}
+                      className="px-2.5 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none"
+                    >
+                      <option value="All">All Status</option>
+                      <option value="Present">Present Only</option>
+                      <option value="Absent">Absent Only</option>
+                    </select>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+
+                <div className="space-y-3">
+                  {filteredAttendanceList.length === 0 ? (
+                    <div className="py-8 text-center text-gray-400 text-xs font-semibold">
+                      No logs found matching "{attSearchTerm}".
+                    </div>
+                  ) : (
+                    filteredAttendanceList.map((rec) => {
+                      const student = studentsData.find(
+                        (s) => s.certificateNumber.toUpperCase() === rec.certificateNumber.toUpperCase()
+                      );
+                      return (
+                        <GlassCard
+                          key={rec.id}
+                          hoverEffect={false}
+                          className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10"
+                        >
+                          <div className="space-y-1 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                rec.status === 'Present'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                              }`}>
+                                {rec.status === 'Present' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                                <span>{rec.status}</span>
+                              </span>
+
+                              {rec.slot && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20">
+                                  {rec.slot}
+                                </span>
+                              )}
+
+                              <span className="text-xs text-gray-500 font-semibold">
+                                {new Date(rec.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+
+                              <span className="text-xs font-mono text-gray-400">
+                                • {rec.certificateNumber}
+                              </span>
+                            </div>
+
+                            <h4 className="font-bold text-sm text-gray-900 dark:text-white">
+                              {student?.name || rec.certificateNumber}
+                              <span className="font-normal text-xs text-gray-400 ml-2">({rec.course})</span>
+                            </h4>
+
+                            {rec.topicOrModule && (
+                              <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                                <span className="text-primary font-semibold">Drill: </span>{rec.topicOrModule}
+                              </p>
+                            )}
+
+                            {rec.remarks && (
+                              <p className="text-[11px] text-gray-500 italic">
+                                "{rec.remarks}" {rec.markedBy ? `— by ${rec.markedBy}` : ''}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Delete Log Button */}
+                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAttendance(rec.id)}
+                              className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+                              title="Delete record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </GlassCard>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
         )}
@@ -1706,10 +1689,10 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-8">
             
             {/* Form Card */}
-            <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
+            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100 dark:border-white/5">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
@@ -1745,7 +1728,7 @@ export const DashboardPage: React.FC = () => {
                     <select
                       value={resCertNo}
                       onChange={(e) => handleResStudentChange(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-xs sm:text-sm font-medium focus:ring-2 focus:ring-accent outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-xs sm:text-sm font-medium focus:ring-2 focus:ring-primary outline-none"
                     >
                       {studentsData.map((s) => (
                         <option key={s.certificateNumber} value={s.certificateNumber}>
@@ -1779,7 +1762,7 @@ export const DashboardPage: React.FC = () => {
                       value={resSubject}
                       onChange={(e) => setResSubject(e.target.value)}
                       placeholder="e.g. Fire Fighting Hydraulics & Pump Calculations"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-accent outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
                       required
                     />
                   </div>
@@ -1793,7 +1776,7 @@ export const DashboardPage: React.FC = () => {
                       value={resTerm}
                       onChange={(e) => setResTerm(e.target.value)}
                       placeholder="Term Final Examination"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-accent outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
                 </div>
@@ -1810,7 +1793,7 @@ export const DashboardPage: React.FC = () => {
                       max={resMaxMarks}
                       value={resMarks}
                       onChange={(e) => handleMarksChange(Number(e.target.value), resMaxMarks)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm font-bold font-mono focus:ring-2 focus:ring-accent outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm font-bold font-mono focus:ring-2 focus:ring-primary outline-none"
                       required
                     />
                   </div>
@@ -1824,7 +1807,7 @@ export const DashboardPage: React.FC = () => {
                       min={1}
                       value={resMaxMarks}
                       onChange={(e) => handleMarksChange(resMarks, Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm font-mono focus:ring-2 focus:ring-accent outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm font-mono focus:ring-2 focus:ring-primary outline-none"
                       required
                     />
                   </div>
@@ -1837,7 +1820,7 @@ export const DashboardPage: React.FC = () => {
                       type="text"
                       value={resGrade}
                       onChange={(e) => setResGrade(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-center text-xs sm:text-sm focus:ring-2 focus:ring-accent outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-center text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
                 </div>
@@ -1852,7 +1835,7 @@ export const DashboardPage: React.FC = () => {
                     value={resRemarks}
                     onChange={(e) => setResRemarks(e.target.value)}
                     placeholder="e.g. Excellent operational accuracy and rapid hose coupling deployment"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-accent outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
                   />
                 </div>
 
@@ -1869,7 +1852,7 @@ export const DashboardPage: React.FC = () => {
                   )}
                   <button
                     type="submit"
-                    className="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-accent hover:bg-accent-hover shadow-md hover:scale-105 transition-all flex items-center gap-1.5"
+                    className="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-dark shadow-md transition-colors flex items-center gap-1.5"
                   >
                     <Award className="w-4 h-4" />
                     <span>{resEditingId ? 'Update Result' : 'Save Examination Result'}</span>
@@ -1896,7 +1879,7 @@ export const DashboardPage: React.FC = () => {
                     value={resSearchTerm}
                     onChange={(e) => setResSearchTerm(e.target.value)}
                     placeholder="Search cadet or subject..."
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-accent"
+                    className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -1977,10 +1960,10 @@ export const DashboardPage: React.FC = () => {
         {(activeTab === 'news_events' || activeTab === 'updates' || activeTab === 'all') && (
           <div>
             {/* Create / Edit Post Form Card */}
-            <FlatCard className="p-6 sm:p-8 mb-12 border border-gray-200/80 dark:border-white/10 shadow-md">
+            <FlatCard hoverEffect={false} className="p-6 sm:p-8 mb-12 border border-gray-200/80 dark:border-white/10 shadow-md">
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100 dark:border-white/5">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
                     <Plus className="w-5 h-5" />
                   </div>
                   <div>
@@ -2016,7 +1999,7 @@ export const DashboardPage: React.FC = () => {
                     type="text"
                     {...register('title')}
                     placeholder="e.g. Annual Heavy Vehicle Water Tender Operations Drill Completed"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   {postErrors.title && (
                     <p className="text-xs text-red-500 mt-1">{postErrors.title.message}</p>
@@ -2031,7 +2014,7 @@ export const DashboardPage: React.FC = () => {
                     </label>
                     <select
                       {...register('category')}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="News">News</option>
                       <option value="Event">Event</option>
@@ -2047,7 +2030,7 @@ export const DashboardPage: React.FC = () => {
                     <input
                       type="date"
                       {...register('date')}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
@@ -2061,7 +2044,7 @@ export const DashboardPage: React.FC = () => {
                     type="text"
                     {...register('excerpt')}
                     placeholder="Brief summary appearing on homepage cards and feed list..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   {postErrors.excerpt && (
                     <p className="text-xs text-red-500 mt-1">{postErrors.excerpt.message}</p>
@@ -2077,7 +2060,7 @@ export const DashboardPage: React.FC = () => {
                     rows={4}
                     {...register('content')}
                     placeholder="Detailed explanation, equipment deployed, cadet roster, or key dates..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   {postErrors.content && (
                     <p className="text-xs text-red-500 mt-1">{postErrors.content.message}</p>
@@ -2116,7 +2099,7 @@ export const DashboardPage: React.FC = () => {
                       type="text"
                       {...register('author')}
                       placeholder="CFSI Administration"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
@@ -2135,7 +2118,7 @@ export const DashboardPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmittingPost}
-                    className="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-accent hover:bg-accent-hover shadow-md hover:scale-105 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-dark shadow-md transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <Plus className="w-4 h-4" />
                     <span>{editingPostId ? 'Update Post Now' : 'Publish Article Live'}</span>
@@ -2154,74 +2137,66 @@ export const DashboardPage: React.FC = () => {
                 <span className="text-xs text-gray-400">Stored in browser localStorage</span>
               </div>
 
-              <AnimatePresence>
-                {displayedPosts.map((post) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <GlassCard hoverEffect={false} className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10">
-                      
-                      {/* Left Info */}
-                      <div className="flex items-start gap-4 flex-1">
-                        {post.imageUrl && (
-                          <img
-                            src={post.imageUrl}
-                            alt={post.title}
-                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-white/10"
-                          />
-                        )}
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/10 text-accent dark:bg-accent/20">
-                              {post.category}
-                            </span>
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>{post.date}</span>
-                            </span>
-                            {post.author && (
-                              <span className="text-xs text-gray-400">• {post.author}</span>
-                            )}
-                          </div>
-                          <h4 className="font-heading font-bold text-base text-gray-900 dark:text-white leading-snug">
-                            {post.title}
-                          </h4>
-                          <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                            {post.excerpt}
-                          </p>
+              {displayedPosts.map((post) => (
+                <div key={post.id}>
+                  <GlassCard hoverEffect={false} className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10">
+                    
+                    {/* Left Info */}
+                    <div className="flex items-start gap-4 flex-1">
+                      {post.imageUrl && (
+                        <img
+                          src={post.imageUrl}
+                          alt={post.title}
+                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-white/10"
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                            {post.category}
+                          </span>
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{post.date}</span>
+                          </span>
+                          {post.author && (
+                            <span className="text-xs text-gray-400">• {post.author}</span>
+                          )}
                         </div>
+                        <h4 className="font-heading font-bold text-base text-gray-900 dark:text-white leading-snug">
+                          {post.title}
+                        </h4>
+                        <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                          {post.excerpt}
+                        </p>
                       </div>
+                    </div>
 
-                      {/* Right Actions: Edit & Delete */}
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                        <button
-                          type="button"
-                          onClick={() => handleEditNewsClick(post)}
-                          className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
-                          title="Edit this post"
-                          aria-label="Edit post"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePost(post.id, post.title)}
-                          className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                          title="Delete this post"
-                          aria-label="Delete post"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    {/* Right Actions: Edit & Delete */}
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <button
+                        type="button"
+                        onClick={() => handleEditNewsClick(post)}
+                        className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
+                        title="Edit this post"
+                        aria-label="Edit post"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePost(post.id, post.title)}
+                        className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+                        title="Delete this post"
+                        aria-label="Delete post"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
 
-                    </GlassCard>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                  </GlassCard>
+                </div>
+              ))}
             </div>
 
           </div>
@@ -2230,18 +2205,11 @@ export const DashboardPage: React.FC = () => {
         {/* ========================================================================= */}
         {/* CADET DETAILS INSPECTION MODAL                                           */}
         {/* ========================================================================= */}
-        <AnimatePresence>
-          {selectedCadetDetail && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white dark:bg-[#12181f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-              >
-                {/* Top Accent Strip */}
-                <div className="h-2 w-full bg-gradient-to-r from-primary via-accent to-primary" />
+        {selectedCadetDetail && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/60">
+            <div className="bg-white dark:bg-[#12181f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Top Strip */}
+              <div className="h-2 w-full bg-primary" />
 
                 <div className="p-6 sm:p-8 space-y-6">
                   {/* Modal Header */}
@@ -2295,7 +2263,7 @@ export const DashboardPage: React.FC = () => {
 
                   {/* Section 1: Demographic & Enrollment Records */}
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-accent mb-3 flex items-center gap-1.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-1.5">
                       <User className="w-4 h-4" />
                       <span>Cadet Demographic & Institutional Record</span>
                     </h3>
@@ -2348,7 +2316,7 @@ export const DashboardPage: React.FC = () => {
                   {/* Section 2: Physical Drill & Muster Attendance Record */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1.5">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                         <Clock className="w-4 h-4" />
                         <span>Dynamic Drill Muster & Training Attendance</span>
                       </h3>
@@ -2405,14 +2373,14 @@ export const DashboardPage: React.FC = () => {
                             <div className="p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
                               <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
                                 <span className="text-gray-600 dark:text-gray-300">Ground Drill Compliance Progress</span>
-                                <span className={summary.percentage >= 75 ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>
+                                <span className={summary.percentage >= 75 ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'}>
                                   {summary.percentage >= 75 ? 'Meets Statutory 75% Requirement' : 'Short of 75% Statutory Target'}
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full transition-all duration-500 ${
-                                    summary.percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'
+                                  className={`h-full rounded-full ${
+                                    summary.percentage >= 75 ? 'bg-emerald-500' : 'bg-red-500'
                                   }`}
                                   style={{ width: `${Math.min(summary.percentage, 100)}%` }}
                                 />
@@ -2479,7 +2447,7 @@ export const DashboardPage: React.FC = () => {
                   {/* Section 3: Examination & Marks Records */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1.5">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                         <Award className="w-4 h-4" />
                         <span>Examination Papers & Practical Evaluations</span>
                       </h3>
@@ -2509,11 +2477,11 @@ export const DashboardPage: React.FC = () => {
                           {cadetResults.length > 0 ? (
                             <>
                               {/* Results Summary Bar */}
-                              <div className="p-3 rounded-xl bg-purple-500/5 dark:bg-white/5 border border-purple-500/10 flex flex-wrap items-center justify-between gap-3">
+                              <div className="p-3 rounded-xl bg-primary/5 dark:bg-white/5 border border-primary/10 flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex items-center gap-4">
                                   <div>
                                     <div className="text-[11px] text-gray-500">Evaluated Papers</div>
-                                    <div className="text-lg font-black text-purple-600 dark:text-purple-400">
+                                    <div className="text-lg font-black text-primary dark:text-primary-light">
                                       {cadetResults.length} Papers
                                     </div>
                                   </div>
@@ -2623,10 +2591,9 @@ export const DashboardPage: React.FC = () => {
                   </div>
 
                 </div>
-              </motion.div>
             </div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
 
       </div>
     </div>

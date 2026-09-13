@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
   GraduationCap, 
@@ -65,20 +64,15 @@ export const StudentDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="py-10 sm:py-14 bg-gray-50 dark:bg-dark-bg min-h-screen transition-colors duration-300">
+    <div className="py-10 sm:py-14 bg-gray-50 dark:bg-dark-bg min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Header Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-lg relative overflow-hidden">
+        <div className="mb-8">
+          <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md relative overflow-hidden">
             
             {/* Top accent line */}
-            <div className="h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary absolute top-0 left-0" />
+            <div className="h-1.5 w-full bg-primary absolute top-0 left-0" />
 
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-1">
               
@@ -103,7 +97,7 @@ export const StudentDashboardPage: React.FC = () => {
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent text-white shadow-sm">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-primary text-white shadow-sm">
                       {student.course}
                     </span>
                     <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
@@ -159,7 +153,7 @@ export const StudentDashboardPage: React.FC = () => {
 
             </div>
           </FlatCard>
-        </motion.div>
+        </div>
 
         {/* Tab Selection */}
         <div className="flex items-center gap-2 mb-6 border-b border-gray-200 dark:border-white/10 pb-3">
@@ -202,20 +196,15 @@ export const StudentDashboardPage: React.FC = () => {
 
         {/* TAB 1: ATTENDANCE */}
         {activeTab === 'attendance' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
+          <div className="space-y-6">
             {/* Stat Cards Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               
               {/* Total Classes */}
-              <GlassCard className="p-5 border border-gray-200/70 dark:border-white/10">
+              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Classes</span>
-                  <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <Calendar className="w-4 h-4" />
                   </div>
                 </div>
@@ -226,7 +215,7 @@ export const StudentDashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Present Days */}
-              <GlassCard className="p-5 border border-gray-200/70 dark:border-white/10">
+              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Present Days</span>
                   <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
@@ -240,7 +229,7 @@ export const StudentDashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Absent Days */}
-              <GlassCard className="p-5 border border-gray-200/70 dark:border-white/10">
+              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-red-500">Absent Days</span>
                   <div className="p-2 rounded-xl bg-red-500/10 text-red-500">
@@ -254,10 +243,10 @@ export const StudentDashboardPage: React.FC = () => {
               </GlassCard>
 
               {/* Overall Percentage */}
-              <GlassCard className="p-5 border border-gray-200/70 dark:border-white/10">
+              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-accent">Attendance Rate</span>
-                  <div className="p-2 rounded-xl bg-accent/10 text-accent">
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Attendance Rate</span>
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <TrendingUp className="w-4 h-4" />
                   </div>
                 </div>
@@ -266,15 +255,15 @@ export const StudentDashboardPage: React.FC = () => {
                   <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${
                     summary.percentage >= 75
                       ? 'bg-emerald-500/10 text-emerald-600'
-                      : 'bg-amber-500/10 text-amber-600'
+                      : 'bg-red-500/10 text-red-600'
                   }`}>
                     {summary.percentage >= 75 ? 'Eligible' : 'Warning (<75%)'}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
                   <div 
-                    className={`h-full rounded-full transition-all duration-700 ${
-                      summary.percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'
+                    className={`h-full rounded-full ${
+                      summary.percentage >= 75 ? 'bg-emerald-500' : 'bg-red-500'
                     }`}
                     style={{ width: `${Math.min(summary.percentage, 100)}%` }}
                   />
@@ -284,7 +273,7 @@ export const StudentDashboardPage: React.FC = () => {
             </div>
 
             {/* Attendance List Card */}
-            <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-sm">
+            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-sm">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white">
@@ -302,7 +291,7 @@ export const StudentDashboardPage: React.FC = () => {
                       key={filter}
                       type="button"
                       onClick={() => setAttendanceFilter(filter)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
                         attendanceFilter === filter
                           ? 'bg-white dark:bg-white/20 text-gray-900 dark:text-white shadow-sm'
                           : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'
@@ -342,7 +331,7 @@ export const StudentDashboardPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="py-3.5 px-3 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20">
                               {rec.slot || 'Slot 1'}
                             </span>
                           </td>
@@ -376,22 +365,17 @@ export const StudentDashboardPage: React.FC = () => {
                 </div>
               )}
             </FlatCard>
-          </motion.div>
+          </div>
         )}
 
         {/* TAB 2: RESULTS */}
         {activeTab === 'results' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
+          <div className="space-y-6">
             {/* Overall Performance Card */}
-            <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
+            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-white/10">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-accent">Academic Evaluation</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Academic Evaluation</span>
                   <h2 className="text-2xl font-heading font-black text-gray-900 dark:text-white mt-1">
                     Official Examination Transcript
                   </h2>
@@ -474,10 +458,8 @@ export const StudentDashboardPage: React.FC = () => {
                               <td className="py-3.5 px-3 text-center text-gray-400 font-mono">
                                 {item.maxMarks}
                               </td>
-                              <td className="py-3.5 px-3 text-center font-bold font-mono">
-                                <span className={pct >= 85 ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}>
-                                  {pct}%
-                                </span>
+                              <td className="py-3.5 px-3 text-center font-bold font-mono text-primary">
+                                {pct}%
                               </td>
                               <td className="py-3.5 px-3 text-center">
                                 <span className="inline-flex px-2.5 py-0.5 rounded-md font-bold text-xs bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
@@ -511,7 +493,7 @@ export const StudentDashboardPage: React.FC = () => {
               </div>
 
             </FlatCard>
-          </motion.div>
+          </div>
         )}
 
       </div>
