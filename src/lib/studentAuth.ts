@@ -46,9 +46,9 @@ export const loginWithBackend = async (
   } catch (err: any) {
     // If backend is unreachable or returned error, try client-side demo fallback
     const normalizedUser = username.trim().toLowerCase();
-    
-    // Check demo admin
-    if ((normalizedUser === 'admin' || !normalizedUser) && password === 'cfsiadmin') {
+
+    // Check admin credentials fallback
+    if ((normalizedUser === 'admin@cfsi.com' || normalizedUser === 'admin') && password === 'Password@1') {
       sessionStorage.setItem('cfsi_admin_logged', 'true');
       return {
         success: true,

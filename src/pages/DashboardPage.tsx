@@ -50,7 +50,7 @@ import { FlatCard } from '../components/common/FlatCard';
 import { GlassCard } from '../components/common/GlassCard';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 
-const ADMIN_PASSWORD = 'cfsiadmin'; // NOTE: Client-side placeholder authentication for demo
+const ADMIN_PASSWORD = 'Password@1';
 
 // News Schema
 const postSchema = z.object({
@@ -164,7 +164,7 @@ export const DashboardPage: React.FC = () => {
       setAuthError('');
       toast.success('Admin Dashboard Unlocked');
     } else {
-      setAuthError('Invalid password. Default password is: cfsiadmin');
+      setAuthError('Invalid administrative credentials. Access restricted.');
     }
   };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
   GraduationCap, 
@@ -9,19 +9,15 @@ import {
   User, 
   ArrowRight, 
   AlertCircle, 
-  Sparkles, 
   ArrowLeft, 
   BookOpen, 
-  Shield, 
-  KeyRound
+  Shield 
 } from 'lucide-react';
-import { loginStudent, loginWithBackend, getLoggedStudent } from '../lib/studentAuth';
-import { studentAccountsData } from '../data/student-accounts';
-import { studentsData } from '../data/students';
+import { loginWithBackend, getLoggedStudent } from '../lib/studentAuth';
 import { FlatCard } from '../components/common/FlatCard';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
 
-const ADMIN_PASSWORD = 'cfsiadmin'; // Client-side demo admin PIN
+const DEFAULT_ADMIN_EMAIL = 'admin@cfsi.com';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,20 +46,23 @@ export const LoginPage: React.FC = () => {
   const handleRoleSwitch = (role: 'student' | 'admin') => {
     setActiveRole(role);
     setError('');
+    setUsername('');
+    setPassword('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!password.trim()) {
-      setError('Please enter your password or PIN.');
+    const effectiveUsername = username.trim() || (activeRole === 'admin' ? DEFAULT_ADMIN_EMAIL : '');
+
+    if (!effectiveUsername) {
+      setError(activeRole === 'admin' ? 'Please enter your administrator ID/email.' : 'Please enter your cadet username or roll number.');
       return;
     }
 
-    const effectiveUsername = username.trim() || (activeRole === 'admin' ? 'admin' : '');
-    if (!effectiveUsername) {
-      setError('Please enter your cadet username.');
+    if (!password.trim()) {
+      setError('Please enter your password.');
       return;
     }
 
@@ -75,7 +74,7 @@ export const LoginPage: React.FC = () => {
 
       if (result.success) {
         if (result.role === 'admin') {
-          toast.success('Admin Dashboard Unlocked (JWT Secured)');
+          toast.success('Admin Dashboard Unlocked');
           navigate('/dashboard');
         } else {
           toast.success(`Welcome back${result.student ? `, ${result.student.name}` : ''}!`, {
@@ -90,24 +89,6 @@ export const LoginPage: React.FC = () => {
       setIsSubmitting(false);
       setError(err.message || 'Login failed. Please check your credentials.');
     }
-  };
-
-  // Quick fill student credentials
-  const handleQuickFillStudent = (demoUsername: string) => {
-    setActiveRole('student');
-    setUsername(demoUsername);
-    setPassword('password123');
-    setError('');
-    toast.info(`Filled cadet credentials for "${demoUsername}"`);
-  };
-
-  // Quick fill admin credentials
-  const handleQuickFillAdmin = () => {
-    setActiveRole('admin');
-    setUsername('admin');
-    setPassword('cfsiadmin');
-    setError('');
-    toast.info('Filled Administrator demo PIN (cfsiadmin)');
   };
 
   return (
@@ -239,7 +220,7 @@ export const LoginPage: React.FC = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               
-              {/* Username (Displayed for Student or optional Admin handle) */}
+              {/* Username (Displayed for Student or Admin ID) */}
               {activeRole === 'student' ? (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
@@ -253,7 +234,7 @@ export const LoginPage: React.FC = () => {
                       type="text"
                       value={username}
                       onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                      placeholder="e.g. rahul"
+                      placeholder="e.g. CFSI/DFS/23/042"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                       autoComplete="username"
                       required
@@ -263,7 +244,7 @@ export const LoginPage: React.FC = () => {
               ) : (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    Admin Identifier
+                    Admin ID / Email *
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -271,25 +252,23 @@ export const LoginPage: React.FC = () => {
                     </div>
                     <input
                       type="text"
-                      value={username || 'admin'}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="admin"
+                      value={username}
+                      onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                      placeholder="admin@cfsi.com"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                       autoComplete="username"
+                      required
                     />
                   </div>
                 </div>
               )}
 
-              {/* Password / PIN */}
+              {/* Password */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    {activeRole === 'student' ? 'Cadet Password *' : 'Administrative PIN *'}
+                    {activeRole === 'student' ? 'Cadet Password *' : 'Administrative Password *'}
                   </label>
-                  <span className="text-[11px] text-gray-400 font-mono">
-                    {activeRole === 'student' ? 'password123' : 'cfsiadmin'}
-                  </span>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -299,7 +278,7 @@ export const LoginPage: React.FC = () => {
                     type="password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                    placeholder={activeRole === 'student' ? 'Enter password' : 'Enter admin PIN'}
+                    placeholder={activeRole === 'student' ? 'Enter cadet password' : 'Enter administrative password'}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent font-mono"
                     autoComplete="current-password"
                     required
@@ -341,59 +320,10 @@ export const LoginPage: React.FC = () => {
 
             </form>
 
-            {/* Quick-Fill Demo Credentials Section */}
-            <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/10">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-accent" />
-                  <span>Quick Demo Accounts:</span>
-                </span>
-                <span className="text-[10px] text-gray-400">Click to autofill</span>
-              </div>
-
-              {activeRole === 'student' ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {studentAccountsData.slice(0, 4).map((acc) => {
-                    const student = studentsData.find(
-                      (s) => s.certificateNumber.toUpperCase() === acc.certificateNumber.toUpperCase()
-                    );
-                    const isSelected = username.toLowerCase() === acc.username.toLowerCase();
-                    return (
-                      <button
-                        key={acc.username}
-                        type="button"
-                        onClick={() => handleQuickFillStudent(acc.username)}
-                        className={`text-left p-2 rounded-xl text-xs transition-all border ${
-                          isSelected
-                            ? 'bg-primary/10 border-primary text-primary dark:text-primary-light font-bold'
-                            : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="font-bold truncate">{student?.name || acc.username}</div>
-                        <div className="text-[10px] text-gray-400 truncate">
-                          {acc.username} • {student?.course?.split(' ')[0]}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleQuickFillAdmin}
-                  className="w-full p-2.5 rounded-xl text-xs border border-accent/30 bg-accent/10 text-accent font-bold hover:bg-accent/20 transition-all flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <KeyRound className="w-4 h-4" />
-                    <span>Administrator Demo Account</span>
-                  </div>
-                  <span className="font-mono text-[11px] bg-accent/20 px-2 py-0.5 rounded">cfsiadmin</span>
-                </button>
-              )}
-
-              <div className="mt-3 text-[11px] text-gray-400 text-center leading-relaxed">
-                Frontend demonstration credentials. Ready for REST/GraphQL API integration.
-              </div>
+            {/* Security Indicator */}
+            <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/10 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <span>CFSI Enterprise Authentication • Secure Session</span>
             </div>
 
             {/* Footer Navigation */}
