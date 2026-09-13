@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
@@ -7,16 +7,16 @@ import {
   Calendar, 
   CheckCircle2, 
   XCircle, 
-  Award, 
-  BookOpen, 
   Clock, 
   FileText, 
   Printer, 
-  ShieldCheck, 
   User, 
   TrendingUp,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Radio,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { getLoggedStudent, logoutStudent } from '../lib/studentAuth';
 import { useStudentData } from '../context/StudentDataContext';
@@ -26,9 +26,8 @@ import { GlassCard } from '../components/common/GlassCard';
 export const StudentDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const student = getLoggedStudent();
-  const { getAttendanceByStudent, getResultsByStudent, getStudentAttendanceSummary } = useStudentData();
+  const { getAttendanceByStudent, getStudentAttendanceSummary } = useStudentData();
 
-  const [activeTab, setActiveTab] = useState<'attendance' | 'results'>('attendance');
   const [attendanceFilter, setAttendanceFilter] = useState<'All' | 'Present' | 'Absent'>('All');
 
   // If not authenticated, redirect to /login
@@ -36,22 +35,59 @@ export const StudentDashboardPage: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const attendanceRecords = getAttendanceByStudent(student.certificateNumber);
-  const resultsRecords = getResultsByStudent(student.certificateNumber);
-  const summary = getStudentAttendanceSummary(student.certificateNumber);
+  const attendanceRecords = getAttendanceByStudent(student.id);
+  const summary = getStudentAttendanceSummary(student.id);
 
-  // Filtered attendance records
-  const filteredAttendance = attendanceRecords.filter((rec) => {
-    if (attendanceFilter === 'All') return true;
-    return rec.status === attendanceFilter;
-  });
+  // Group records by Date -> Slot 1, Slot 2, Slot 3
+  const groupedByDate = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        date: string;
+        slot1?: any;
+        slot2?: any;
+        slot3?: any;
+        presentCount: number;
+        totalCount: number;
+      }
+    >();
 
-  // Calculate totals for results
-  const totalMarksObtained = resultsRecords.reduce((acc, curr) => acc + curr.marksObtained, 0);
-  const totalMaxMarks = resultsRecords.reduce((acc, curr) => acc + curr.maxMarks, 0);
-  const overallResultPercentage = totalMaxMarks > 0 
-    ? Math.round((totalMarksObtained / totalMaxMarks) * 1000) / 10 
-    : 0;
+    attendanceRecords.forEach((r) => {
+      const d = r.date;
+      if (!d) return;
+
+      if (!map.has(d)) {
+        map.set(d, {
+          date: d,
+          presentCount: 0,
+          totalCount: 0,
+        });
+      }
+
+      const row = map.get(d)!;
+      const s = (r.slot || '').toLowerCase();
+
+      if (s.includes('1') || s.includes('one')) {
+        row.slot1 = r;
+      } else if (s.includes('2') || s.includes('two')) {
+        row.slot2 = r;
+      } else if (s.includes('3') || s.includes('three')) {
+        row.slot3 = r;
+      } else {
+        if (!row.slot1) row.slot1 = r;
+        else if (!row.slot2) row.slot2 = r;
+        else if (!row.slot3) row.slot3 = r;
+      }
+
+      if (r.status === 'Present') row.presentCount++;
+      row.totalCount++;
+    });
+
+    const list = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
+    if (attendanceFilter === 'All') return list;
+    if (attendanceFilter === 'Present') return list.filter((l) => l.presentCount > 0);
+    return list.filter((l) => l.presentCount < l.totalCount);
+  }, [attendanceRecords, attendanceFilter]);
 
   const handleLogout = () => {
     logoutStudent();
@@ -115,7 +151,7 @@ export const StudentDashboardPage: React.FC = () => {
                     </span>
                     <span className="text-gray-300 dark:text-gray-700">•</span>
                     <span>
-                      Cert No: <span className="font-bold text-primary dark:text-primary-light font-mono">{student.certificateNumber}</span>
+                      Student ID: <span className="font-bold text-primary dark:text-primary-light font-mono">{student.id}</span>
                     </span>
                   </div>
                 </div>
@@ -123,13 +159,6 @@ export const StudentDashboardPage: React.FC = () => {
 
               {/* Header Right Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 self-end md:self-center w-full sm:w-auto">
-                <Link
-                  to={`/verify?cert=${encodeURIComponent(student.certificateNumber)}`}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Verify Certificate</span>
-                </Link>
 
                 <button
                   type="button"
@@ -155,69 +184,15 @@ export const StudentDashboardPage: React.FC = () => {
           </FlatCard>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex items-center gap-2 mb-6 border-b border-gray-200 dark:border-white/10 pb-3">
-          <button
-            type="button"
-            onClick={() => setActiveTab('attendance')}
-            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-              activeTab === 'attendance'
-                ? 'bg-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/5'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>My Attendance</span>
-            <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-              activeTab === 'attendance' ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-white/10'
-            }`}>
-              {summary.total}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('results')}
-            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-              activeTab === 'results'
-                ? 'bg-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/5'
-            }`}
-          >
-            <Award className="w-4 h-4" />
-            <span>My Results</span>
-            <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-              activeTab === 'results' ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-white/10'
-            }`}>
-              {resultsRecords.length}
-            </span>
-          </button>
-        </div>
-
-        {/* TAB 1: ATTENDANCE */}
-        {activeTab === 'attendance' && (
-          <div className="space-y-6">
+        {/* ATTENDANCE SECTION */}
+        <div className="space-y-6">
             {/* Stat Cards Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               
-              {/* Total Classes */}
-              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
+              {/* Present Slots */}
+              <GlassCard hoverEffect={false} className="p-5 border border-emerald-200/70 dark:border-emerald-800/30 bg-emerald-50/40 dark:bg-emerald-950/10">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Classes</span>
-                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white">
-                  {summary.total}
-                </div>
-                <div className="text-[11px] text-gray-500 mt-1">Ground & theory sessions</div>
-              </GlassCard>
-
-              {/* Present Days */}
-              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Present Days</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Present Slots</span>
                   <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
@@ -225,13 +200,13 @@ export const StudentDashboardPage: React.FC = () => {
                 <div className="text-2xl sm:text-3xl font-heading font-black text-emerald-600 dark:text-emerald-400">
                   {summary.present}
                 </div>
-                <div className="text-[11px] text-gray-500 mt-1">Active attendance marked</div>
+                <div className="text-[11px] text-gray-500 mt-1">Sessions attended</div>
               </GlassCard>
 
-              {/* Absent Days */}
-              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
+              {/* Absent Slots */}
+              <GlassCard hoverEffect={false} className="p-5 border border-red-200/70 dark:border-red-800/30 bg-red-50/40 dark:bg-red-950/10">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-red-500">Absent Days</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-red-500">Absent Slots</span>
                   <div className="p-2 rounded-xl bg-red-500/10 text-red-500">
                     <XCircle className="w-4 h-4" />
                   </div>
@@ -239,13 +214,27 @@ export const StudentDashboardPage: React.FC = () => {
                 <div className="text-2xl sm:text-3xl font-heading font-black text-red-600 dark:text-red-400">
                   {summary.absent}
                 </div>
-                <div className="text-[11px] text-gray-500 mt-1">Missed sessions</div>
+                <div className="text-[11px] text-gray-500 mt-1">Sessions missed</div>
               </GlassCard>
 
-              {/* Overall Percentage */}
+              {/* Total Slots */}
               <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Attendance Rate</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Slots</span>
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white">
+                  {summary.total}
+                </div>
+                <div className="text-[11px] text-gray-500 mt-1">Total drill sessions</div>
+              </GlassCard>
+
+              {/* Total Attendance */}
+              <GlassCard hoverEffect={false} className="p-5 border border-gray-200/70 dark:border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Total Attendance</span>
                   <div className="p-2 rounded-xl bg-primary/10 text-primary">
                     <TrendingUp className="w-4 h-4" />
                   </div>
@@ -276,11 +265,17 @@ export const StudentDashboardPage: React.FC = () => {
             <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-sm">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white">
-                    Daily Ground Drill & Class Muster
-                  </h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Official biometric & roll-call records verified by CFSI instructors.
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white">
+                      Attendance Muster
+                    </h2>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      <span>Live Sync Active</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Official biometric & roll-call records verified by CFSI instructors • Synchronized in real time.
                   </p>
                 </div>
 
@@ -303,198 +298,107 @@ export const StudentDashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              {filteredAttendance.length === 0 ? (
+              {groupedByDate.length === 0 ? (
                 <div className="py-12 text-center text-gray-400">
                   <Clock className="w-10 h-10 mx-auto mb-2 opacity-40" />
                   <p className="text-sm font-semibold">No attendance records found matching "{attendanceFilter}".</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-white/10 text-gray-400 uppercase tracking-wider font-extrabold text-[10px]">
-                        <th className="py-3 px-3">Date</th>
-                        <th className="py-3 px-3">Slot / Session</th>
-                        <th className="py-3 px-3">Status</th>
-                        <th className="py-3 px-4">Practical Drill / Module</th>
-                        <th className="py-3 px-4">Instructor Feedback / Notes</th>
-                        <th className="py-3 px-3">Instructor</th>
+                <div className="overflow-x-auto border border-gray-200/80 dark:border-white/10 rounded-2xl bg-white dark:bg-[#161d27] shadow-sm">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-gray-50/90 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 uppercase font-extrabold text-[10px] sm:text-[11px] tracking-wider">
+                      <tr>
+                        <th className="py-3.5 px-4 min-w-[160px]">DATE</th>
+                        <th className="py-3.5 px-4 min-w-[180px]">SLOT ONE</th>
+                        <th className="py-3.5 px-4 min-w-[180px]">SLOT TWO</th>
+                        <th className="py-3.5 px-4 min-w-[180px]">SLOT THREE</th>
+                        <th className="py-3.5 px-4 text-center min-w-[150px]">TOTAL ATTENDANCE</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                      {filteredAttendance.map((rec) => (
-                        <tr key={rec.id} className="hover:bg-gray-50/80 dark:hover:bg-white/5 transition-colors">
-                          <td className="py-3.5 px-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                              <span>{new Date(rec.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20">
-                              {rec.slot || 'Slot 1'}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[11px] ${
-                              rec.status === 'Present'
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-                            }`}>
-                              {rec.status === 'Present' ? (
-                                <CheckCircle2 className="w-3 h-3" />
-                              ) : (
-                                <XCircle className="w-3 h-3" />
+                      {groupedByDate.map((row) => {
+                        const dayRate = row.totalCount > 0 ? Math.round((row.presentCount / row.totalCount) * 100) : 0;
+                        const renderSlotItem = (slotRec?: any) => {
+                          if (!slotRec) {
+                            return <span className="text-gray-400 dark:text-gray-500 text-xs italic">—</span>;
+                          }
+                          const isPresent = slotRec.status === 'Present';
+                          return (
+                            <div className="flex flex-col items-start gap-1">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                                isPresent
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                              }`}>
+                                {isPresent ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                                <span>{slotRec.status}</span>
+                              </span>
+                              {slotRec.topicOrModule && (
+                                <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate max-w-[190px]" title={slotRec.topicOrModule}>
+                                  {slotRec.topicOrModule}
+                                </span>
                               )}
-                              <span>{rec.status}</span>
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 font-semibold text-gray-800 dark:text-gray-200">
-                            {rec.topicOrModule || 'Tactical Drill Training'}
-                          </td>
-                          <td className="py-3.5 px-4 text-gray-500 dark:text-gray-400 italic">
-                            {rec.remarks || 'Standard protocol complied'}
-                          </td>
-                          <td className="py-3.5 px-3 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
-                            {rec.markedBy || 'CFSI Training Wing'}
-                          </td>
-                        </tr>
-                      ))}
+                            </div>
+                          );
+                        };
+
+                        return (
+                          <tr key={row.date} className="hover:bg-gray-50/70 dark:hover:bg-white/5 transition-colors">
+                            {/* DATE */}
+                            <td className="py-4 px-4 font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                  <Calendar className="w-4 h-4" />
+                                </div>
+                                <span className="font-heading font-black text-xs sm:text-sm">{row.date}</span>
+                              </div>
+                            </td>
+
+                            {/* SLOT ONE */}
+                            <td className="py-4 px-4">
+                              {renderSlotItem(row.slot1)}
+                            </td>
+
+                            {/* SLOT TWO */}
+                            <td className="py-4 px-4">
+                              {renderSlotItem(row.slot2)}
+                            </td>
+
+                            {/* SLOT THREE */}
+                            <td className="py-4 px-4">
+                              {renderSlotItem(row.slot3)}
+                            </td>
+
+                            {/* TOTAL ATTENDANCE */}
+                            <td className="py-4 px-4 text-center whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                                  row.presentCount === 3
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                    : row.presentCount === 0
+                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                                    : 'bg-primary/10 text-primary dark:text-primary-light border border-primary/20'
+                                }`}
+                              >
+                                {row.presentCount === 3 ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                ) : row.presentCount === 0 ? (
+                                  <XCircle className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Clock className="w-3.5 h-3.5" />
+                                )}
+                                <span>{row.presentCount}/3 Present ({dayRate}%)</span>
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               )}
             </FlatCard>
           </div>
-        )}
-
-        {/* TAB 2: RESULTS */}
-        {activeTab === 'results' && (
-          <div className="space-y-6">
-            {/* Overall Performance Card */}
-            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-white/10">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Academic Evaluation</span>
-                  <h2 className="text-2xl font-heading font-black text-gray-900 dark:text-white mt-1">
-                    Official Examination Transcript
-                  </h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Course: <span className="font-bold text-gray-800 dark:text-gray-200">{student.course}</span> • Certified by IFSMA
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* Aggregate Marks */}
-                  <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-center min-w-[120px]">
-                    <div className="text-[10px] uppercase font-bold text-gray-400">Total Marks</div>
-                    <div className="text-xl font-heading font-black text-gray-900 dark:text-white mt-0.5">
-                      {totalMarksObtained} <span className="text-xs text-gray-400 font-normal">/ {totalMaxMarks}</span>
-                    </div>
-                  </div>
-
-                  {/* Percentage */}
-                  <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-center min-w-[120px]">
-                    <div className="text-[10px] uppercase font-bold text-primary dark:text-primary-light">Aggregate</div>
-                    <div className="text-xl font-heading font-black text-primary dark:text-primary-light mt-0.5">
-                      {overallResultPercentage}%
-                    </div>
-                  </div>
-
-                  {/* Official Grade */}
-                  <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center min-w-[120px]">
-                    <div className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400">Final Grade</div>
-                    <div className="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                      {student.grade.split(' ')[0] || 'Pass'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Subject Breakdown Table */}
-              <div className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-primary" />
-                    <span>Subject-Wise Marks & Practical Grading</span>
-                  </h3>
-                  <span className="text-xs text-gray-400">{resultsRecords.length} Subjects Evaluated</span>
-                </div>
-
-                {resultsRecords.length === 0 ? (
-                  <div className="py-12 text-center text-gray-400">
-                    <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                    <p className="text-sm font-semibold">No examination results recorded yet for this cadet.</p>
-                    <p className="text-xs text-gray-400 mt-1">Evaluations will appear here after end-of-term assessments.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-200 dark:border-white/10 text-gray-400 uppercase tracking-wider font-extrabold text-[10px]">
-                          <th className="py-3 px-3">Subject / Paper</th>
-                          <th className="py-3 px-3">Evaluation Cycle</th>
-                          <th className="py-3 px-3 text-center">Marks Obtained</th>
-                          <th className="py-3 px-3 text-center">Max Marks</th>
-                          <th className="py-3 px-3 text-center">Score %</th>
-                          <th className="py-3 px-3 text-center">Grade</th>
-                          <th className="py-3 px-4">Examiner Remarks</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                        {resultsRecords.map((item) => {
-                          const pct = item.maxMarks > 0 ? Math.round((item.marksObtained / item.maxMarks) * 100) : 0;
-                          return (
-                            <tr key={item.id} className="hover:bg-gray-50/80 dark:hover:bg-white/5 transition-colors">
-                              <td className="py-3.5 px-3 font-bold text-gray-900 dark:text-white">
-                                {item.subject}
-                              </td>
-                              <td className="py-3.5 px-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                {item.semesterOrTerm || 'Final Board Exam'}
-                              </td>
-                              <td className="py-3.5 px-3 font-black text-center text-gray-900 dark:text-white font-mono text-sm">
-                                {item.marksObtained}
-                              </td>
-                              <td className="py-3.5 px-3 text-center text-gray-400 font-mono">
-                                {item.maxMarks}
-                              </td>
-                              <td className="py-3.5 px-3 text-center font-bold font-mono text-primary">
-                                {pct}%
-                              </td>
-                              <td className="py-3.5 px-3 text-center">
-                                <span className="inline-flex px-2.5 py-0.5 rounded-md font-bold text-xs bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
-                                  {item.grade}
-                                </span>
-                              </td>
-                              <td className="py-3.5 px-4 text-gray-500 dark:text-gray-400 italic">
-                                {item.remarks || 'Satisfactory tactical proficiency'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-
-              {/* Institute Seal and Disclaimer */}
-              <div className="mt-8 pt-5 border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-gray-400">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  <span>Officially attested by Board of Examination, CFSI Vadodara Main Campus</span>
-                </div>
-                <div className="text-right">
-                  <span>Pass Out Student Roster: </span>
-                  <Link to="/student-data" className="text-primary hover:underline font-semibold">
-                    View Complete Batch List
-                  </Link>
-                </div>
-              </div>
-
-            </FlatCard>
-          </div>
-        )}
 
       </div>
     </div>

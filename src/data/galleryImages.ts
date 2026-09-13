@@ -19,10 +19,10 @@ export const galleryImagesData: GalleryImage[] = [
   },
   {
     id: 'img-03',
-    title: 'Annual Commendation & Certificate Distribution',
-    category: 'Certificates',
+    title: 'Annual Commendation & Cadet Distribution',
+    category: 'Events',
     imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=80',
-    caption: 'Diploma batch graduates receiving their certified credentials and badges.',
+    caption: 'Diploma batch graduates receiving their honors and badges.',
     date: 'June 2024'
   },
   {
@@ -75,8 +75,8 @@ export const galleryImagesData: GalleryImage[] = [
   },
   {
     id: 'img-10',
-    title: 'Certified Safety Officer Badge Presentation',
-    category: 'Certificates',
+    title: 'Safety Officer Badge Presentation Ceremony',
+    category: 'Events',
     imageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80',
     caption: 'Distinguished students awarded Gold Medals for ground tactical excellence.',
     date: 'June 2024'

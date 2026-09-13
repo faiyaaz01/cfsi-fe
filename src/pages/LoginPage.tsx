@@ -58,7 +58,7 @@ export const LoginPage: React.FC = () => {
           navigate('/teacher/dashboard', { replace: true });
         } else if (result.role === 'student') {
           toast.success(`Welcome back${result.student ? `, ${result.student.name}` : ''}!`, {
-            description: 'Accessing your attendance and examination records.'
+            description: 'Accessing your attendance and training records.'
           });
           navigate('/student/dashboard');
         } else if (user) {
@@ -87,14 +87,6 @@ export const LoginPage: React.FC = () => {
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Home</span>
-          </Link>
-
-          <Link
-            to="/verify"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Verify Certificate</span>
           </Link>
         </div>
 
@@ -157,7 +149,7 @@ export const LoginPage: React.FC = () => {
               {/* Username / Email / Roll No */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                  Username, Roll No, or Email *
+                  Student ID, Username, or Email *
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -167,7 +159,7 @@ export const LoginPage: React.FC = () => {
                     type="text"
                     value={username}
                     onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                    placeholder="e.g. admin@cfsi.com or CFSI/DFS/23/042"
+                    placeholder="e.g. 262701 or admin@cfsi.com"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     autoComplete="username"
                     required

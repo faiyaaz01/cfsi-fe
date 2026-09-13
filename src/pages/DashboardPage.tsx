@@ -21,8 +21,8 @@ import {
   FileText,
   AlertCircle,
   Clock,
-  Award,
   User,
+  Users,
   GraduationCap,
   Search,
   BookOpen,
@@ -39,19 +39,21 @@ import {
   Flame,
   FileSpreadsheet,
   ExternalLink,
-  Printer
+  Printer,
+  UploadCloud,
+  Loader2
 } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { useStudentData } from '../context/StudentDataContext';
-import { NewsPost, NewsCategory, AttendanceRecord, ResultRecord, AttendanceStatus, AttendanceSlot, StudentVerificationRecord } from '../types';
+import { NewsPost, NewsCategory, AttendanceRecord, AttendanceStatus, AttendanceSlot, StudentVerificationRecord } from '../types';
 import { studentsData } from '../data/students';
-import { calculateGrade } from '../lib/studentAuth';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { GlassCard } from '../components/common/GlassCard';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import { BulkStudentImportModal } from '../components/admin/BulkStudentImportModal';
 
 // News Schema
 const postSchema = z.object({
@@ -71,30 +73,27 @@ export const DashboardPage: React.FC = () => {
   const {user, logout} = useAuth();
   const isAuthenticated = user?.role === 'admin';
 
-  // Tabs: 'students' | 'attendance' | 'results' | 'news_events' | 'updates' | 'all'
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'results' | 'news_events' | 'updates' | 'all'>('students');
+  // Tabs: 'students' | 'attendance' | 'news_events' | 'updates' | 'all'
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'news_events' | 'updates' | 'all'>('students');
   
   // News context
   const { posts, addPost, updatePost, deletePost, resetToSeed: resetNewsToSeed } = useNews();
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
 
-  // Student Data context (Attendance & Results)
+  // Student Data context (Attendance)
   const { 
     attendance, 
-    results, 
     addAttendance, 
     updateAttendance, 
     deleteAttendance,
     setSlotAttendance,
     bulkMarkDaySlots,
+    uploadDayAttendance,
     clearDayAttendance,
-    addResult, 
-    updateResult, 
-    deleteResult,
     getAttendanceByStudent,
-    getResultsByStudent,
     getStudentAttendanceSummary,
+    isDateLocked,
     resetToSeed: resetStudentDataToSeed 
   } = useStudentData();
 
@@ -102,6 +101,7 @@ export const DashboardPage: React.FC = () => {
   const [cadetSearch, setCadetSearch] = useState('');
   const [cadetCourseFilter, setCadetCourseFilter] = useState('All');
   const [selectedCadetDetail, setSelectedCadetDetail] = useState<StudentVerificationRecord | null>(null);
+  const [bulkImportModalOpen, setBulkImportModalOpen] = useState<boolean>(false);
 
   // Filtered Cadets for Student Directory
   const filteredCadets = useMemo(() => {
@@ -111,7 +111,7 @@ export const DashboardPage: React.FC = () => {
       const matchesSearch = !q ||
         cadet.name.toLowerCase().includes(q) ||
         cadet.rollNo.toLowerCase().includes(q) ||
-        cadet.certificateNumber.toLowerCase().includes(q) ||
+        cadet.id.toLowerCase().includes(q) ||
         cadet.fatherName.toLowerCase().includes(q) ||
         cadet.batch.toLowerCase().includes(q);
       return matchesCourse && matchesSearch;
@@ -130,32 +130,14 @@ export const DashboardPage: React.FC = () => {
   const [showHistoricalLogs, setShowHistoricalLogs] = useState<boolean>(false);
   const [attSearchTerm, setAttSearchTerm] = useState('');
   const [attFilterStatus, setAttFilterStatus] = useState<'All' | 'Present' | 'Absent'>('All');
+  const [isUploadingMuster, setIsUploadingMuster] = useState<boolean>(false);
+  const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
 
-  // --- RESULTS FORM STATE ---
-  const [resEditingId, setResEditingId] = useState<string | null>(null);
-  const [resCertNo, setResCertNo] = useState(studentsData[0]?.certificateNumber || '');
-  const [resCourse, setResCourse] = useState(studentsData[0]?.course || '');
-  const [resSubject, setResSubject] = useState('');
-  const [resMarks, setResMarks] = useState<number>(85);
-  const [resMaxMarks, setResMaxMarks] = useState<number>(100);
-  const [resGrade, setResGrade] = useState<string>('A+');
-  const [resTerm, setResTerm] = useState('Term Final Examination');
-  const [resRemarks, setResRemarks] = useState('');
-  const [resSearchTerm, setResSearchTerm] = useState('');
-
-  // Update course automatically when student selection changes in Results
-  const handleResStudentChange = (cert: string) => {
-    setResCertNo(cert);
-    const found = studentsData.find((s) => s.certificateNumber === cert);
-    if (found) setResCourse(found.course);
-  };
-
-  // Auto calculate grade when marks change
-  const handleMarksChange = (marks: number, max: number) => {
-    setResMarks(marks);
-    setResMaxMarks(max);
-    setResGrade(calculateGrade(marks, max));
-  };
+  const lockStatus = useMemo(
+    () => isDateLocked(selectedMusterDate),
+    [isDateLocked, selectedMusterDate, attendance]
+  );
+  const isLocked = lockStatus.locked;
 
   // News Form
   const {
@@ -250,6 +232,7 @@ export const DashboardPage: React.FC = () => {
       const mStr = String(d.getMonth() + 1).padStart(2, '0');
       const dStr = String(d.getDate()).padStart(2, '0');
       setSelectedMusterDate(`${yStr}-${mStr}-${dStr}`);
+      setHasPendingChanges(false);
     } catch {
       // fallback
     }
@@ -264,6 +247,7 @@ export const DashboardPage: React.FC = () => {
       const mStr = String(d.getMonth() + 1).padStart(2, '0');
       const dStr = String(d.getDate()).padStart(2, '0');
       setSelectedMusterDate(`${yStr}-${mStr}-${dStr}`);
+      setHasPendingChanges(false);
     } catch {
       // fallback
     }
@@ -271,6 +255,7 @@ export const DashboardPage: React.FC = () => {
 
   const handleSetToday = () => {
     setSelectedMusterDate(new Date().toISOString().split('T')[0]);
+    setHasPendingChanges(false);
   };
 
   const formattedDateLabel = useMemo(() => {
@@ -290,17 +275,17 @@ export const DashboardPage: React.FC = () => {
       const matchesSearch = !musterSearch ||
         s.name.toLowerCase().includes(musterSearch.toLowerCase()) ||
         s.rollNo.toLowerCase().includes(musterSearch.toLowerCase()) ||
-        s.certificateNumber.toLowerCase().includes(musterSearch.toLowerCase());
+        s.id.toLowerCase().includes(musterSearch.toLowerCase());
       return matchesCourse && matchesSearch;
     });
   }, [musterCourseFilter, musterSearch]);
 
   // Helper to find slot record for a cadet on selectedMusterDate
-  const getStudentSlotRecord = (certNo: string, slot: AttendanceSlot): AttendanceRecord | undefined => {
-    const norm = certNo.trim().toUpperCase();
+  const getStudentSlotRecord = (studentId: string, slot: AttendanceSlot): AttendanceRecord | undefined => {
+    const norm = studentId.trim().toUpperCase();
     return attendance.find(
       (a) =>
-        a.certificateNumber.toUpperCase() === norm &&
+        (a.studentId.toUpperCase() === norm || (a.rollNo && a.rollNo.toUpperCase() === norm)) &&
         a.date === selectedMusterDate &&
         (a.slot === slot || (!a.slot && slot === 'Slot 1'))
     );
@@ -317,15 +302,15 @@ export const DashboardPage: React.FC = () => {
     let s3Absent = 0;
 
     filteredStudentsForMuster.forEach((s) => {
-      const r1 = getStudentSlotRecord(s.certificateNumber, 'Slot 1');
+      const r1 = getStudentSlotRecord(s.id, 'Slot 1');
       if (r1?.status === 'Present') s1Present++;
       else if (r1?.status === 'Absent') s1Absent++;
 
-      const r2 = getStudentSlotRecord(s.certificateNumber, 'Slot 2');
+      const r2 = getStudentSlotRecord(s.id, 'Slot 2');
       if (r2?.status === 'Present') s2Present++;
       else if (r2?.status === 'Absent') s2Absent++;
 
-      const r3 = getStudentSlotRecord(s.certificateNumber, 'Slot 3');
+      const r3 = getStudentSlotRecord(s.id, 'Slot 3');
       if (r3?.status === 'Present') s3Present++;
       else if (r3?.status === 'Absent') s3Absent++;
     });
@@ -348,31 +333,48 @@ export const DashboardPage: React.FC = () => {
 
   // 1-Click Slot Toggle
   const handleToggleSlot = (student: StudentVerificationRecord, slot: AttendanceSlot, newStatus: AttendanceStatus) => {
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      return;
+    }
     const topic = slot === 'Slot 1' ? slot1Topic : slot === 'Slot 2' ? slot2Topic : slot3Topic;
-    setSlotAttendance(student.certificateNumber, selectedMusterDate, slot, newStatus, {
+    setSlotAttendance(student.id, selectedMusterDate, slot, newStatus, {
       course: student.course,
+      rollNo: student.rollNo,
       topicOrModule: topic,
       markedBy: musterInstructor,
     });
+    setHasPendingChanges(true);
   };
 
   // Mark all 3 slots for one cadet
   const handleMarkStudentAllSlots = (student: StudentVerificationRecord, status: AttendanceStatus) => {
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      return;
+    }
     (['Slot 1', 'Slot 2', 'Slot 3'] as AttendanceSlot[]).forEach((slot) => {
       const topic = slot === 'Slot 1' ? slot1Topic : slot === 'Slot 2' ? slot2Topic : slot3Topic;
-      setSlotAttendance(student.certificateNumber, selectedMusterDate, slot, status, {
+      setSlotAttendance(student.id, selectedMusterDate, slot, status, {
         course: student.course,
+        rollNo: student.rollNo,
         topicOrModule: topic,
         markedBy: musterInstructor,
       });
     });
+    setHasPendingChanges(true);
     toast.success(`${student.name}: Marked ${status} for all 3 slots.`);
   };
 
   // Bulk mark slots across all filtered cadets
   const handleBulkMark = (slot: AttendanceSlot | 'All', status: AttendanceStatus) => {
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      return;
+    }
     const targets = filteredStudentsForMuster.map((s) => ({
-      certificateNumber: s.certificateNumber,
+      studentId: s.id,
+      rollNo: s.rollNo,
       course: s.course,
     }));
     if (targets.length === 0) {
@@ -381,6 +383,7 @@ export const DashboardPage: React.FC = () => {
     }
     const topic = slot === 'Slot 1' ? slot1Topic : slot === 'Slot 2' ? slot2Topic : slot3Topic;
     bulkMarkDaySlots(selectedMusterDate, slot, status, targets, musterInstructor, topic);
+    setHasPendingChanges(true);
     toast.success(
       slot === 'All'
         ? `Marked ${targets.length} cadets ${status} for all 3 slots on ${selectedMusterDate}`
@@ -388,110 +391,90 @@ export const DashboardPage: React.FC = () => {
     );
   };
 
+  // Upload and commit marked muster to MongoDB with 48-hour edit window
+  const handleUploadAttendance = async () => {
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      return;
+    }
+
+    const dayRecords = attendance.filter((a) => a.date === selectedMusterDate);
+    if (dayRecords.length === 0) {
+      toast.error('No attendance records have been marked yet for this date to upload.');
+      return;
+    }
+
+    try {
+      setIsUploadingMuster(true);
+      await uploadDayAttendance(
+        selectedMusterDate,
+        dayRecords.map((r) => ({
+          studentId: r.studentId,
+          rollNo: r.rollNo,
+          slot: r.slot,
+          status: r.status,
+          course: r.course,
+          topicOrModule: r.topicOrModule,
+          remarks: r.remarks,
+          markedBy: r.markedBy,
+        }))
+      );
+      setHasPendingChanges(false);
+      toast.success(
+        `Muster successfully uploaded! Live-synced to student portal. Editable for the next 48 hours.`
+      );
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.message || 'Failed to upload attendance.';
+      toast.error(`Upload failed: ${msg}`);
+    } finally {
+      setIsUploadingMuster(false);
+    }
+  };
+
   // Clear day attendance
-  const handleClearDay = () => {
+  const handleClearDay = async () => {
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      return;
+    }
     if (window.confirm(`Are you sure you want to clear all attendance entries for ${formattedDateLabel}?`)) {
-      clearDayAttendance(selectedMusterDate);
+      await clearDayAttendance(selectedMusterDate);
+      setHasPendingChanges(false);
       toast.info(`Cleared muster records for ${selectedMusterDate}`);
     }
   };
 
-  const handleDeleteAttendance = (id: string) => {
-    if (window.confirm('Delete this attendance entry?')) {
-      deleteAttendance(id);
-      toast.success('Attendance entry removed');
-    }
-  };
-
-  // --- RESULTS ACTIONS ---
-  const handleSaveResult = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resCertNo || !resSubject.trim()) {
-      toast.error('Please select student and specify the subject.');
+  const handleDeleteAttendance = async (id: string, isRecordLocked?: boolean) => {
+    if (isRecordLocked) {
+      toast.error('This record is permanently locked (48-hour edit window expired).');
       return;
     }
-
-    if (resEditingId) {
-      updateResult(resEditingId, {
-        certificateNumber: resCertNo,
-        course: resCourse,
-        subject: resSubject,
-        marksObtained: Number(resMarks),
-        maxMarks: Number(resMaxMarks),
-        grade: resGrade,
-        semesterOrTerm: resTerm || undefined,
-        remarks: resRemarks || undefined,
-      });
-      toast.success('Examination result updated successfully');
-      setResEditingId(null);
-    } else {
-      addResult({
-        certificateNumber: resCertNo,
-        course: resCourse,
-        subject: resSubject,
-        marksObtained: Number(resMarks),
-        maxMarks: Number(resMaxMarks),
-        grade: resGrade,
-        semesterOrTerm: resTerm || undefined,
-        remarks: resRemarks || undefined,
-      });
-      toast.success(`Result recorded: ${resSubject} (${resMarks}/${resMaxMarks})`);
-    }
-
-    // Reset subject and remarks
-    setResSubject('');
-    setResRemarks('');
-  };
-
-  const handleEditResult = (record: ResultRecord) => {
-    setResEditingId(record.id);
-    setResCertNo(record.certificateNumber);
-    setResCourse(record.course);
-    setResSubject(record.subject);
-    setResMarks(record.marksObtained);
-    setResMaxMarks(record.maxMarks);
-    setResGrade(record.grade);
-    setResTerm(record.semesterOrTerm || 'Term Final Examination');
-    setResRemarks(record.remarks || '');
-    window.scrollTo({ top: 350, behavior: 'smooth' });
-    toast.info('Editing result record');
-  };
-
-  const handleCancelResEdit = () => {
-    setResEditingId(null);
-    setResSubject('');
-    setResRemarks('');
-  };
-
-  const handleDeleteResult = (id: string) => {
-    if (window.confirm('Delete this examination result record?')) {
-      deleteResult(id);
-      if (resEditingId === id) handleCancelResEdit();
-      toast.success('Result record removed');
+    if (window.confirm('Delete this attendance entry?')) {
+      try {
+        await deleteAttendance(id);
+        toast.success('Attendance entry removed');
+      } catch (err: any) {
+        const msg = err.response?.data?.detail || err.message || 'Failed to delete';
+        toast.error(`Delete failed: ${msg}`);
+      }
     }
   };
 
   // Filtered attendance list
   const filteredAttendanceList = attendance.filter((rec) => {
-    const student = studentsData.find((s) => s.certificateNumber.toUpperCase() === rec.certificateNumber.toUpperCase());
+    const student = studentsData.find(
+      (s) =>
+        s.id.toUpperCase() === rec.studentId.toUpperCase() ||
+        s.rollNo === rec.studentId ||
+        (rec.rollNo && s.rollNo === rec.rollNo)
+    );
     const matchesSearch = 
       !attSearchTerm ||
-      rec.certificateNumber.toLowerCase().includes(attSearchTerm.toLowerCase()) ||
+      rec.studentId.toLowerCase().includes(attSearchTerm.toLowerCase()) ||
       (student && student.name.toLowerCase().includes(attSearchTerm.toLowerCase())) ||
       (rec.topicOrModule && rec.topicOrModule.toLowerCase().includes(attSearchTerm.toLowerCase()));
     const matchesStatus = attFilterStatus === 'All' || rec.status === attFilterStatus;
     return matchesSearch && matchesStatus;
-  });
-
-  // Filtered results list
-  const filteredResultsList = results.filter((res) => {
-    const student = studentsData.find((s) => s.certificateNumber.toUpperCase() === res.certificateNumber.toUpperCase());
-    return (
-      !resSearchTerm ||
-      res.certificateNumber.toLowerCase().includes(resSearchTerm.toLowerCase()) ||
-      (student && student.name.toLowerCase().includes(resSearchTerm.toLowerCase())) ||
-      res.subject.toLowerCase().includes(resSearchTerm.toLowerCase())
-    );
   });
 
   // Filtered News items
@@ -521,17 +504,17 @@ export const DashboardPage: React.FC = () => {
               Admin & Academic Management
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Live updates persist in browser storage and synchronize with student portals.
+              Live updates persist in MongoDB database and synchronize with student portals.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
-              to="/verify"
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 flex items-center gap-1.5 transition-colors shadow-sm"
+              to="/users"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-600 hover:text-white border border-amber-500/30 flex items-center gap-1.5 transition-colors shadow-sm"
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Verify Certificate</span>
+              <Users className="w-3.5 h-3.5" />
+              <span>Manage Users</span>
             </Link>
 
             <Link
@@ -591,20 +574,6 @@ export const DashboardPage: React.FC = () => {
             <span>Mark Attendance ({attendance.length})</span>
           </button>
 
-          {/* Manage Results */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('results')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
-              activeTab === 'results'
-                ? 'bg-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
-            }`}
-          >
-            <Award className="w-3.5 h-3.5" />
-            <span>Manage Results ({results.length})</span>
-          </button>
-
           {/* News & Events */}
           <button
             type="button"
@@ -644,20 +613,19 @@ export const DashboardPage: React.FC = () => {
             All News ({posts.length})
           </button>
 
-          {/* Clear Muster Records */}
+          {/* Clear Muster Records in MongoDB */}
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm('Clear all attendance muster and examination score records? This will purge local session records.')) {
-                resetStudentDataToSeed();
-                toast.success('Purged local attendance and examination records');
+            onClick={async () => {
+              if (window.confirm('Clear all attendance muster records from MongoDB database? This action cannot be undone.')) {
+                await resetStudentDataToSeed();
+                toast.success('Purged attendance records from MongoDB database');
               }
             }}
-            title="Clear all attendance muster and examination records"
-            className="ml-auto text-xs font-semibold text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-auto"
+            title="Clear all attendance muster records from MongoDB"
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Clear Muster Logs</span>
+            Reset Attendance Database
           </button>
         </div>
 
@@ -678,11 +646,21 @@ export const DashboardPage: React.FC = () => {
                     Institutional Cadet Directory
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Inspect cadet demographics, verify certificates, track live physical drill attendance, and review examination scorecards.
+                    Inspect cadet demographics and track live physical drill attendance.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setBulkImportModalOpen(true)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1.5 shadow-sm shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                    title="Bulk import students from CSV or Excel and auto-generate accounts"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Bulk Import Students (CSV/Excel)</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setActiveTab('attendance')}
@@ -691,29 +669,11 @@ export const DashboardPage: React.FC = () => {
                     <Clock className="w-3.5 h-3.5" />
                     <span>Mark Daily Muster</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('results')}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Record Exam Scores</span>
-                  </button>
-                  <Link
-                    to="/verify"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Public Verification</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </Link>
                 </div>
               </div>
 
               {/* Statistics Row */}
-              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Enrolled Cadets</div>
                   <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
@@ -727,7 +687,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
                     {studentsData.filter((s) => s.verificationStatus === 'Verified').length}
                   </div>
-                  <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">100% QR & Barcode Verified</div>
+                  <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">Batch 2026-2027 Roster</div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
@@ -736,14 +696,6 @@ export const DashboardPage: React.FC = () => {
                     {attendance.length}
                   </div>
                   <div className="text-[11px] text-gray-400 mt-0.5">Physical & Theory Drill Slots</div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
-                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Recorded Exam Papers</div>
-                  <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
-                    {results.length}
-                  </div>
-                  <div className="text-[11px] text-gray-400 mt-0.5">Subject & Practical Scores</div>
                 </div>
               </div>
 
@@ -756,7 +708,7 @@ export const DashboardPage: React.FC = () => {
                     type="text"
                     value={cadetSearch}
                     onChange={(e) => setCadetSearch(e.target.value)}
-                    placeholder="Search cadet by name, roll no, certificate ID, father's name..."
+                    placeholder="Search cadet by name, roll no, student ID, father's name..."
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                   />
                   {cadetSearch && (
@@ -802,7 +754,7 @@ export const DashboardPage: React.FC = () => {
                     Enrolled Cadet Roster
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Click "Inspect Details" to review comprehensive demographics, attendance breakdown, and exam scores.
+                    Click "Inspect Details" to review comprehensive demographics and attendance breakdown.
                   </p>
                 </div>
               </div>
@@ -815,7 +767,6 @@ export const DashboardPage: React.FC = () => {
                       <th className="py-3.5 px-4">Identifiers</th>
                       <th className="py-3.5 px-4">Program & Batch</th>
                       <th className="py-3.5 px-4 text-center">Drill Attendance</th>
-                      <th className="py-3.5 px-4 text-center">Exam Papers</th>
                       <th className="py-3.5 px-4 text-center">Status</th>
                       <th className="py-3.5 px-4 text-center">Action</th>
                     </tr>
@@ -823,14 +774,13 @@ export const DashboardPage: React.FC = () => {
                   <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                     {filteredCadets.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-gray-400 text-xs font-semibold">
+                        <td colSpan={6} className="py-12 text-center text-gray-400 text-xs font-semibold">
                           No cadets found matching "{cadetSearch}".
                         </td>
                       </tr>
                     ) : (
                       filteredCadets.map((cadet) => {
-                        const attSummary = getStudentAttendanceSummary(cadet.certificateNumber);
-                        const cadetResults = getResultsByStudent(cadet.certificateNumber);
+                        const attSummary = getStudentAttendanceSummary(cadet.id);
 
                         return (
                           <tr
@@ -871,7 +821,7 @@ export const DashboardPage: React.FC = () => {
                             {/* Identifiers */}
                             <td className="py-3.5 px-4">
                               <div className="font-mono text-xs font-bold text-gray-900 dark:text-white">
-                                {cadet.certificateNumber}
+                                ID: {cadet.id}
                               </div>
                               <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
                                 Roll: {cadet.rollNo}
@@ -917,20 +867,6 @@ export const DashboardPage: React.FC = () => {
                               )}
                             </td>
 
-                            {/* Exam Papers */}
-                            <td className="py-3.5 px-4 text-center">
-                              {cadetResults.length > 0 ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20">
-                                  <Award className="w-3 h-3" />
-                                  <span>{cadetResults.length} Papers</span>
-                                </span>
-                              ) : (
-                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium text-gray-400 bg-gray-100 dark:bg-white/5">
-                                  No papers
-                                </span>
-                              )}
-                            </td>
-
                             {/* Status */}
                             <td className="py-3.5 px-4 text-center">
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -961,18 +897,6 @@ export const DashboardPage: React.FC = () => {
                                   title="Mark Muster for this cadet"
                                 >
                                   <Clock className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setResCertNo(cadet.certificateNumber);
-                                    setResCourse(cadet.course);
-                                    setActiveTab('results');
-                                  }}
-                                  className="p-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
-                                  title="Record Exam Result for this cadet"
-                                >
-                                  <Award className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </td>
@@ -1158,6 +1082,108 @@ export const DashboardPage: React.FC = () => {
 
             </FlatCard>
 
+            {/* 48-Hour Lock Window & Upload Status Alert */}
+            <div
+              className={`p-4 rounded-2xl border transition-all ${
+                isLocked
+                  ? 'bg-rose-50/90 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-900 dark:text-rose-200'
+                  : lockStatus.uploadedAt
+                  ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-200'
+                  : 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-900 dark:text-amber-200'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      isLocked
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : lockStatus.uploadedAt
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-amber-500 text-white shadow-sm'
+                    }`}
+                  >
+                    {isLocked ? (
+                      <Lock className="w-5 h-5" />
+                    ) : lockStatus.uploadedAt ? (
+                      <CheckCircle2 className="w-5 h-5" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-heading font-black text-sm sm:text-base">
+                        {isLocked
+                          ? 'Attendance Locked (48-Hour Edit Window Expired)'
+                          : lockStatus.uploadedAt
+                          ? `Attendance Uploaded • ${lockStatus.remainingHours ?? 48} Hours Left to Edit`
+                          : 'Draft Mode • Attendance Not Yet Uploaded'}
+                      </span>
+                      {isLocked ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                          Permanent Archive
+                        </span>
+                      ) : lockStatus.uploadedAt ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                          Live Synced
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
+                          Unpublished
+                        </span>
+                      )}
+                      {hasPendingChanges && !isLocked && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-200 dark:bg-orange-900/60 text-orange-800 dark:text-orange-300">
+                          Unsaved Edits Pending Upload
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs opacity-85 mt-0.5">
+                      {isLocked
+                        ? `Uploaded on ${new Date(lockStatus.uploadedAt!).toLocaleString()}. The 48-hour editing period has ended; this muster cannot be altered.`
+                        : lockStatus.uploadedAt
+                        ? `Uploaded on ${new Date(lockStatus.uploadedAt).toLocaleString()}. You can freely modify attendance until ${new Date(lockStatus.canEditUntil!).toLocaleString()}. Changes stream in real time to students.`
+                        : 'Mark slot attendance below, then click "Upload Attendance" to commit to MongoDB and publish to the student portal. The 48-hour edit window starts once uploaded.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUploadAttendance}
+                    disabled={isLocked || isUploadingMuster}
+                    className={`w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
+                      isLocked
+                        ? 'bg-gray-200 dark:bg-white/10 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                        : hasPendingChanges || !lockStatus.uploadedAt
+                        ? 'bg-primary text-white hover:bg-primary-dark ring-2 ring-primary/40 shadow-md animate-pulse'
+                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    }`}
+                  >
+                    {isUploadingMuster ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : isLocked ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Locked</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="w-4 h-4" />
+                        <span>{lockStatus.uploadedAt ? 'Update & Re-Upload' : 'Upload Attendance'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Daily Metrics Bar */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               
@@ -1236,28 +1262,48 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleBulkMark('Slot 1', 'Present')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
+                  disabled={isLocked}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    isLocked
+                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                      : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white'
+                  }`}
                 >
                   Mark All Slot 1 (P)
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBulkMark('Slot 2', 'Present')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
+                  disabled={isLocked}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    isLocked
+                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                      : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white'
+                  }`}
                 >
                   Mark All Slot 2 (P)
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBulkMark('Slot 3', 'Present')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
+                  disabled={isLocked}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    isLocked
+                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                      : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white'
+                  }`}
                 >
                   Mark All Slot 3 (P)
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBulkMark('All', 'Present')}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-colors flex items-center gap-1"
+                  disabled={isLocked}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center gap-1 ${
+                    isLocked
+                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  }`}
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
                   <span>All 3 Slots (P)</span>
@@ -1265,9 +1311,38 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleClearDay}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-red-500 hover:text-white transition-colors"
+                  disabled={isLocked}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    isLocked
+                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-red-500 hover:text-white'
+                  }`}
                 >
                   Reset Day
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUploadAttendance}
+                  disabled={isLocked || isUploadingMuster}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5 ${
+                    isLocked
+                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                      : hasPendingChanges || !lockStatus.uploadedAt
+                      ? 'bg-primary text-white hover:bg-primary-dark ring-2 ring-primary/30'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  }`}
+                >
+                  {isUploadingMuster ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>{lockStatus.uploadedAt ? 'Upload Updates' : 'Upload Muster'}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1323,16 +1398,16 @@ export const DashboardPage: React.FC = () => {
                       </tr>
                     ) : (
                       filteredStudentsForMuster.map((student, idx) => {
-                        const rec1 = getStudentSlotRecord(student.certificateNumber, 'Slot 1');
-                        const rec2 = getStudentSlotRecord(student.certificateNumber, 'Slot 2');
-                        const rec3 = getStudentSlotRecord(student.certificateNumber, 'Slot 3');
+                        const rec1 = getStudentSlotRecord(student.id, 'Slot 1');
+                        const rec2 = getStudentSlotRecord(student.id, 'Slot 2');
+                        const rec3 = getStudentSlotRecord(student.id, 'Slot 3');
 
                         const countPresent = [rec1, rec2, rec3].filter((r) => r?.status === 'Present').length;
                         const countMarked = [rec1, rec2, rec3].filter(Boolean).length;
 
                         return (
                           <tr
-                            key={student.certificateNumber}
+                            key={student.id}
                             className="hover:bg-gray-50/70 dark:hover:bg-white/5 transition-colors"
                           >
                             {/* Row Index */}
@@ -1361,9 +1436,9 @@ export const DashboardPage: React.FC = () => {
                                     {student.name}
                                   </div>
                                   <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 font-mono">
-                                    <span>{student.rollNo}</span>
+                                    <span>Roll: {student.rollNo}</span>
                                     <span>•</span>
-                                    <span className="text-primary dark:text-primary-light">{student.certificateNumber}</span>
+                                    <span className="text-primary dark:text-primary-light">ID: {student.id}</span>
                                   </div>
                                 </div>
                               </div>
@@ -1385,24 +1460,34 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 1', 'Present')}
+                                  disabled={isLocked}
                                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
-                                    rec1?.status === 'Present'
+                                    isLocked
+                                      ? rec1?.status === 'Present'
+                                        ? 'bg-emerald-600/60 text-white cursor-not-allowed'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : rec1?.status === 'Present'
                                       ? 'bg-emerald-600 text-white shadow-sm'
                                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
                                   }`}
-                                  title="Mark Present for Slot 1"
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark Present for Slot 1'}
                                 >
                                   P
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 1', 'Absent')}
+                                  disabled={isLocked}
                                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
-                                    rec1?.status === 'Absent'
+                                    isLocked
+                                      ? rec1?.status === 'Absent'
+                                        ? 'bg-red-600/60 text-white cursor-not-allowed'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : rec1?.status === 'Absent'
                                       ? 'bg-red-600 text-white shadow-sm'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/25 border border-red-500/20'
                                   }`}
-                                  title="Mark Absent for Slot 1"
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark Absent for Slot 1'}
                                 >
                                   A
                                 </button>
@@ -1415,24 +1500,34 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 2', 'Present')}
+                                  disabled={isLocked}
                                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
-                                    rec2?.status === 'Present'
+                                    isLocked
+                                      ? rec2?.status === 'Present'
+                                        ? 'bg-emerald-600/60 text-white cursor-not-allowed'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : rec2?.status === 'Present'
                                       ? 'bg-emerald-600 text-white shadow-sm'
                                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
                                   }`}
-                                  title="Mark Present for Slot 2"
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark Present for Slot 2'}
                                 >
                                   P
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 2', 'Absent')}
+                                  disabled={isLocked}
                                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
-                                    rec2?.status === 'Absent'
+                                    isLocked
+                                      ? rec2?.status === 'Absent'
+                                        ? 'bg-red-600/60 text-white cursor-not-allowed'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : rec2?.status === 'Absent'
                                       ? 'bg-red-600 text-white shadow-sm'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/25 border border-red-500/20'
                                   }`}
-                                  title="Mark Absent for Slot 2"
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark Absent for Slot 2'}
                                 >
                                   A
                                 </button>
@@ -1445,24 +1540,34 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 3', 'Present')}
+                                  disabled={isLocked}
                                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
-                                    rec3?.status === 'Present'
+                                    isLocked
+                                      ? rec3?.status === 'Present'
+                                        ? 'bg-emerald-600/60 text-white cursor-not-allowed'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : rec3?.status === 'Present'
                                       ? 'bg-emerald-600 text-white shadow-sm'
                                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
                                   }`}
-                                  title="Mark Present for Slot 3"
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark Present for Slot 3'}
                                 >
                                   P
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlot(student, 'Slot 3', 'Absent')}
+                                  disabled={isLocked}
                                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center transition-colors ${
-                                    rec3?.status === 'Absent'
+                                    isLocked
+                                      ? rec3?.status === 'Absent'
+                                        ? 'bg-red-600/60 text-white cursor-not-allowed'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : rec3?.status === 'Absent'
                                       ? 'bg-red-600 text-white shadow-sm'
                                       : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/25 border border-red-500/20'
                                   }`}
-                                  title="Mark Absent for Slot 3"
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark Absent for Slot 3'}
                                 >
                                   A
                                 </button>
@@ -1503,16 +1608,26 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleMarkStudentAllSlots(student, 'Present')}
-                                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-colors"
-                                  title="Mark 3/3 Present"
+                                  disabled={isLocked}
+                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                                    isLocked
+                                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                                  }`}
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark 3/3 Present'}
                                 >
                                   3/3 P
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleMarkStudentAllSlots(student, 'Absent')}
-                                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-colors"
-                                  title="Mark 3/3 Absent"
+                                  disabled={isLocked}
+                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                                    isLocked
+                                      ? 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                                      : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white'
+                                  }`}
+                                  title={isLocked ? 'Locked (48h expired)' : 'Mark 3/3 Absent'}
                                 >
                                   3/3 A
                                 </button>
@@ -1587,7 +1702,10 @@ export const DashboardPage: React.FC = () => {
                   ) : (
                     filteredAttendanceList.map((rec) => {
                       const student = studentsData.find(
-                        (s) => s.certificateNumber.toUpperCase() === rec.certificateNumber.toUpperCase()
+                        (s) =>
+                          s.id.toUpperCase() === rec.studentId.toUpperCase() ||
+                          s.rollNo === rec.studentId ||
+                          (rec.rollNo && s.rollNo === rec.rollNo)
                       );
                       return (
                         <GlassCard
@@ -1612,17 +1730,29 @@ export const DashboardPage: React.FC = () => {
                                 </span>
                               )}
 
+                              {rec.isLocked ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                  <Lock className="w-3 h-3" />
+                                  <span>Locked</span>
+                                </span>
+                              ) : rec.uploadedAt ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <UploadCloud className="w-3 h-3" />
+                                  <span>Uploaded</span>
+                                </span>
+                              ) : null}
+
                               <span className="text-xs text-gray-500 font-semibold">
                                 {new Date(rec.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                               </span>
 
                               <span className="text-xs font-mono text-gray-400">
-                                • {rec.certificateNumber}
+                                • ID: {rec.studentId}
                               </span>
                             </div>
 
                             <h4 className="font-bold text-sm text-gray-900 dark:text-white">
-                              {student?.name || rec.certificateNumber}
+                              {student?.name || rec.studentId}
                               <span className="font-normal text-xs text-gray-400 ml-2">({rec.course})</span>
                             </h4>
 
@@ -1643,11 +1773,16 @@ export const DashboardPage: React.FC = () => {
                           <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                             <button
                               type="button"
-                              onClick={() => handleDeleteAttendance(rec.id)}
-                              className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                              title="Delete record"
+                              onClick={() => handleDeleteAttendance(rec.id, rec.isLocked)}
+                              disabled={rec.isLocked}
+                              className={`p-2 rounded-xl transition-colors ${
+                                rec.isLocked
+                                  ? 'bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-500 cursor-not-allowed'
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white'
+                              }`}
+                              title={rec.isLocked ? 'Record permanently locked (>48h)' : 'Delete record'}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {rec.isLocked ? <Lock className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
                             </button>
                           </div>
                         </GlassCard>
@@ -1661,277 +1796,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* TAB: MANAGE RESULTS                                                       */}
-        {/* ========================================================================= */}
-        {activeTab === 'results' && (
-          <div className="space-y-8">
-            
-            {/* Form Card */}
-            <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
-              <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100 dark:border-white/5">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    <Award className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
-                      {resEditingId ? 'Edit Examination Score' : 'Record Cadet Subject & Practical Marks'}
-                    </h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Evaluations auto-calculate grade and aggregate percentage on the cadet's transcript.
-                    </p>
-                  </div>
-                </div>
 
-                {resEditingId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelResEdit}
-                    className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 font-semibold"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Cancel Edit</span>
-                  </button>
-                )}
-              </div>
-
-              <form onSubmit={handleSaveResult} className="space-y-4">
-                
-                {/* Student Selector & Course */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Cadet Candidate *
-                    </label>
-                    <select
-                      value={resCertNo}
-                      onChange={(e) => handleResStudentChange(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-xs sm:text-sm font-medium focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      {studentsData.map((s) => (
-                        <option key={s.certificateNumber} value={s.certificateNumber}>
-                          {s.name} — {s.rollNo} ({s.course})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Enrolled Course
-                    </label>
-                    <input
-                      type="text"
-                      value={resCourse}
-                      onChange={(e) => setResCourse(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Subject & Term */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Subject / Paper Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={resSubject}
-                      onChange={(e) => setResSubject(e.target.value)}
-                      placeholder="e.g. Fire Fighting Hydraulics & Pump Calculations"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Evaluation Assessment Cycle
-                    </label>
-                    <input
-                      type="text"
-                      value={resTerm}
-                      onChange={(e) => setResTerm(e.target.value)}
-                      placeholder="Term Final Examination"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Marks Obtained, Max Marks & Auto Grade */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Marks Obtained *
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={resMaxMarks}
-                      value={resMarks}
-                      onChange={(e) => handleMarksChange(Number(e.target.value), resMaxMarks)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm font-bold font-mono focus:ring-2 focus:ring-primary outline-none"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Maximum Marks *
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={resMaxMarks}
-                      onChange={(e) => handleMarksChange(resMarks, Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm font-mono focus:ring-2 focus:ring-primary outline-none"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Auto Grade
-                    </label>
-                    <input
-                      type="text"
-                      value={resGrade}
-                      onChange={(e) => setResGrade(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-center text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Examiner Remarks */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    Examiner Remarks / Practical Assessment Comments
-                  </label>
-                  <input
-                    type="text"
-                    value={resRemarks}
-                    onChange={(e) => setResRemarks(e.target.value)}
-                    placeholder="e.g. Excellent operational accuracy and rapid hose coupling deployment"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="pt-2 flex items-center justify-end gap-3">
-                  {resEditingId && (
-                    <button
-                      type="button"
-                      onClick={handleCancelResEdit}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-dark shadow-md transition-colors flex items-center gap-1.5"
-                  >
-                    <Award className="w-4 h-4" />
-                    <span>{resEditingId ? 'Update Result' : 'Save Examination Result'}</span>
-                  </button>
-                </div>
-
-              </form>
-            </FlatCard>
-
-            {/* Results History List */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-heading font-extrabold text-xl text-gray-900 dark:text-white">
-                    Recorded Subject Evaluations ({filteredResultsList.length})
-                  </h3>
-                  <span className="text-xs text-gray-400">Subject-wise marks feeding student transcripts</span>
-                </div>
-
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    value={resSearchTerm}
-                    onChange={(e) => setResSearchTerm(e.target.value)}
-                    placeholder="Search cadet or subject..."
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {filteredResultsList.map((item) => {
-                  const student = studentsData.find(
-                    (s) => s.certificateNumber.toUpperCase() === item.certificateNumber.toUpperCase()
-                  );
-                  const pct = item.maxMarks > 0 ? Math.round((item.marksObtained / item.maxMarks) * 100) : 0;
-                  return (
-                    <GlassCard
-                      key={item.id}
-                      hoverEffect={false}
-                      className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10"
-                    >
-                      <div className="space-y-1 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
-                            {item.grade} Grade ({pct}%)
-                          </span>
-
-                          <span className="text-xs font-bold text-gray-900 dark:text-white">
-                            {item.marksObtained} / {item.maxMarks} Marks
-                          </span>
-
-                          <span className="text-xs font-mono text-gray-400">
-                            • {item.certificateNumber}
-                          </span>
-                        </div>
-
-                        <h4 className="font-bold text-sm text-gray-900 dark:text-white">
-                          {item.subject}
-                        </h4>
-
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Cadet: <span className="font-semibold text-gray-800 dark:text-gray-200">{student?.name || item.certificateNumber}</span> • {item.semesterOrTerm || 'Term Final'}
-                        </p>
-
-                        {item.remarks && (
-                          <p className="text-[11px] text-gray-500 italic">
-                            "{item.remarks}"
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Edit / Delete */}
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                        <button
-                          type="button"
-                          onClick={() => handleEditResult(item)}
-                          className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
-                          title="Edit result"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteResult(item.id)}
-                          className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                          title="Delete result"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </GlassCard>
-                  );
-                })}
-              </div>
-            </div>
-
-          </div>
-        )}
 
         {/* ========================================================================= */}
         {/* TABS: NEWS & UPDATES (Existing Content Manager)                           */}
@@ -2249,9 +2114,9 @@ export const DashboardPage: React.FC = () => {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                        <div className="text-[11px] font-semibold text-gray-400">Certificate Number</div>
-                        <div className="font-mono text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
-                          {selectedCadetDetail.certificateNumber}
+                        <div className="text-[11px] font-semibold text-gray-400">Student ID</div>
+                        <div className="font-mono text-xs sm:text-sm font-bold text-primary dark:text-primary-light mt-0.5">
+                          {selectedCadetDetail.id}
                         </div>
                       </div>
 
@@ -2314,8 +2179,8 @@ export const DashboardPage: React.FC = () => {
                     </div>
 
                     {(() => {
-                      const summary = getStudentAttendanceSummary(selectedCadetDetail.certificateNumber);
-                      const cadetAttRecords = getAttendanceByStudent(selectedCadetDetail.certificateNumber);
+                      const summary = getStudentAttendanceSummary(selectedCadetDetail.id);
+                      const cadetAttRecords = getAttendanceByStudent(selectedCadetDetail.id);
 
                       return (
                         <div className="space-y-3">
@@ -2423,133 +2288,11 @@ export const DashboardPage: React.FC = () => {
                     })()}
                   </div>
 
-                  {/* Section 3: Examination & Marks Records */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                        <Award className="w-4 h-4" />
-                        <span>Examination Papers & Practical Evaluations</span>
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setResCertNo(selectedCadetDetail.certificateNumber);
-                          setResCourse(selectedCadetDetail.course);
-                          setActiveTab('results');
-                          setSelectedCadetDetail(null);
-                        }}
-                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Add Exam Score</span>
-                      </button>
-                    </div>
 
-                    {(() => {
-                      const cadetResults = getResultsByStudent(selectedCadetDetail.certificateNumber);
-                      const totalMarks = cadetResults.reduce((acc, curr) => acc + curr.marksObtained, 0);
-                      const totalMax = cadetResults.reduce((acc, curr) => acc + curr.maxMarks, 0);
-                      const avgPct = totalMax > 0 ? Math.round((totalMarks / totalMax) * 1000) / 10 : 0;
-
-                      return (
-                        <div className="space-y-3">
-                          {cadetResults.length > 0 ? (
-                            <>
-                              {/* Results Summary Bar */}
-                              <div className="p-3 rounded-xl bg-primary/5 dark:bg-white/5 border border-primary/10 flex flex-wrap items-center justify-between gap-3">
-                                <div className="flex items-center gap-4">
-                                  <div>
-                                    <div className="text-[11px] text-gray-500">Evaluated Papers</div>
-                                    <div className="text-lg font-black text-primary dark:text-primary-light">
-                                      {cadetResults.length} Papers
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[11px] text-gray-500">Aggregate Marks</div>
-                                    <div className="text-lg font-black text-gray-900 dark:text-white">
-                                      {totalMarks} / {totalMax}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-[11px] text-gray-500">Overall Calculated Percentage</div>
-                                  <div className="text-lg font-black text-primary dark:text-primary-light">
-                                    {avgPct}%
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Results Table */}
-                              <div className="max-h-48 overflow-y-auto rounded-xl border border-gray-200/60 dark:border-white/10">
-                                <table className="w-full text-left text-xs">
-                                  <thead className="bg-gray-50 dark:bg-white/5 text-[10px] uppercase font-bold text-gray-400 sticky top-0">
-                                    <tr>
-                                      <th className="py-2 px-3">Subject / Paper</th>
-                                      <th className="py-2 px-3">Marks</th>
-                                      <th className="py-2 px-3 text-center">Grade</th>
-                                      <th className="py-2 px-3">Term / Exam</th>
-                                      <th className="py-2 px-3">Remarks</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                                    {cadetResults.map((r) => (
-                                      <tr key={r.id}>
-                                        <td className="py-2 px-3 font-bold text-gray-900 dark:text-white">{r.subject}</td>
-                                        <td className="py-2 px-3 font-mono font-bold text-gray-700 dark:text-gray-300">
-                                          {r.marksObtained} / {r.maxMarks}
-                                        </td>
-                                        <td className="py-2 px-3 text-center">
-                                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
-                                            {r.grade}
-                                          </span>
-                                        </td>
-                                        <td className="py-2 px-3 text-gray-500">{r.semesterOrTerm || 'Term Final'}</td>
-                                        <td className="py-2 px-3 text-gray-400 italic text-[11px]">{r.remarks || '—'}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 text-center">
-                              <p className="text-xs text-gray-500">
-                                No examination papers or practical drill evaluations recorded yet for this cadet.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setResCertNo(selectedCadetDetail.certificateNumber);
-                                  setResCourse(selectedCadetDetail.course);
-                                  setActiveTab('results');
-                                  setSelectedCadetDetail(null);
-                                }}
-                                className="mt-2 text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
-                              >
-                                <Award className="w-3 h-3" />
-                                <span>Record exam marks in Manage Results tab</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
 
                   {/* Modal Footer Actions */}
                   <div className="pt-4 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        to={`/verify?cert=${selectedCadetDetail.certificateNumber}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1.5"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Public Certificate</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
-
                       <button
                         type="button"
                         onClick={() => window.print()}
@@ -2573,6 +2316,15 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Bulk Student Import Modal */}
+        <BulkStudentImportModal
+          isOpen={bulkImportModalOpen}
+          onClose={() => setBulkImportModalOpen(false)}
+          onSuccess={() => {
+            toast.success('Bulk student accounts generated successfully');
+          }}
+        />
 
       </div>
     </div>

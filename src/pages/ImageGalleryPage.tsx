@@ -6,9 +6,9 @@ import { GalleryImage } from '../types';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 
-type CategoryFilter = 'All' | 'Training' | 'Events' | 'Certificates' | 'Equipment';
+type CategoryFilter = 'All' | 'Training' | 'Events' | 'Equipment';
 
-const categories: CategoryFilter[] = ['All', 'Training', 'Events', 'Certificates', 'Equipment'];
+const categories: CategoryFilter[] = ['All', 'Training', 'Events', 'Equipment'];
 
 export const ImageGalleryPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
@@ -48,7 +48,7 @@ export const ImageGalleryPage: React.FC = () => {
         <SectionHeading
           badge="Visual Archive"
           title="INSTITUTE PHOTO GALLERY"
-          subtitle="Explore ground drills, smoke chamber rescue simulations, campus events, and certification honors at CFSI Vadodara."
+          subtitle="Explore ground drills, smoke chamber rescue simulations, campus events, and practical drill honors at CFSI Vadodara."
         />
 
         {/* Filter Pills */}

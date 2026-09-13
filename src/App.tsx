@@ -18,10 +18,10 @@ import { CareerPage } from './pages/CareerPage';
 import { NewsPage } from './pages/NewsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ContactPage } from './pages/ContactPage';
-import { StudentVerificationPage } from './pages/StudentVerificationPage';
 import { StudentDataPage } from './pages/StudentDataPage';
 import { LoginPage } from './pages/LoginPage';
 import { StudentDashboardPage } from './pages/StudentDashboardPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 const AppContent: React.FC = () => {
   const { theme } = useTheme();
@@ -56,8 +56,8 @@ const AppContent: React.FC = () => {
             </Route>
             <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
             <Route element={<AuthGuard roles={['student']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
+            <Route element={<AuthGuard roles={['student', 'teacher', 'admin']} />}><Route path="profile" element={<ProfilePage />} /></Route>
             <Route element={<AuthGuard roles={['admin', 'teacher']} />}><Route path="student-data" element={<StudentDataPage />} /></Route>
-            <Route element={<AuthGuard />}><Route path="verify" element={<StudentVerificationPage />} /></Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

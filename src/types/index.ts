@@ -43,7 +43,7 @@ export interface VideoItem {
 export interface GalleryImage {
   id: string;
   title: string;
-  category: 'Training' | 'Events' | 'Certificates' | 'Equipment';
+  category: 'Training' | 'Events' | 'Equipment';
   imageUrl: string;
   caption: string;
   date: string;
@@ -61,9 +61,8 @@ export interface TrainingPost {
 }
 
 export interface StudentVerificationRecord {
-  id: string;
-  certificateNumber: string;
-  rollNo: string;
+  id: string; // Student ID (e.g. 262701)
+  rollNo: string; // Roll number (e.g. 01)
   name: string;
   fatherName: string;
   course: string;
@@ -75,7 +74,47 @@ export interface StudentVerificationRecord {
   issueDate: string;
   centerLocation: string;
   photoUrl?: string;
+  motherName?: string;
+  birthDate?: string;
+  presentAddress?: string;
+  studentPhone?: string;
+  fatherPhone?: string;
+  motherPhone?: string;
+  category?: string;
+  aadharCard?: string;
+  email?: string;
+  nationality?: string;
+  state?: string;
 }
+
+export interface StudentProfile {
+  id: string; // Cadet Student ID - Hardcoded / Read-only
+  rollNo?: string;
+  name: string; // Full Name
+  photoUrl?: string;
+  birthDate?: string;
+  motherName?: string;
+  fatherName?: string;
+  presentAddress?: string;
+  studentPhone: string; // Mandatory
+  fatherPhone?: string;
+  motherPhone?: string;
+  category?: string;
+  aadharCard?: string;
+  email?: string;
+  nationality?: string;
+  state?: string;
+  course?: string;
+  batch?: string;
+  passingYear?: string;
+  grade?: string;
+  percentage?: string;
+  verificationStatus?: string;
+  issueDate?: string;
+  centerLocation?: string;
+}
+
+export type CadetRecord = StudentVerificationRecord;
 
 export interface JobListing {
   id: string;
@@ -110,11 +149,11 @@ export interface CareerApplicationData {
   resumeFileName?: string;
 }
 
-// Student Portal & Attendance/Result Types (Designed for easy future REST/GraphQL backend wiring)
+// Student Portal & Attendance Types (Designed for REST backend)
 export interface StudentAccount {
-  certificateNumber: string;
+  studentId: string;
   username: string;
-  password: string; // Demo plaintext credential for mock authentication
+  password: string;
 }
 
 export type AttendanceStatus = 'Present' | 'Absent';
@@ -123,7 +162,8 @@ export type AttendanceSlot = 'Slot 1' | 'Slot 2' | 'Slot 3';
 
 export interface AttendanceRecord {
   id: string;
-  certificateNumber: string;
+  studentId: string; // Student ID (e.g. 262701)
+  rollNo?: string;
   date: string; // ISO format (YYYY-MM-DD)
   slot?: AttendanceSlot; // 3 slots each day: Slot 1 (Morning), Slot 2 (Theory), Slot 3 (Practical)
   slotTiming?: string;
@@ -133,19 +173,8 @@ export interface AttendanceRecord {
   remarks?: string;
   markedBy?: string;
   createdAt?: string;
-}
-
-export interface ResultRecord {
-  id: string;
-  certificateNumber: string;
-  course: string;
-  subject: string;
-  marksObtained: number;
-  maxMarks: number;
-  grade: string;
-  examDate?: string;
-  semesterOrTerm?: string;
-  remarks?: string;
-  createdAt?: string;
+  uploadedAt?: string;
+  isLocked?: boolean;
+  canEditUntil?: string;
 }
 

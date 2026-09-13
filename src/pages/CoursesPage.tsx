@@ -199,7 +199,7 @@ export const CoursesPage: React.FC = () => {
               Want to check pass-out student records & alumni database?
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
-              Search our public pass-out directory by certificate number, batch year, and course.
+              Search our student directory by student ID, batch year, and course.
             </p>
           </div>
           <Link

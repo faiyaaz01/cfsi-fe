@@ -1,9 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, GraduationCap, Lock } from 'lucide-react';
+import { Phone, Mail, GraduationCap, Lock, Users, LogOut, LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { useAuth, homeFor } from '../../context/AuthContext';
 
 export const Topbar: React.FC = () => {
+  const { user, logout } = useAuth();
+  const portalPath = user ? homeFor(user) : '/login';
+
   return (
     <div className="bg-[#1e5fd9] dark:bg-[#12181f] text-white text-xs py-1.5 px-4 sm:px-6 lg:px-8 border-b border-white/10 dark:border-white/5 transition-colors duration-300">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-1.5 gap-x-4">
@@ -35,27 +39,77 @@ export const Topbar: React.FC = () => {
           </a>
         </div>
 
-        {/* Right: Student Portal, Admin Lock, Location badge & Dark/Light toggle */}
-        <div className="flex items-center gap-2.5 ml-auto sm:ml-0">
+        {/* Right: Authenticated Session Controls OR Guest Portal Entry */}
+        <div className="flex items-center gap-2 ml-auto sm:ml-0">
           
-          {/* Combined Institutional Portal Entry (Student & Admin) */}
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-gray-950 hover:bg-amber-300 font-extrabold text-[11px] shadow-sm transition-all duration-200 hover:scale-105"
-            title="Institutional Portal (Student & Admin Login)"
-          >
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Portal Login</span>
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-2">
+              {/* Logged in User Badge */}
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 dark:bg-white/10 text-white text-[11px] font-semibold border border-white/20">
+                <div className="w-4 h-4 rounded-full bg-amber-400 text-gray-950 flex items-center justify-center font-black text-[9px]">
+                  {(user.full_name || user.username).charAt(0).toUpperCase()}
+                </div>
+                <span className="truncate max-w-[120px] sm:max-w-[160px]">{user.full_name || user.username}</span>
+                <span className="text-[10px] uppercase font-bold text-amber-300">
+                  • {user.role}
+                </span>
+              </div>
 
-          {/* Admin Direct Tab Link */}
-          <Link
-            to="/login"
-            title="Institutional Login"
-            className="p-1 rounded-md text-white/80 hover:text-white hover:bg-white/15 transition-colors"
-          >
-            <Lock className="w-3.5 h-3.5" />
-          </Link>
+              {/* Manage Users button (Admin only) */}
+              {user.role === 'admin' && (
+                <Link
+                  to="/users"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 hover:text-amber-200 border border-amber-400/30 text-[11px] font-bold transition-all shadow-sm active:scale-95"
+                  title="Institutional User & Credentials Management"
+                >
+                  <Users className="w-3 h-3" />
+                  <span>Manage users</span>
+                </Link>
+              )}
+
+              {/* Portal Dashboard link */}
+              <Link
+                to={portalPath}
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-950 text-[11px] font-extrabold transition-all duration-200 hover:scale-105 active:scale-95"
+                title="Go to Institutional Dashboard"
+              >
+                <LayoutDashboard className="w-3 h-3" />
+                <span>Dashboard</span>
+              </Link>
+
+              {/* Sign Out button */}
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white/80 hover:text-white hover:bg-white/15 text-[11px] font-medium transition-colors active:scale-95"
+                title="Sign out of current session"
+              >
+                <LogOut className="w-3 h-3 text-red-300" />
+                <span className="hidden sm:inline">Sign out</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Combined Institutional Portal Entry (Student & Admin) */}
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-gray-950 hover:bg-amber-300 font-extrabold text-[11px] shadow-sm transition-all duration-200 hover:scale-105"
+                title="Institutional Portal (Student & Admin Login)"
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>Portal Login</span>
+              </Link>
+
+              {/* Admin Direct Tab Link */}
+              <Link
+                to="/login"
+                title="Institutional Login"
+                className="p-1 rounded-md text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </Link>
+            </>
+          )}
 
           <span className="text-white/30">|</span>
 

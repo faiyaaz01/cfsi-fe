@@ -43,12 +43,12 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   return <AuthContext.Provider value={{user, loading, refresh, logout}}>{children}</AuthContext.Provider>;
 }
 export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
-  const {user, loading, logout} = useAuth();
+  const {user, loading} = useAuth();
   const location = useLocation();
   if (loading) return <p className="p-12 text-center" role="status">Checking your session…</p>;
   if (!user) return <Navigate to="/login" state={{from: location.pathname}} replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to={homeFor(user)} replace />;
-  return <><div className="p-3 flex justify-end gap-4 bg-gray-100 dark:bg-slate-900"><span>{user.full_name} · {user.role}</span>{user.role === 'admin' && <Link to="/users">Manage users</Link>}<button onClick={() => void logout()}>Sign out</button></div><Outlet /></>;
+  return <Outlet />;
 }
 export function GuestGuard() {
   const {user, loading} = useAuth();

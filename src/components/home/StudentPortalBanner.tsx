@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { GraduationCap, ArrowRight, BookOpen, Clock, Award, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, ArrowRight, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
 
 export const StudentPortalBanner: React.FC = () => {
   return (
@@ -29,11 +29,11 @@ export const StudentPortalBanner: React.FC = () => {
                 </div>
 
                 <h3 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
-                  Check Live Drill Attendance & Exam Scores
+                  Check Live Drill Attendance & Training Records
                 </h3>
 
                 <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
-                  Enrolled students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and semester examination report cards.
+                  Enrolled students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.
                 </p>
 
                 {/* Feature checklist */}
@@ -44,11 +44,11 @@ export const StudentPortalBanner: React.FC = () => {
                   </span>
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Subject-Wise Marks & Grades</span>
+                    <span>Physical Drill Muster Logs</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Official Transcript Printout</span>
+                    <span>Attendance Records & Dossier</span>
                   </span>
                 </div>
               </div>

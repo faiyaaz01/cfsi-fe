@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Phone, 
   Mail, 
   MapPin, 
   Clock, 
   ShieldCheck, 
-  ExternalLink,
+  ExternalLink, 
   ChevronRight,
   GraduationCap
 } from 'lucide-react';
@@ -15,37 +16,50 @@ import cfsiLogo from '../../assets/cfsi-logo.jpg';
 
 export const Footer: React.FC = () => {
   const [activeContactTab, setActiveContactTab] = useState<'phone' | 'email' | 'address'>('phone');
+  const { user } = useAuth();
+  const location = useLocation();
+
+  // Hide CTA banner on dashboards and for authenticated portal sessions
+  const isDashboardRoute = 
+    location.pathname.includes('dashboard') ||
+    location.pathname.includes('users') ||
+    location.pathname.includes('portal') ||
+    location.pathname.includes('student-data');
+
+  const showCtaBanner = !isDashboardRoute && !user;
 
   return (
     <footer className="bg-gray-100 dark:bg-[#12181f] text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-white/10 transition-colors duration-300">
       
-      {/* Top CTA Banner */}
-      <div className="bg-gradient-to-r from-primary via-[#1e5fd9] to-[#1648a8] text-white py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-center md:text-left space-y-1">
-            <h3 className="text-xl sm:text-2xl font-heading font-bold text-white">
-              Ready to Build a Rewarding Career in Fire & Industrial Safety?
-            </h3>
-            <p className="text-white/80 text-sm">
-              Admissions open for Certificate & Diploma Batches 2024-25. 100% ground drill & job assistance.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Link
-              to="/courses"
-              className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-primary hover:bg-gray-100 transition-all shadow-md hover:scale-105"
-            >
-              Explore Courses
-            </Link>
-            <Link
-              to="/contact"
-              className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-accent text-white hover:bg-accent-hover transition-all shadow-md hover:scale-105"
-            >
-              Get Free Counselling
-            </Link>
+      {/* Top CTA Banner (Hidden on dashboards after login) */}
+      {showCtaBanner && (
+        <div className="bg-gradient-to-r from-primary via-[#1e5fd9] to-[#1648a8] text-white py-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left space-y-1">
+              <h3 className="text-xl sm:text-2xl font-heading font-bold text-white">
+                Ready to Build a Rewarding Career in Fire & Industrial Safety?
+              </h3>
+              <p className="text-white/80 text-sm">
+                Admissions open for Certificate & Diploma Batches 2024-25. 100% ground drill & job assistance.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <Link
+                to="/courses"
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-primary hover:bg-gray-100 transition-all shadow-md hover:scale-105"
+              >
+                Explore Courses
+              </Link>
+              <Link
+                to="/contact"
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-accent text-white hover:bg-accent-hover transition-all shadow-md hover:scale-105"
+              >
+                Get Free Counselling
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
