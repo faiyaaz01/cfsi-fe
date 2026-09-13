@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --primary: #1e5fd9;
+    --accent: #ff7a29;
+    --border: #e5e7eb;
+  }
+
+  .dark {
+    --bg-primary: #0d1117;
+    --bg-secondary: #12181f;
+    --text-primary: #f2f2f2;
+    --text-secondary: #9ca3af;
+    --primary: #4d84e2;
+    --accent: #ff7a29;
+    --border: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    @apply bg-white dark:bg-dark-bg text-[#1a1a1a] dark:text-dark-text font-sans antialiased overflow-x-hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  /* Minimal Glassmorphism - Light Mode */
+  .glass-card-light {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Minimal Glassmorphism - Dark Mode */
+  .glass-card-dark {
+    background: rgba(22, 29, 39, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Universal minimal glass card */
+  .glass-card {
+    @apply bg-white/70 dark:bg-[#161d27]/70 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-[14px] shadow-glass-light dark:shadow-glass-dark;
+  }
+
+  /* Clean flat card */
+  .flat-card {
+    @apply bg-white dark:bg-[#161d27] rounded-2xl border border-gray-100 dark:border-white/5 shadow-card-soft transition-all duration-300;
+  }
+
+  /* Interactive lift hover */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
