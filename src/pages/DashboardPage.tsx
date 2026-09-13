@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -53,6 +53,7 @@ import { GlassCard } from '../components/common/GlassCard';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 import { BulkStudentImportModal } from '../components/admin/BulkStudentImportModal';
 
 // News Schema
@@ -102,10 +103,53 @@ export const DashboardPage: React.FC = () => {
   const [cadetCourseFilter, setCadetCourseFilter] = useState('All');
   const [selectedCadetDetail, setSelectedCadetDetail] = useState<StudentVerificationRecord | null>(null);
   const [bulkImportModalOpen, setBulkImportModalOpen] = useState<boolean>(false);
+  const [cadetsList, setCadetsList] = useState<StudentVerificationRecord[]>([]);
+  const [isLoadingCadets, setIsLoadingCadets] = useState<boolean>(false);
+  const [deletingCadetId, setDeletingCadetId] = useState<string | null>(null);
+
+  // Fetch registered cadets dynamically from backend MongoDB
+  const loadCadets = useCallback(async () => {
+    try {
+      setIsLoadingCadets(true);
+      const data = await api.getStudents();
+      setCadetsList(data || []);
+    } catch (err: any) {
+      console.warn('Could not fetch cadets from backend:', err);
+      setCadetsList([]);
+    } finally {
+      setIsLoadingCadets(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCadets();
+  }, [loadCadets]);
+
+  // Permanently delete a cadet from database (removes user login, profile, and attendance)
+  const handleDeleteCadet = async (cadet: StudentVerificationRecord) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete Cadet "${cadet.name}" (${cadet.id})?\n\nThis will permanently remove their user account, student record, and attendance logs from the database.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingCadetId(cadet.id);
+      await api.deleteStudent(cadet.id);
+      setCadetsList((prev) => prev.filter((c) => c.id !== cadet.id && c.rollNo !== cadet.rollNo));
+      if (selectedCadetDetail?.id === cadet.id) {
+        setSelectedCadetDetail(null);
+      }
+      toast.success(`Cadet ${cadet.name} (${cadet.id}) permanently removed from database.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete cadet from database');
+    } finally {
+      setDeletingCadetId(null);
+    }
+  };
 
   // Filtered Cadets for Student Directory
   const filteredCadets = useMemo(() => {
-    return studentsData.filter((cadet) => {
+    return cadetsList.filter((cadet) => {
       const matchesCourse = cadetCourseFilter === 'All' || cadet.course === cadetCourseFilter;
       const q = cadetSearch.trim().toLowerCase();
       const matchesSearch = !q ||
@@ -116,7 +160,7 @@ export const DashboardPage: React.FC = () => {
         cadet.batch.toLowerCase().includes(q);
       return matchesCourse && matchesSearch;
     });
-  }, [cadetSearch, cadetCourseFilter]);
+  }, [cadetSearch, cadetCourseFilter, cadetsList]);
 
   // --- 3-SLOT DAILY ATTENDANCE MUSTER STATE ---
   const [selectedMusterDate, setSelectedMusterDate] = useState(new Date().toISOString().split('T')[0]);
@@ -270,7 +314,7 @@ export const DashboardPage: React.FC = () => {
 
   // Cadets matching current filter
   const filteredStudentsForMuster = useMemo(() => {
-    return studentsData.filter((s) => {
+    return cadetsList.filter((s) => {
       const matchesCourse = musterCourseFilter === 'All' || s.course === musterCourseFilter;
       const matchesSearch = !musterSearch ||
         s.name.toLowerCase().includes(musterSearch.toLowerCase()) ||
@@ -278,7 +322,7 @@ export const DashboardPage: React.FC = () => {
         s.id.toLowerCase().includes(musterSearch.toLowerCase());
       return matchesCourse && matchesSearch;
     });
-  }, [musterCourseFilter, musterSearch]);
+  }, [musterCourseFilter, musterSearch, cadetsList]);
 
   // Helper to find slot record for a cadet on selectedMusterDate
   const getStudentSlotRecord = (studentId: string, slot: AttendanceSlot): AttendanceRecord | undefined => {
@@ -462,7 +506,7 @@ export const DashboardPage: React.FC = () => {
 
   // Filtered attendance list
   const filteredAttendanceList = attendance.filter((rec) => {
-    const student = studentsData.find(
+    const student = cadetsList.find(
       (s) =>
         s.id.toUpperCase() === rec.studentId.toUpperCase() ||
         s.rollNo === rec.studentId ||
@@ -557,7 +601,7 @@ export const DashboardPage: React.FC = () => {
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5" />
-            <span>Cadets Directory ({studentsData.length})</span>
+            <span>Cadets Directory ({cadetsList.length})</span>
           </button>
 
           {/* Mark Attendance */}
@@ -675,9 +719,9 @@ export const DashboardPage: React.FC = () => {
               {/* Statistics Row */}
               <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
-                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Enrolled Cadets</div>
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Cadets</div>
                   <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
-                    {studentsData.length}
+                    {cadetsList.length}
                   </div>
                   <div className="text-[11px] text-gray-400 mt-0.5">Across 4 Safety Programs</div>
                 </div>
@@ -685,7 +729,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-emerald-500/5 dark:bg-white/5 border border-emerald-500/10 dark:border-white/5">
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Verified Credentials</div>
                   <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                    {studentsData.filter((s) => s.verificationStatus === 'Verified').length}
+                    {cadetsList.filter((s) => s.verificationStatus === 'Verified').length}
                   </div>
                   <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">Batch 2026-2027 Roster</div>
                 </div>
@@ -729,7 +773,7 @@ export const DashboardPage: React.FC = () => {
                     onChange={(e) => setCadetCourseFilter(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="All">All Programs ({studentsData.length} Cadets)</option>
+                    <option value="All">All Programs ({cadetsList.length} Cadets)</option>
                     <option value="Diploma In Fire Safety">Diploma In Fire Safety</option>
                     <option value="Sub Fire Officer">Sub Fire Officer</option>
                     <option value="Certificate In Fire Safety">Certificate In Fire Safety</option>
@@ -740,7 +784,7 @@ export const DashboardPage: React.FC = () => {
                 {/* Count Badge */}
                 <div className="md:col-span-2 text-right">
                   <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                    Showing <span className="text-gray-900 dark:text-white font-bold">{filteredCadets.length}</span> of {studentsData.length}
+                    Showing <span className="text-gray-900 dark:text-white font-bold">{filteredCadets.length}</span> of {cadetsList.length}
                   </span>
                 </div>
               </div>
@@ -751,7 +795,7 @@ export const DashboardPage: React.FC = () => {
               <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
-                    Enrolled Cadet Roster
+                    Cadet Directory & Roster
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Click "Inspect Details" to review comprehensive demographics and attendance breakdown.
@@ -775,7 +819,9 @@ export const DashboardPage: React.FC = () => {
                     {filteredCadets.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-12 text-center text-gray-400 text-xs font-semibold">
-                          No cadets found matching "{cadetSearch}".
+                          {cadetSearch
+                            ? `No cadets found matching "${cadetSearch}".`
+                            : 'No cadets registered in the institutional directory yet. Click "Bulk Import Students (CSV/Excel)" above to import students from your spreadsheet.'}
                         </td>
                       </tr>
                     ) : (
@@ -821,7 +867,7 @@ export const DashboardPage: React.FC = () => {
                             {/* Identifiers */}
                             <td className="py-3.5 px-4">
                               <div className="font-mono text-xs font-bold text-gray-900 dark:text-white">
-                                ID: {cadet.id}
+                                Cadet User ID: {cadet.id}
                               </div>
                               <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
                                 Roll: {cadet.rollNo}
@@ -897,6 +943,19 @@ export const DashboardPage: React.FC = () => {
                                   title="Mark Muster for this cadet"
                                 >
                                   <Clock className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={deletingCadetId === cadet.id}
+                                  onClick={() => handleDeleteCadet(cadet)}
+                                  className="p-1.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                                  title="Permanently delete cadet from database"
+                                >
+                                  {deletingCadetId === cadet.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  )}
                                 </button>
                               </div>
                             </td>
@@ -997,7 +1056,7 @@ export const DashboardPage: React.FC = () => {
                     onChange={(e) => setMusterCourseFilter(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="All">All Course Programs ({studentsData.length})</option>
+                    <option value="All">All Course Programs ({cadetsList.length})</option>
                     <option value="Diploma In Fire Safety">Diploma In Fire Safety</option>
                     <option value="Sub Fire Officer">Sub Fire Officer</option>
                     <option value="Certificate In Fire Safety">Certificate In Fire Safety</option>
@@ -1701,7 +1760,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   ) : (
                     filteredAttendanceList.map((rec) => {
-                      const student = studentsData.find(
+                      const student = cadetsList.find(
                         (s) =>
                           s.id.toUpperCase() === rec.studentId.toUpperCase() ||
                           s.rollNo === rec.studentId ||
@@ -2105,16 +2164,16 @@ export const DashboardPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Section 1: Demographic & Enrollment Records */}
+                  {/* Section 1: Demographic & Cadet Records */}
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-1.5">
                       <User className="w-4 h-4" />
                       <span>Cadet Demographic & Institutional Record</span>
                     </h3>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
                       <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                        <div className="text-[11px] font-semibold text-gray-400">Student ID</div>
+                        <div className="text-[11px] font-semibold text-gray-400">Cadet User ID (Login)</div>
                         <div className="font-mono text-xs sm:text-sm font-bold text-primary dark:text-primary-light mt-0.5">
                           {selectedCadetDetail.id}
                         </div>
@@ -2128,30 +2187,79 @@ export const DashboardPage: React.FC = () => {
                       </div>
 
                       <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                        <div className="text-[11px] font-semibold text-gray-400">Issue Date</div>
+                        <div className="text-[11px] font-semibold text-gray-400">Mode of Study</div>
                         <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
-                          {selectedCadetDetail.issueDate}
+                          {selectedCadetDetail.mode || 'REGULAR'}
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                        <div className="text-[11px] font-semibold text-gray-400">Passing / Completion Year</div>
+                        <div className="text-[11px] font-semibold text-gray-400">DOB (Birth Date)</div>
                         <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
-                          {selectedCadetDetail.passingYear}
+                          {selectedCadetDetail.birthDate || 'N/A'}
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                        <div className="text-[11px] font-semibold text-gray-400">Registered Grade</div>
-                        <div className="text-xs sm:text-sm font-bold text-primary dark:text-primary-light mt-0.5">
-                          {selectedCadetDetail.grade} ({selectedCadetDetail.percentage})
+                        <div className="text-[11px] font-semibold text-gray-400">Gender</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.gender || 'MALE'}
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Category</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.category || 'General'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Aadhaar Card</div>
+                        <div className="font-mono text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.aadharCard || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Contact Details</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.studentPhone || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Email ID</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5 truncate">
+                          {selectedCadetDetail.email || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Father / Guardian</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5 truncate">
+                          {selectedCadetDetail.fatherName || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Mother Name</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5 truncate">
+                          {selectedCadetDetail.motherName || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 col-span-2">
                         <div className="text-[11px] font-semibold text-gray-400">Training Center Campus</div>
                         <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5 truncate">
-                          {selectedCadetDetail.centerLocation}
+                          {selectedCadetDetail.centerName || selectedCadetDetail.centerLocation}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 col-span-2">
+                        <div className="text-[11px] font-semibold text-gray-400">Present Address</div>
+                        <div className="text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-200 mt-0.5 truncate">
+                          {selectedCadetDetail.presentAddress || 'N/A'}
                         </div>
                       </div>
                     </div>
@@ -2301,6 +2409,21 @@ export const DashboardPage: React.FC = () => {
                         <Printer className="w-3.5 h-3.5" />
                         <span>Print Cadet Dossier</span>
                       </button>
+
+                      <button
+                        type="button"
+                        disabled={deletingCadetId === selectedCadetDetail.id}
+                        onClick={() => handleDeleteCadet(selectedCadetDetail)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                        title="Permanently remove cadet from database"
+                      >
+                        {deletingCadetId === selectedCadetDetail.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                        <span>Delete Cadet</span>
+                      </button>
                     </div>
 
                     <button
@@ -2323,6 +2446,7 @@ export const DashboardPage: React.FC = () => {
           onClose={() => setBulkImportModalOpen(false)}
           onSuccess={() => {
             toast.success('Bulk student accounts generated successfully');
+            loadCadets();
           }}
         />
 

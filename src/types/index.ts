@@ -61,8 +61,9 @@ export interface TrainingPost {
 }
 
 export interface StudentVerificationRecord {
-  id: string; // Student ID (e.g. 262701)
+  id: string; // Student ID (e.g. 262701 or 2600DFS26101)
   rollNo: string; // Roll number (e.g. 01)
+  enrollmentNo?: string;
   name: string;
   fatherName: string;
   course: string;
@@ -73,6 +74,9 @@ export interface StudentVerificationRecord {
   verificationStatus: 'Verified' | 'Pending' | 'Suspended';
   issueDate: string;
   centerLocation: string;
+  centerName?: string;
+  gender?: string;
+  mode?: string;
   photoUrl?: string;
   motherName?: string;
   birthDate?: string;
@@ -90,9 +94,11 @@ export interface StudentVerificationRecord {
 export interface StudentProfile {
   id: string; // Cadet Student ID - Hardcoded / Read-only
   rollNo?: string;
+  enrollmentNo?: string;
   name: string; // Full Name
   photoUrl?: string;
   birthDate?: string;
+  gender?: string;
   motherName?: string;
   fatherName?: string;
   presentAddress?: string;
@@ -106,12 +112,14 @@ export interface StudentProfile {
   state?: string;
   course?: string;
   batch?: string;
+  mode?: string;
   passingYear?: string;
   grade?: string;
   percentage?: string;
   verificationStatus?: string;
   issueDate?: string;
   centerLocation?: string;
+  centerName?: string;
 }
 
 export type CadetRecord = StudentVerificationRecord;

@@ -26,12 +26,15 @@ import {
   ShieldAlert,
   Sparkles,
   LayoutDashboard,
-  FileSpreadsheet
+  FileSpreadsheet,
+  UserCheck,
+  UserX,
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, AuthUser } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { studentsData } from '../data/students';
+import { StudentVerificationRecord } from '../types';
 import { FlatCard } from '../components/common/FlatCard';
 import { BulkStudentImportModal } from '../components/admin/BulkStudentImportModal';
 
@@ -56,6 +59,7 @@ const emptyForm: UserFormData = {
 export function UsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AuthUser[]>([]);
+  const [enrolledStudents, setEnrolledStudents] = useState<StudentVerificationRecord[]>([]);
   const [form, setForm] = useState<UserFormData>({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -67,16 +71,28 @@ export function UsersPage() {
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<AuthUser | null>(null);
   const [bulkImportModalOpen, setBulkImportModalOpen] = useState(false);
 
+  // Selection & Bulk Management State
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
   const formRef = useRef<HTMLDivElement>(null);
+  const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
   // Load user directory from FastAPI + MongoDB
   const loadUsers = useCallback(async () => {
     try {
       setBusy(true);
       setError('');
-      const data = await api.users('GET');
+      const [data, sData] = await Promise.all([
+        api.users('GET'),
+        api.getStudents().catch(() => [])
+      ]);
       if (Array.isArray(data)) {
         setUsers(data);
+      }
+      if (Array.isArray(sData)) {
+        setEnrolledStudents(sData);
       }
     } catch (err: any) {
       const msg = err.message || 'Failed to load user accounts.';
@@ -152,7 +168,7 @@ export function UsersPage() {
       setForm((prev) => ({ ...prev, student_id: '' }));
       return;
     }
-    const student = studentsData.find((s) => s.id === studentId);
+    const student = enrolledStudents.find((s) => s.id === studentId);
     setForm((prev) => ({
       ...prev,
       student_id: studentId,
@@ -222,6 +238,106 @@ export function UsersPage() {
     }
   };
 
+  // Check if all filtered users are selected
+  const isAllSelected = useMemo(() => {
+    if (filteredUsers.length === 0) return false;
+    return filteredUsers.every((u) => selectedUserIds.includes(u.id));
+  }, [filteredUsers, selectedUserIds]);
+
+  const isIndeterminate = useMemo(() => {
+    const count = filteredUsers.filter((u) => selectedUserIds.includes(u.id)).length;
+    return count > 0 && count < filteredUsers.length;
+  }, [filteredUsers, selectedUserIds]);
+
+  useEffect(() => {
+    if (selectAllCheckboxRef.current) {
+      selectAllCheckboxRef.current.indeterminate = isIndeterminate;
+    }
+  }, [isIndeterminate]);
+
+  const handleToggleSelectUser = (userId: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      const filteredSet = new Set(filteredUsers.map((u) => u.id));
+      setSelectedUserIds((prev) => prev.filter((id) => !filteredSet.has(id)));
+    } else {
+      const combined = new Set([...selectedUserIds, ...filteredUsers.map((u) => u.id)]);
+      setSelectedUserIds(Array.from(combined));
+    }
+  };
+
+  const handleSelectAllTotal = () => {
+    setSelectedUserIds(users.map((u) => u.id));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedUserIds([]);
+  };
+
+  // Bulk Delete Selected Users
+  const handleBulkDelete = async () => {
+    const targetIds = selectedUserIds.filter((id) => id !== currentUser?.id);
+    if (targetIds.length === 0) {
+      toast.warning('No deletable accounts selected. You cannot delete your own admin account.');
+      setBulkDeleteModalOpen(false);
+      return;
+    }
+
+    setIsBulkProcessing(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const uid of targetIds) {
+      try {
+        await api.users('DELETE', uid);
+        successCount++;
+      } catch (e) {
+        console.error(`Error deleting user ${uid}:`, e);
+        failCount++;
+      }
+    }
+
+    setIsBulkProcessing(false);
+    setBulkDeleteModalOpen(false);
+    setSelectedUserIds([]);
+    await loadUsers();
+
+    if (successCount > 0) {
+      toast.success(`Permanently deleted ${successCount} user account(s) from database.`);
+    }
+    if (failCount > 0) {
+      toast.error(`Failed to delete ${failCount} account(s).`);
+    }
+  };
+
+  // Bulk Status Update (Activate or Suspend)
+  const handleBulkSetStatus = async (isActive: boolean) => {
+    const targetIds = selectedUserIds.filter((id) => id !== currentUser?.id);
+    if (targetIds.length === 0) {
+      toast.warning('You cannot change the status of your own admin account.');
+      return;
+    }
+
+    setIsBulkProcessing(true);
+    let count = 0;
+    for (const uid of targetIds) {
+      try {
+        await api.users('PATCH', uid, { is_active: isActive });
+        count++;
+      } catch (e) {
+        console.error(`Error updating user status for ${uid}:`, e);
+      }
+    }
+    setIsBulkProcessing(false);
+    await loadUsers();
+    toast.success(`${count} user account(s) ${isActive ? 'activated' : 'suspended'}.`);
+  };
+
   return (
     <div className="py-10 sm:py-14 bg-gray-50 dark:bg-dark-bg min-h-screen transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -240,11 +356,11 @@ export function UsersPage() {
               <Shield className="w-4 h-4" />
               <span>Institutional Identity & Access Control</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-heading font-black tracking-tight text-gray-900 dark:text-white">
               User Management & Access Control
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 max-w-3xl">
-              Create, configure, and maintain authenticated Administrator, Faculty Instructor, and Enrolled Cadet access credentials.
+              Create, configure, and maintain authenticated Administrator, Faculty Instructor, and Cadet access credentials.
             </p>
           </div>
 
@@ -360,10 +476,10 @@ export function UsersPage() {
             </div>
           </FlatCard>
 
-          {/* Enrolled Cadets */}
+          {/* Active Cadets */}
           <FlatCard hoverEffect={false} className="p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Enrolled Cadets</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Active Cadets</span>
               <div className="p-2 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
                 <GraduationCap className="w-4 h-4" />
               </div>
@@ -520,7 +636,7 @@ export function UsersPage() {
                 <div className="p-4 sm:p-5 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/15 dark:border-white/10 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-bold text-primary dark:text-primary-light uppercase tracking-wider">
                     <GraduationCap className="w-4 h-4" />
-                    <span>Link Enrolled Cadet Record</span>
+                    <span>Link Cadet Record</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -534,7 +650,7 @@ export function UsersPage() {
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">-- Choose cadet from directory --</option>
-                        {studentsData.map((s) => (
+                        {enrolledStudents.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.id} — {s.name} (Roll {s.rollNo}, {s.course})
                           </option>
@@ -684,13 +800,103 @@ export function UsersPage() {
 
           {/* Users Table Card */}
           <FlatCard hoverEffect={false} className="border border-gray-200/80 dark:border-white/10 shadow-md overflow-hidden">
+            
+            {/* Selection Action Toolbar */}
+            {selectedUserIds.length > 0 && (
+              <div className="p-3.5 sm:px-6 bg-primary/10 dark:bg-primary/20 border-b border-primary/20 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary text-white shadow-sm">
+                    {selectedUserIds.length}
+                  </span>
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">
+                    {selectedUserIds.length === 1 ? 'user selected' : 'users selected'}
+                  </span>
+                  {selectedUserIds.length < filteredUsers.length && (
+                    <button
+                      type="button"
+                      onClick={handleToggleSelectAll}
+                      className="text-xs font-semibold text-primary dark:text-primary-light hover:underline ml-1"
+                    >
+                      Select all {filteredUsers.length} visible
+                    </button>
+                  )}
+                  {selectedUserIds.length < users.length && (
+                    <button
+                      type="button"
+                      onClick={handleSelectAllTotal}
+                      className="text-xs font-semibold text-primary dark:text-primary-light hover:underline ml-1"
+                    >
+                      Select all {users.length} in system
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={() => handleBulkSetStatus(true)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-colors flex items-center gap-1.5"
+                    title="Activate selected accounts"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Activate</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={() => handleBulkSetStatus(false)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition-colors flex items-center gap-1.5"
+                    title="Suspend selected accounts"
+                  >
+                    <UserX className="w-3.5 h-3.5" />
+                    <span>Suspend</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1.5"
+                    title="Permanently delete selected accounts from database"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Selected ({selectedUserIds.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={handleClearSelection}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-gray-50/80 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[11px] border-b border-gray-200/60 dark:border-white/10">
+                    <th className="py-3.5 px-4 w-12 text-center">
+                      <div className="flex items-center justify-center">
+                        <input
+                          ref={selectAllCheckboxRef}
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleToggleSelectAll}
+                          className="w-4 h-4 text-primary rounded border-gray-300 dark:border-white/20 focus:ring-primary cursor-pointer"
+                          title={isAllSelected ? "Deselect all visible users" : "Select all visible users"}
+                          aria-label="Select all visible users"
+                        />
+                      </div>
+                    </th>
                     <th className="py-3.5 px-4">User Identity</th>
                     <th className="py-3.5 px-4">Access Role</th>
-                    <th className="py-3.5 px-4">Linked Student ID</th>
+                    <th className="py-3.5 px-4">Cadet User ID</th>
                     <th className="py-3.5 px-4 text-center">Account Status</th>
                     <th className="py-3.5 px-4 text-center">Actions</th>
                   </tr>
@@ -698,13 +904,14 @@ export function UsersPage() {
                 <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-gray-400 font-semibold">
+                      <td colSpan={6} className="py-12 text-center text-gray-400 font-semibold">
                         No users found matching "{searchQuery}".
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((account) => {
                       const isSelf = account.id === currentUser?.id;
+                      const isSelected = selectedUserIds.includes(account.id);
                       const roleColors = {
                         admin: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
                         teacher: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
@@ -720,8 +927,25 @@ export function UsersPage() {
                       return (
                         <tr
                           key={account.id}
-                          className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                          className={`transition-colors ${
+                            isSelected
+                              ? 'bg-primary/[0.06] dark:bg-primary/[0.12]'
+                              : 'hover:bg-primary/[0.02] dark:hover:bg-white/[0.02]'
+                          }`}
                         >
+                          {/* Row Selection Checkbox */}
+                          <td className="py-3.5 px-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleSelectUser(account.id)}
+                                className="w-4 h-4 text-primary rounded border-gray-300 dark:border-white/20 focus:ring-primary cursor-pointer"
+                                aria-label={`Select ${account.full_name || account.username}`}
+                              />
+                            </div>
+                          </td>
+
                           {/* User Identity */}
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
@@ -757,9 +981,11 @@ export function UsersPage() {
                           {/* Linked Student ID */}
                           <td className="py-3.5 px-4">
                             {account.student_id ? (
-                              <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-primary dark:text-primary-light">
-                                <span>{account.student_id}</span>
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-primary dark:text-primary-light">
+                                  <span>{account.student_id}</span>
+                                </span>
+                              </div>
                             ) : (
                               <span className="text-[11px] text-gray-400 italic">
                                 Staff Credential (Unlinked)
@@ -870,6 +1096,67 @@ export function UsersPage() {
                 >
                   {busy ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                   <span>Delete User</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <AnimatePresence>
+        {bulkDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="w-full max-w-md rounded-3xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-6 space-y-4 text-gray-900 dark:text-white"
+            >
+              <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+                <div className="p-3 rounded-2xl bg-red-500/10">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-black text-lg">Confirm Bulk Account Deletion</h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Permanent security action</span>
+                </div>
+              </div>
+
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                Are you sure you want to permanently delete{' '}
+                <span className="font-bold text-gray-900 dark:text-white">
+                  {selectedUserIds.filter((id) => id !== currentUser?.id).length}
+                </span>{' '}
+                selected user account(s) from MongoDB?
+                {selectedUserIds.includes(currentUser?.id || '') && (
+                  <p className="mt-2 text-xs text-amber-500 font-medium">
+                    • Note: Your active administrator account will be protected and preserved.
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-red-500 font-medium">
+                  • This will invalidate all credentials, delete associated profiles, and purge attendance records.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isBulkProcessing}
+                  onClick={() => setBulkDeleteModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isBulkProcessing}
+                  onClick={handleBulkDelete}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md flex items-center gap-1.5"
+                >
+                  {isBulkProcessing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  <span>Delete Selected Accounts</span>
                 </button>
               </div>
             </motion.div>

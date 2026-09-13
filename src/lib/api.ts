@@ -1,4 +1,4 @@
-import { AttendanceRecord, StudentProfile } from '../types';
+import { AttendanceRecord, StudentProfile, StudentVerificationRecord } from '../types';
 
 /**
  * Central Fire Safety Institute (CFSI) Universal API Client
@@ -38,8 +38,19 @@ export interface AuthUser {
   username: string;
   role: 'admin' | 'teacher' | 'student';
   student_id?: string | null;
+  enrollment_no?: string | null;
+  roll_no?: string | null;
   full_name?: string | null;
+  father_name?: string | null;
+  mother_name?: string | null;
   photo_url?: string | null;
+  course?: string | null;
+  batch?: string | null;
+  center?: string | null;
+  mode?: string | null;
+  gender?: string | null;
+  phone?: string | null;
+  email?: string | null;
   is_active: boolean;
 }
 
@@ -275,9 +286,11 @@ export const api = {
     return {
       id: String(doc.id || doc._id || ''),
       rollNo: doc.rollNo || doc.roll_no,
+      enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
       name: doc.name || doc.full_name || '',
       photoUrl: doc.photoUrl || doc.photo_url,
       birthDate: doc.birthDate || doc.birth_date,
+      gender: doc.gender || 'MALE',
       motherName: doc.motherName || doc.mother_name,
       fatherName: doc.fatherName || doc.father_name,
       presentAddress: doc.presentAddress || doc.present_address,
@@ -291,12 +304,14 @@ export const api = {
       state: doc.state || 'Gujarat',
       course: doc.course,
       batch: doc.batch,
+      mode: doc.mode || 'REGULAR',
       passingYear: doc.passingYear || doc.passing_year,
       grade: doc.grade,
       percentage: doc.percentage,
       verificationStatus: doc.verificationStatus || doc.verification_status,
       issueDate: doc.issueDate || doc.issue_date,
-      centerLocation: doc.centerLocation || doc.center_location,
+      centerLocation: doc.centerLocation || doc.center_location || doc.centerName || doc.center_name,
+      centerName: doc.centerName || doc.center_name || doc.centerLocation || doc.center_location,
     };
   },
 
@@ -306,6 +321,7 @@ export const api = {
       name: profile.name,
       photoUrl: profile.photoUrl,
       birthDate: profile.birthDate,
+      gender: profile.gender,
       motherName: profile.motherName,
       fatherName: profile.fatherName,
       presentAddress: profile.presentAddress,
@@ -317,6 +333,10 @@ export const api = {
       email: profile.email,
       nationality: profile.nationality,
       state: profile.state,
+      mode: profile.mode,
+      enrollmentNo: profile.enrollmentNo,
+      centerName: profile.centerName,
+      centerLocation: profile.centerLocation,
     };
     const response = await fetchWithAuth('/students/profile/me', {
       method: 'PUT',
@@ -330,9 +350,11 @@ export const api = {
     return {
       id: String(doc.id || doc._id || ''),
       rollNo: doc.rollNo || doc.roll_no,
+      enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
       name: doc.name || doc.full_name || '',
       photoUrl: doc.photoUrl || doc.photo_url,
       birthDate: doc.birthDate || doc.birth_date,
+      gender: doc.gender || 'MALE',
       motherName: doc.motherName || doc.mother_name,
       fatherName: doc.fatherName || doc.father_name,
       presentAddress: doc.presentAddress || doc.present_address,
@@ -346,12 +368,14 @@ export const api = {
       state: doc.state || 'Gujarat',
       course: doc.course,
       batch: doc.batch,
+      mode: doc.mode || 'REGULAR',
       passingYear: doc.passingYear || doc.passing_year,
       grade: doc.grade,
       percentage: doc.percentage,
       verificationStatus: doc.verificationStatus || doc.verification_status,
       issueDate: doc.issueDate || doc.issue_date,
-      centerLocation: doc.centerLocation || doc.center_location,
+      centerLocation: doc.centerLocation || doc.center_location || doc.centerName || doc.center_name,
+      centerName: doc.centerName || doc.center_name || doc.centerLocation || doc.center_location,
     };
   },
 
@@ -380,5 +404,67 @@ export const api = {
       throw new Error(err.detail || 'Failed to bulk import students');
     }
     return response.json();
+  },
+
+  /** Get enrolled students list from MongoDB */
+  async getStudents(course?: string): Promise<StudentVerificationRecord[]> {
+    const query = course && course !== 'All' ? `?course=${encodeURIComponent(course)}` : '';
+    const response = await fetchWithAuth(`/students${query}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch students from database');
+    }
+    const data = await response.json();
+    return (data || []).map((doc: any): StudentVerificationRecord => ({
+      id: String(doc.id || doc._id || ''),
+      rollNo: String(doc.rollNo || doc.roll_no || ''),
+      enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
+      name: doc.name || doc.full_name || '',
+      fatherName: doc.fatherName || doc.father_name || '',
+      course: doc.course || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+      batch: doc.batch || 'Batch 2026-2027',
+      passingYear: String(doc.passingYear || doc.passing_year || '2026'),
+      grade: doc.grade || 'A',
+      percentage: String(doc.percentage || '85%'),
+      verificationStatus: (doc.verificationStatus || doc.verification_status || 'Verified') as any,
+      issueDate: doc.issueDate || doc.issue_date || '2026-06-30',
+      centerLocation: doc.centerLocation || doc.center_location || doc.centerName || doc.center_name || 'CENTRAL FIRE AND SAFETY INSTITUTE',
+      centerName: doc.centerName || doc.center_name || doc.centerLocation || doc.center_location || 'CENTRAL FIRE AND SAFETY INSTITUTE',
+      mode: doc.mode || 'REGULAR',
+      gender: doc.gender || 'MALE',
+      photoUrl: doc.photoUrl || doc.photo_url || undefined,
+      motherName: doc.motherName || doc.mother_name || undefined,
+      birthDate: doc.birthDate || doc.birth_date || undefined,
+      presentAddress: doc.presentAddress || doc.present_address || undefined,
+      studentPhone: doc.studentPhone || doc.student_phone || undefined,
+      fatherPhone: doc.fatherPhone || doc.father_phone || undefined,
+      motherPhone: doc.motherPhone || doc.mother_phone || undefined,
+      category: doc.category || undefined,
+      aadharCard: doc.aadharCard || doc.aadhar_card || undefined,
+      email: doc.email || undefined,
+      nationality: doc.nationality || 'INDIAN',
+      state: doc.state || 'GUJARAT',
+    }));
+  },
+
+  /** Delete a student record and linked user account from MongoDB */
+  async deleteStudent(studentId: string): Promise<void> {
+    const response = await fetchWithAuth(`/students/${encodeURIComponent(studentId)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete student from database');
+    }
+  },
+
+  /** Delete a user account and associated student/attendance data from MongoDB */
+  async deleteUser(userId: string): Promise<void> {
+    const response = await fetchWithAuth(`/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete user from database');
+    }
   },
 };

@@ -33,7 +33,7 @@ export const StudentPortalBanner: React.FC = () => {
                 </h3>
 
                 <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
-                  Enrolled students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.
+                  Cadets can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.
                 </p>
 
                 {/* Feature checklist */}

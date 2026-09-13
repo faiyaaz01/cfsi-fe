@@ -20,7 +20,9 @@ import {
   Save,
   RefreshCw,
   X,
-  AlertCircle
+  AlertCircle,
+  GraduationCap,
+  Building
 } from 'lucide-react';
 
 const INDIAN_STATES = [
@@ -45,6 +47,7 @@ export const ProfilePage: React.FC = () => {
   const [name, setName] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [gender, setGender] = useState('MALE');
   const [motherName, setMotherName] = useState('');
   const [fatherName, setFatherName] = useState('');
   const [presentAddress, setPresentAddress] = useState('');
@@ -56,6 +59,12 @@ export const ProfilePage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [nationality, setNationality] = useState('Indian');
   const [state, setState] = useState('Gujarat');
+  const [rollNo, setRollNo] = useState('');
+  const [enrollmentNo, setEnrollmentNo] = useState('');
+  const [course, setCourse] = useState('DIPLOMA IN FIRE AND SAFETY MANAGEMENT');
+  const [batch, setBatch] = useState('Batch 2026-2027');
+  const [mode, setMode] = useState('REGULAR');
+  const [centerName, setCenterName] = useState('CENTRAL FIRE AND SAFETY INSTITUTE');
 
   const loadProfile = async () => {
     try {
@@ -65,6 +74,7 @@ export const ProfilePage: React.FC = () => {
       setName(data.name || '');
       setPhotoUrl(data.photoUrl || user?.photo_url || '');
       setBirthDate(data.birthDate || '');
+      setGender(data.gender || 'MALE');
       setMotherName(data.motherName || '');
       setFatherName(data.fatherName || '');
       setPresentAddress(data.presentAddress || '');
@@ -76,6 +86,12 @@ export const ProfilePage: React.FC = () => {
       setEmail(data.email || '');
       setNationality(data.nationality || 'Indian');
       setState(data.state || 'Gujarat');
+      setRollNo((data as any).rollNo || (data as any).roll_no || (user as any)?.roll_no || '');
+      setEnrollmentNo(data.enrollmentNo || data.id || user?.student_id || user?.username || '');
+      setCourse(data.course || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT');
+      setBatch(data.batch || 'Batch 2026-2027');
+      setMode(data.mode || 'REGULAR');
+      setCenterName(data.centerName || data.centerLocation || 'CENTRAL FIRE AND SAFETY INSTITUTE');
     } catch (err: any) {
       toast.error(err.message || 'Failed to load profile data');
     } finally {
@@ -124,6 +140,7 @@ export const ProfilePage: React.FC = () => {
         name,
         photoUrl,
         birthDate,
+        gender,
         motherName,
         fatherName,
         presentAddress,
@@ -135,6 +152,9 @@ export const ProfilePage: React.FC = () => {
         email: email.trim(),
         nationality,
         state,
+        enrollmentNo,
+        mode,
+        centerName,
       });
 
       setProfile(updated);
@@ -216,9 +236,17 @@ export const ProfilePage: React.FC = () => {
             </h1>
 
             <p className="text-xs sm:text-sm text-white/80 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-              <span><strong>User ID:</strong> {hardcodedUserId}</span>
+              <span><strong>Cadet User ID:</strong> {hardcodedUserId}</span>
+              {rollNo && (
+                <>
+                  <span>•</span>
+                  <span><strong>Roll No:</strong> {rollNo}</span>
+                </>
+              )}
               <span>•</span>
-              <span><strong>Program:</strong> {profile?.course || 'Fire Safety Program'}</span>
+              <span><strong>Program:</strong> {course || profile?.course || 'Fire Safety Program'}</span>
+              <span>•</span>
+              <span><strong>Mode:</strong> {mode}</span>
             </p>
           </div>
         </div>
@@ -290,26 +318,52 @@ export const ProfilePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Section 2: Identity & Core Details (Hardcoded User ID + Full Name) */}
+        {/* Section 2: Cadet Identification & Program Details */}
         <section className="bg-white dark:bg-[#161d27] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-white/5">
             <Shield className="w-5 h-5 text-primary dark:text-primary-light" />
             <h2 className="text-base font-heading font-bold text-gray-900 dark:text-white">
-              Cadet Identification & Name
+              Cadet Identification & Program Details
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             
-            {/* Hardcoded / Immutable User ID */}
+            {/* Cadet Roll No */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  User ID (Student ID)
+                  Cadet Roll No
                 </label>
                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
                   <Lock className="w-3 h-3" />
-                  <span>Hardcoded / Locked</span>
+                  <span>Locked</span>
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={rollNo || (profile as any)?.rollNo || (profile as any)?.roll_no || '—'}
+                  readOnly
+                  disabled
+                  className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-gray-100 dark:bg-slate-800/80 text-gray-500 dark:text-gray-400 text-sm font-mono font-bold cursor-not-allowed pl-9 select-all"
+                />
+                <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+              </div>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                Institute assigned cadet roll number.
+              </p>
+            </div>
+
+            {/* Cadet User ID (Student ID) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Cadet User ID (Login Username)
+                </label>
+                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+                  <Lock className="w-3 h-3" />
+                  <span>Locked</span>
                 </span>
               </div>
               <div className="relative">
@@ -320,17 +374,17 @@ export const ProfilePage: React.FC = () => {
                   disabled
                   className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-gray-100 dark:bg-slate-800/80 text-gray-500 dark:text-gray-400 text-sm font-mono font-bold cursor-not-allowed pl-9 select-all"
                 />
-                <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                <User className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               </div>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                Assigned institute cadet ID; permanently locked against modifications.
+                Cadet login identifier.
               </p>
             </div>
 
-            {/* User Name / Full Name */}
+            {/* Cadet Name / Full Name */}
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                User Name (Full Name) <span className="text-red-500">*</span>
+                Cadet Name (Full Name) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -345,6 +399,69 @@ export const ProfilePage: React.FC = () => {
               </div>
             </div>
 
+            {/* Course Name */}
+            <div className="sm:col-span-2 lg:col-span-2">
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Course Name / Program
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={course}
+                  readOnly
+                  disabled
+                  className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-gray-300 text-sm font-semibold cursor-not-allowed pl-9 select-all"
+                />
+                <GraduationCap className="w-4 h-4 text-primary absolute left-3 top-3" />
+              </div>
+            </div>
+
+            {/* Training Mode */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Mode (Reg/Correspo)
+              </label>
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary outline-none"
+              >
+                <option value="REGULAR">REGULAR</option>
+                <option value="CORRESPONDENCE">CORRESPONDENCE</option>
+              </select>
+            </div>
+
+            {/* Center Name */}
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Training Center / Campus
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={centerName}
+                  readOnly
+                  disabled
+                  className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-gray-300 text-sm font-semibold cursor-not-allowed pl-9 select-all"
+                />
+                <Building className="w-4 h-4 text-primary absolute left-3 top-3" />
+              </div>
+            </div>
+
+            {/* Session / Year */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Session / Year
+              </label>
+              <input
+                type="text"
+                value={batch}
+                readOnly
+                disabled
+                className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-gray-300 text-sm font-semibold cursor-not-allowed select-all"
+              />
+            </div>
+
           </div>
         </section>
 
@@ -357,17 +474,48 @@ export const ProfilePage: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             
-            {/* Birth Date */}
+            {/* Birth Date (DOB) */}
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                 Birth Date (DOB)
               </label>
               <input
-                type="date"
+                type="text"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
+                placeholder="DD-MM-YYYY"
+                className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Gender
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary outline-none"
+              >
+                <option value="MALE">MALE</option>
+                <option value="FEMALE">FEMALE</option>
+                <option value="OTHER">OTHER</option>
+              </select>
+            </div>
+
+            {/* Father Name */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Father Name
+              </label>
+              <input
+                type="text"
+                value={fatherName}
+                onChange={(e) => setFatherName(e.target.value)}
+                placeholder="Father's full name"
                 className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
@@ -382,20 +530,6 @@ export const ProfilePage: React.FC = () => {
                 value={motherName}
                 onChange={(e) => setMotherName(e.target.value)}
                 placeholder="Mother's full name"
-                className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* Father Name */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                Father Name
-              </label>
-              <input
-                type="text"
-                value={fatherName}
-                onChange={(e) => setFatherName(e.target.value)}
-                placeholder="Father's full name"
                 className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary outline-none"
               />
             </div>

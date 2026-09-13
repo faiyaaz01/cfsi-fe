@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { motion } from 'framer-motion';
 import { 
   UploadCloud, 
   FileSpreadsheet, 
@@ -33,6 +32,12 @@ interface ParsedStudentRow {
   aadharCard: string;
   email: string;
   presentAddress: string;
+  enrollmentNo?: string;
+  gender?: string;
+  centerName?: string;
+  mode?: string;
+  nationality?: string;
+  state?: string;
   generatedId: string;
   generatedPassword: string;
   isValid: boolean;
@@ -59,59 +64,131 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Helper to format DOB as DDMMYYYY
-  const formatDobToPassword = (rawDate: any): string => {
-    if (!rawDate) return '20060101';
-
-    // If Excel date serial number (e.g. 38942)
-    if (typeof rawDate === 'number') {
-      const dateObj = XLSX.SSF.parse_date_code(rawDate);
-      if (dateObj) {
-        const dd = String(dateObj.d).padStart(2, '0');
-        const mm = String(dateObj.m).padStart(2, '0');
-        const yyyy = String(dateObj.y);
-        return `${dd}${mm}${yyyy}`;
+  // Helper to format Aadhar card numbers (converts Excel scientific notation like 9.69E+11 to plain digits)
+  const formatAadhar = (rawVal: any, formattedVal?: any): string => {
+    if (typeof rawVal === 'number' && !isNaN(rawVal)) {
+      return Math.round(rawVal).toString();
+    }
+    const val = String(formattedVal || rawVal || '').trim();
+    if (val.includes('e+') || val.includes('E+')) {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        return Math.round(num).toString();
       }
     }
-
-    const str = String(rawDate).trim();
-
-    // Check YYYY-MM-DD or YYYY/MM/DD
-    const ymd = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
-    if (ymd) {
-      const yyyy = ymd[1];
-      const mm = ymd[2].padStart(2, '0');
-      const dd = ymd[3].padStart(2, '0');
-      return `${dd}${mm}${yyyy}`;
-    }
-
-    // Check DD/MM/YYYY or DD-MM-YYYY
-    const dmy = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
-    if (dmy) {
-      const dd = dmy[1].padStart(2, '0');
-      const mm = dmy[2].padStart(2, '0');
-      const yyyy = dmy[3];
-      return `${dd}${mm}${yyyy}`;
-    }
-
-    const digits = str.replace(/\D/g, '');
-    if (digits.length === 8) {
-      if (digits.startsWith('19') || digits.startsWith('20')) {
-        return `${digits.slice(6, 8)}${digits.slice(4, 6)}${digits.slice(0, 4)}`;
-      }
-      return digits;
-    }
-
-    return digits || '20060101';
+    return val;
   };
 
-  // Helper to compute Student ID from Batch & Roll No
+  // Helper to parse any Excel/CSV date format into DD-MM-YYYY display and DDMMYYYY password
+  const parseDateAndGeneratePassword = (
+    rawVal: any,
+    formattedVal?: any
+  ): { birthDate: string; password: string } => {
+    const formattedStr = typeof formattedVal === 'string' ? formattedVal.trim() : '';
+    const rawStr =
+      typeof rawVal === 'string'
+        ? rawVal.trim()
+        : typeof rawVal === 'number'
+        ? String(rawVal)
+        : '';
+
+    // 1. If text string matches standard date formats
+    for (const candidate of [rawStr, formattedStr]) {
+      if (!candidate) continue;
+
+      // Match DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+      const dmy = candidate.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+      if (dmy) {
+        const p1 = parseInt(dmy[1], 10);
+        const p2 = parseInt(dmy[2], 10);
+        const yyyy = dmy[3];
+
+        let dd = p1;
+        let mm = p2;
+        // If second part > 12 and first <= 12, it was MM-DD-YYYY
+        if (p2 > 12 && p1 <= 12) {
+          dd = p2;
+          mm = p1;
+        }
+
+        const ddStr = String(dd).padStart(2, '0');
+        const mmStr = String(mm).padStart(2, '0');
+        return {
+          birthDate: `${ddStr}-${mmStr}-${yyyy}`,
+          password: `${ddStr}${mmStr}${yyyy}`,
+        };
+      }
+
+      // Match YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+      const ymd = candidate.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+      if (ymd) {
+        const yyyy = ymd[1];
+        const mm = String(parseInt(ymd[2], 10)).padStart(2, '0');
+        const dd = String(parseInt(ymd[3], 10)).padStart(2, '0');
+        return {
+          birthDate: `${dd}-${mm}-${yyyy}`,
+          password: `${dd}${mm}${yyyy}`,
+        };
+      }
+    }
+
+    // 2. Check if rawVal or candidate is an Excel serial date number (e.g. 36474.00011574074 or 36474)
+    const num = typeof rawVal === 'number' ? rawVal : parseFloat(rawStr || formattedStr);
+    if (!isNaN(num) && num > 1000 && num < 100000) {
+      try {
+        const dateObj = XLSX.SSF.parse_date_code(num);
+        if (dateObj && dateObj.y && dateObj.m && dateObj.d) {
+          const ddStr = String(dateObj.d).padStart(2, '0');
+          const mmStr = String(dateObj.m).padStart(2, '0');
+          const yyyy = String(dateObj.y);
+          return {
+            birthDate: `${ddStr}-${mmStr}-${yyyy}`,
+            password: `${ddStr}${mmStr}${yyyy}`,
+          };
+        }
+      } catch {
+        // Fallthrough
+      }
+    }
+
+    // 3. Check 8 consecutive digits
+    for (const candidate of [rawStr, formattedStr]) {
+      const digits = candidate.replace(/\D/g, '');
+      if (digits.length === 8) {
+        if (digits.startsWith('19') || digits.startsWith('20')) {
+          // YYYYMMDD
+          const yyyy = digits.slice(0, 4);
+          const mm = digits.slice(4, 6);
+          const dd = digits.slice(6, 8);
+          return {
+            birthDate: `${dd}-${mm}-${yyyy}`,
+            password: `${dd}${mm}${yyyy}`,
+          };
+        }
+        // DDMMYYYY
+        const dd = digits.slice(0, 2);
+        const mm = digits.slice(2, 4);
+        const yyyy = digits.slice(4, 8);
+        return {
+          birthDate: `${dd}-${mm}-${yyyy}`,
+          password: digits,
+        };
+      }
+    }
+
+    // 4. Default fallback
+    const fallback = formattedStr || rawStr || '';
+    const digitsOnly = fallback.replace(/\D/g, '');
+    return {
+      birthDate: fallback,
+      password: digitsOnly.length >= 8 ? digitsOnly.slice(0, 8) : '20060101',
+    };
+  };
+
+  // Helper to compute Cadet User ID from Batch/Year & Roll No (e.g. 262701)
   const formatStudentId = (batch: string, rollNo: string): string => {
     const cleanRoll = String(rollNo || '').trim();
-    if (cleanRoll.length >= 5 && /^\d+$/.test(cleanRoll)) {
-      return cleanRoll;
-    }
-    const cleanBatch = batch || 'Batch 2026-2027';
+    const cleanBatch = String(batch || 'Batch 2026-2027').trim();
     const digits = cleanBatch.replace(/\D/g, '');
     let prefix = '2627';
     if (digits.length >= 8) {
@@ -120,7 +197,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
       prefix = digits;
     }
     const padded = cleanRoll.length < 2 && /^\d+$/.test(cleanRoll) ? cleanRoll.padStart(2, '0') : cleanRoll;
-    return `${prefix}${padded}`;
+    return `${prefix}${padded || '01'}`;
   };
 
   // Handle File Parsing
@@ -130,13 +207,27 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
 
     setFile(selectedFile);
     setImportResult(null);
-
     try {
       const data = await selectedFile.arrayBuffer();
-      const workbook = XLSX.read(data, { type: 'array' });
+      const isCsv =
+        selectedFile.name.toLowerCase().endsWith('.csv') ||
+        selectedFile.name.toLowerCase().endsWith('.tsv');
+      const workbook = XLSX.read(data, {
+        type: 'array',
+        cellDates: false,
+        cellNF: true,
+        cellText: true,
+        dateNF: 'dd-mm-yyyy',
+        raw: isCsv,
+      });
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+      const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' });
+      const formattedRows: any[] = XLSX.utils.sheet_to_json(worksheet, {
+        raw: false,
+        defval: '',
+        dateNF: 'dd-mm-yyyy',
+      });
 
       if (rawRows.length === 0) {
         toast.error('The uploaded file contains no data rows.');
@@ -144,38 +235,123 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
       }
 
       const parsed: ParsedStudentRow[] = rawRows.map((row, index) => {
+        const formattedRow = formattedRows[index] || {};
+
         // Normalize keys (case-insensitive & strip punctuation)
-        const getVal = (aliases: string[]) => {
-          for (const key of Object.keys(row)) {
+        const getVal = (aliases: string[], fromFormatted = false) => {
+          const target = fromFormatted ? formattedRow : row;
+          for (const key of Object.keys(target)) {
             const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, '');
             for (const alias of aliases) {
               if (normalized === alias.toLowerCase().replace(/[^a-z0-9]/g, '')) {
-                return String(row[key]).trim();
+                return target[key];
               }
             }
           }
           return '';
         };
 
-        const rollNo = getVal(['rollno', 'rollnumber', 'roll', 'roll_no']) || String(index + 1);
-        const name = getVal(['name', 'studentname', 'fullname', 'cadetname', 'full_name']);
-        const birthDate = getVal(['birthdate', 'dob', 'dateofbirth', 'birth_date']);
-        const course = getVal(['course', 'program', 'coursename']) || 'Diploma In Fire Safety';
-        const batch = getVal(['batch', 'session', 'batchname']) || 'Batch 2026-2027';
-        const studentPhone = getVal(['studentphone', 'phone', 'phonenumber', 'mobile', 'student_phone']);
-        const fatherName = getVal(['fathername', 'fathersname', 'father_name']);
-        const motherName = getVal(['mothername', 'mothersname', 'mother_name']);
-        const fatherPhone = getVal(['fatherphone', 'father_phone']);
-        const motherPhone = getVal(['motherphone', 'mother_phone']);
-        const category = getVal(['category', 'caste']) || 'General';
-        const aadharCard = getVal(['aadhar', 'aadharcard', 'aadharno', 'aadhar_card']);
-        const email = getVal(['email', 'emailid', 'email_id']);
-        const presentAddress = getVal(['address', 'presentaddress', 'residentialaddress', 'present_address']);
+        const enrollmentNo = String(
+          getVal([
+            'enrollmentno',
+            'enrollmentnumber',
+            'enrollment',
+            'enrollno',
+            'enroll_no',
+            'student_id',
+            'enrollment_no'
+          ]) || ''
+        ).trim();
 
-        const generatedId = formatStudentId(batch, rollNo);
-        const generatedPassword = formatDobToPassword(birthDate);
+        const sessionYear = String(
+          getVal(['sessionyear', 'session_year', 'session', 'year', 'batch']) || ''
+        ).trim();
 
-        const isValid = Boolean(name && birthDate);
+        const explicitRoll = String(
+          getVal(['rollno', 'rollnumber', 'roll', 'roll_no']) || ''
+        ).trim();
+        const rollNo = explicitRoll || String(index + 1);
+
+        const name = String(
+          getVal(['name', 'studentname', 'fullname', 'cadetname', 'full_name']) || ''
+        ).trim();
+
+        // Retrieve both raw value (e.g. 36474.00011574074) and formatted string (e.g. "11-10-1999")
+        const rawDob = getVal(['dob', 'birthdate', 'dateofbirth', 'birth_date'], false);
+        const formattedDob = getVal(['dob', 'birthdate', 'dateofbirth', 'birth_date'], true);
+        const { birthDate, password: generatedPassword } = parseDateAndGeneratePassword(
+          rawDob,
+          formattedDob
+        );
+
+        const course =
+          String(getVal(['coursename', 'course_name', 'course', 'program']) || '').trim() ||
+          'DIPLOMA IN FIRE AND SAFETY MANAGEMENT';
+
+        const batch = sessionYear || String(getVal(['batch', 'session', 'batchname']) || '').trim() || 'Batch 2026-2027';
+
+        const studentPhone = String(
+          getVal([
+            'contactdetails',
+            'contact_details',
+            'contact',
+            'contactno',
+            'contactnumber',
+            'studentphone',
+            'phone',
+            'phonenumber',
+            'mobile',
+            'student_phone',
+          ]) || ''
+        ).trim();
+
+        const fatherName = String(
+          getVal(['fathername', 'fathersname', 'father_name']) || ''
+        ).trim();
+
+        const motherName = String(
+          getVal(['mothername', 'mothersname', 'mother_name']) || ''
+        ).trim();
+
+        const fatherPhone = String(
+          getVal(['fatherphone', 'father_phone']) || ''
+        ).trim();
+
+        const motherPhone = String(
+          getVal(['motherphone', 'mother_phone']) || ''
+        ).trim();
+
+        const gender = String(getVal(['gender', 'sex']) || '').trim() || 'MALE';
+
+        const category =
+          String(getVal(['category', 'caste']) || '').trim() || 'General';
+
+        const rawAadhar = getVal(['aadharcard', 'aadhar_card', 'aadhar', 'aadharno'], false);
+        const formattedAadhar = getVal(['aadharcard', 'aadhar_card', 'aadhar', 'aadharno'], true);
+        const aadharCard = formatAadhar(rawAadhar, formattedAadhar);
+
+        const centerName = String(
+          getVal(['centername', 'center_name', 'center', 'trainingcenter', 'centerlocation', 'center_location']) || ''
+        ).trim() || 'CENTRAL FIRE AND SAFETY INSTITUTE';
+
+        const mode = String(
+          getVal(['moderegcorrespo', 'mode', 'trainingmode', 'studymode']) || ''
+        ).trim() || 'REGULAR';
+
+        const email = String(getVal(['emailid', 'email_id', 'email']) || '').trim();
+
+        const presentAddress = String(
+          getVal(['presentaddress', 'present_address', 'address', 'residentialaddress']) || ''
+        ).trim();
+
+        const nationality = String(getVal(['nationality']) || '').trim() || 'INDIAN';
+        const state = String(getVal(['state']) || '').trim() || 'GUJARAT';
+
+        // Assign Cadet User ID automatically as per roll (e.g. 202601)
+        const cadetUserId = formatStudentId(batch, rollNo);
+        const generatedId = cadetUserId;
+
+        const isValid = Boolean(name && birthDate && birthDate.length >= 8);
         const validationError = !name
           ? 'Missing Student Name'
           : !birthDate
@@ -197,6 +373,12 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
           aadharCard,
           email,
           presentAddress,
+          enrollmentNo,
+          gender,
+          centerName,
+          mode,
+          nationality,
+          state,
           generatedId,
           generatedPassword,
           isValid,
@@ -215,63 +397,83 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
   // Download Sample Template (CSV)
   const handleDownloadTemplate = () => {
     const sampleHeaders = [
-      'Roll Number',
+      'Roll No',
+      'Session/Year',
       'Student Name',
-      'Birth Date (DD/MM/YYYY)',
-      'Course',
-      'Batch',
-      'Student Phone',
       'Father Name',
       'Mother Name',
+      'Present Address',
+      'Contact Details',
+      'DOB',
+      'Gender',
       'Category',
-      'Aadhaar Card',
+      'Aadhar Card',
+      'Center Name',
+      'Course Name',
+      'Mode (Reg/Correspo)',
       'Email ID',
-      'Present Address'
+      'Nationality',
+      'STATE',
     ];
 
     const sampleRows = [
       [
-        '09',
-        'Manish V. Trivedi',
-        '23/10/2006',
-        'Diploma In Fire Safety',
-        'Batch 2026-2027',
-        '+91 98980 12345',
-        'Virendra Trivedi',
-        'Varshaben Trivedi',
+        '1',
+        '2026-2027',
+        'AMBHIRE RUSHIKESH',
+        'AMBHIRE KAMLESH',
+        'AMBHIRE ANKUSHI',
+        'Tadgaam-Mangelav, Tal. Umbergaon, Dist. Valsad, Gujarat - 396170',
+        '9327904526',
+        '11-10-1999',
+        'MALE',
         'General',
-        '4532 8901 2345',
-        'manish.trivedi@gmail.com',
-        'B-402, Shivalik Heights, Waghodia Road, Vadodara - 390019'
+        '969123456789',
+        'CENTRAL FIRE AND SAFETY INSTITUTE',
+        'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+        'REGULAR',
+        'rushiambhire5@gmail.com',
+        'INDIAN',
+        'GUJARAT',
       ],
       [
-        '10',
-        'Priya K. Solanki',
-        '15/04/2005',
-        'Sub Fire Officer',
-        'Batch 2026-2027',
-        '+91 98234 56789',
-        'Kirit Solanki',
-        'Geetaben Solanki',
+        '2',
+        '2026-2027',
+        'PRIYA K. SOLANKI',
+        'KIRIT SOLANKI',
+        'GEETABEN SOLANKI',
+        '12, Gokul Residency, Alkapuri, Vadodara - 390007',
+        '9823456789',
+        '15-04-2005',
+        'FEMALE',
         'OBC',
-        '7890 1234 5678',
+        '789012345678',
+        'CENTRAL FIRE AND SAFETY INSTITUTE',
+        'SUB FIRE OFFICER',
+        'REGULAR',
         'priya.solanki@gmail.com',
-        '12, Gokul Residency, Alkapuri, Vadodara - 390007'
+        'INDIAN',
+        'GUJARAT',
       ],
       [
-        '11',
-        'Jaydeep S. Rathod',
-        '08/12/2004',
-        'Certificate In Fire Safety',
-        'Batch 2026-2027',
-        '+91 97123 45678',
-        'Suresh Rathod',
-        'Hansaben Rathod',
+        '3',
+        '2026-2027',
+        'JAYDEEP S. RATHOD',
+        'SURESH RATHOD',
+        'HANSABEN RATHOD',
+        'Flat 301, Pushpak Complex, Manjalpur, Vadodara - 390011',
+        '9712345678',
+        '08-12-2004',
+        'MALE',
         'SC',
-        '2345 6789 0123',
+        '234567890123',
+        'CENTRAL FIRE AND SAFETY INSTITUTE',
+        'CERTIFICATE IN FIRE AND SAFETY',
+        'REGULAR',
         'jaydeep.rathod@gmail.com',
-        'Flat 301, Pushpak Complex, Manjalpur, Vadodara - 390011'
-      ]
+        'INDIAN',
+        'GUJARAT',
+      ],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet([sampleHeaders, ...sampleRows]);
@@ -293,8 +495,12 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
       setLoading(true);
       const payload = validRows.map((r) => ({
         rollNo: r.rollNo,
+        studentId: r.generatedId,
+        enrollmentNo: r.generatedId,
+        sessionYear: r.batch,
         name: r.name,
         birthDate: r.birthDate,
+        gender: r.gender,
         course: r.course,
         batch: r.batch,
         studentPhone: r.studentPhone,
@@ -304,8 +510,13 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
         motherPhone: r.motherPhone,
         category: r.category,
         aadharCard: r.aadharCard,
+        centerName: r.centerName,
+        centerLocation: r.centerName,
+        mode: r.mode,
         email: r.email,
         presentAddress: r.presentAddress,
+        nationality: r.nationality,
+        state: r.state,
       }));
 
       const res = await api.bulkImportStudents(payload, 'Batch 2026-2027');
@@ -326,7 +537,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
     if (!importResult?.students) return;
     const lines = importResult.students.map(
       (s: any) =>
-        `Roll No: ${s.roll_no} | Student ID (Username): ${s.student_id} | Password: ${s.generated_password} | Name: ${s.name} | DOB: ${s.birth_date}`
+        `Roll No: ${s.roll_no} | Cadet User ID (Login): ${s.student_id} | Password: ${s.generated_password} | Name: ${s.name} | DOB: ${s.birth_date}`
     );
     const text = `CFSI Cadet Generated Login Credentials:\n\n${lines.join('\n')}`;
     navigator.clipboard.writeText(text);
@@ -337,12 +548,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs overflow-y-auto">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="bg-white dark:bg-[#161d27] rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-gray-200 dark:border-white/10 my-8 overflow-hidden relative"
-      >
+      <div className="bg-white dark:bg-[#161d27] rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-gray-200 dark:border-white/10 my-8 overflow-hidden relative">
         {/* Close Button */}
         <button
           type="button"
@@ -362,7 +568,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
               Bulk Import Students & Auto-Create Accounts
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Upload a CSV or Excel (.xlsx, .xls) file. Student IDs are derived from the roll number, and passwords are automatically set to their birth dates (DDMMYYYY).
+              Upload a CSV or Excel (.xlsx, .xls) file. Cadet User IDs (e.g. 262701) are automatically assigned by roll number for login, and passwords are set to birth dates (DDMMYYYY).
             </p>
           </div>
         </div>
@@ -380,7 +586,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                     {importResult.message}
                   </h3>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                    Accounts are live in MongoDB and students can now log in immediately.
+                    Accounts are live in MongoDB and students can now log in immediately with their Cadet User ID.
                   </p>
                 </div>
               </div>
@@ -401,8 +607,8 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                 <thead className="bg-gray-50 dark:bg-slate-800/80 sticky top-0 border-b border-gray-200 dark:border-white/10">
                   <tr>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Roll No</th>
+                    <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Cadet User ID (Login)</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Cadet Name</th>
-                    <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Student ID (Username)</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Birth Date</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Generated Password</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Status</th>
@@ -412,11 +618,11 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                   {importResult.students?.map((s: any, idx: number) => (
                     <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5">
                       <td className="p-3 font-mono font-bold text-gray-800 dark:text-gray-200">{s.roll_no}</td>
+                      <td className="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">{s.student_id}</td>
                       <td className="p-3 font-semibold text-gray-900 dark:text-white">{s.name}</td>
-                      <td className="p-3 font-mono font-bold text-primary">{s.student_id}</td>
                       <td className="p-3 text-gray-600 dark:text-gray-400">{s.birth_date}</td>
                       <td className="p-3">
-                        <span className="inline-flex items-center gap-1 font-mono font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 font-mono font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light px-2 py-0.5 rounded border border-primary/20">
                           <Key className="w-3 h-3" />
                           <span>{s.generated_password}</span>
                         </span>
@@ -532,8 +738,8 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                       <tr>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">#</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Roll</th>
+                        <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Cadet User ID</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Cadet Name</th>
-                        <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Auto Student ID</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Birth Date</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Auto Password (DDMMYYYY)</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Course</th>
@@ -545,16 +751,21 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                         <tr key={idx} className={row.isValid ? 'hover:bg-gray-50 dark:hover:bg-white/5' : 'bg-red-50/50 dark:bg-red-950/20'}>
                           <td className="p-2.5 text-gray-400">{idx + 1}</td>
                           <td className="p-2.5 font-mono font-bold text-gray-800 dark:text-gray-200">{row.rollNo}</td>
+                          <td className="p-2.5 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            {row.generatedId}
+                          </td>
                           <td className="p-2.5 font-bold text-gray-900 dark:text-white">{row.name || <span className="text-red-500 italic">Empty</span>}</td>
-                          <td className="p-2.5 font-mono font-bold text-primary">{row.generatedId}</td>
                           <td className="p-2.5 text-gray-600 dark:text-gray-400">{row.birthDate || <span className="text-red-500 italic">Empty</span>}</td>
                           <td className="p-2.5">
-                            <span className="inline-flex items-center gap-1 font-mono font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded text-[11px]">
+                            <span className="inline-flex items-center gap-1 font-mono font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light px-2 py-0.5 rounded text-[11px] border border-primary/20">
                               <Lock className="w-3 h-3" />
                               <span>{row.generatedPassword}</span>
                             </span>
                           </td>
-                          <td className="p-2.5 text-gray-500 dark:text-gray-400 truncate max-w-[130px]">{row.course}</td>
+                          <td className="p-2.5 text-gray-500 dark:text-gray-400 truncate max-w-[130px]">
+                            <div>{row.course}</div>
+                            {row.mode && <span className="text-[10px] text-gray-400">({row.mode})</span>}
+                          </td>
                           <td className="p-2.5">
                             {row.isValid ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
@@ -604,7 +815,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
 
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };

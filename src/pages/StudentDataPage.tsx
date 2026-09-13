@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
@@ -11,19 +11,29 @@ import {
   ChevronRight,
   Flame
 } from 'lucide-react';
-import { studentsData } from '../data/students';
+import { api } from '../lib/api';
+import { StudentVerificationRecord } from '../types';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { toast } from 'sonner';
 
 export const StudentDataPage: React.FC = () => {
+  const [students, setStudents] = useState<StudentVerificationRecord[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
 
+  useEffect(() => {
+    api.getStudents()
+      .then((data) => setStudents(data || []))
+      .catch(() => setStudents([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   // Filter students based on search query and dropdowns
   const filteredStudents = useMemo(() => {
-    return studentsData.filter((student) => {
+    return students.filter((student) => {
       const matchesSearch =
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -37,10 +47,10 @@ export const StudentDataPage: React.FC = () => {
 
       return matchesSearch && matchesCourse && matchesYear;
     });
-  }, [searchTerm, selectedCourse, selectedYear]);
+  }, [students, searchTerm, selectedCourse, selectedYear]);
 
-  const uniqueCourses = ['All', ...Array.from(new Set(studentsData.map((s) => s.course)))];
-  const uniqueYears = ['All', ...Array.from(new Set(studentsData.map((s) => s.passingYear)))];
+  const uniqueCourses = ['All', ...Array.from(new Set(students.map((s) => s.course)))];
+  const uniqueYears = ['All', ...Array.from(new Set(students.map((s) => s.passingYear)))];
 
   const handleExportCSV = () => {
     const headers = ['Student ID', 'Roll No', 'Name', "Father's Name", 'Course', 'Batch', 'Passing Year', 'Grade', 'Status'];
@@ -137,7 +147,7 @@ export const StudentDataPage: React.FC = () => {
           </div>
 
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>Showing <strong>{filteredStudents.length}</strong> of {studentsData.length} pass-out records</span>
+            <span>Showing <strong>{filteredStudents.length}</strong> of {students.length} pass-out records</span>
             {(searchTerm || selectedCourse !== 'All' || selectedYear !== 'All') && (
               <button
                 type="button"
