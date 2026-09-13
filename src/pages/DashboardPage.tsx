@@ -38,7 +38,9 @@ import {
   RefreshCw,
   Sun,
   Flame,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ExternalLink,
+  Printer
 } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { useStudentData } from '../context/StudentDataContext';
@@ -73,8 +75,8 @@ export const DashboardPage: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Tabs: 'news_events' | 'updates' | 'attendance' | 'results' | 'all'
-  const [activeTab, setActiveTab] = useState<'news_events' | 'updates' | 'attendance' | 'results' | 'all'>('news_events');
+  // Tabs: 'students' | 'attendance' | 'results' | 'news_events' | 'updates' | 'all'
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'results' | 'news_events' | 'updates' | 'all'>('students');
   
   // News context
   const { posts, addPost, updatePost, deletePost, resetToSeed: resetNewsToSeed } = useNews();
@@ -94,8 +96,31 @@ export const DashboardPage: React.FC = () => {
     addResult, 
     updateResult, 
     deleteResult,
+    getAttendanceByStudent,
+    getResultsByStudent,
+    getStudentAttendanceSummary,
     resetToSeed: resetStudentDataToSeed 
   } = useStudentData();
+
+  // --- CADET / STUDENT DIRECTORY STATE ---
+  const [cadetSearch, setCadetSearch] = useState('');
+  const [cadetCourseFilter, setCadetCourseFilter] = useState('All');
+  const [selectedCadetDetail, setSelectedCadetDetail] = useState<StudentVerificationRecord | null>(null);
+
+  // Filtered Cadets for Student Directory
+  const filteredCadets = useMemo(() => {
+    return studentsData.filter((cadet) => {
+      const matchesCourse = cadetCourseFilter === 'All' || cadet.course === cadetCourseFilter;
+      const q = cadetSearch.trim().toLowerCase();
+      const matchesSearch = !q ||
+        cadet.name.toLowerCase().includes(q) ||
+        cadet.rollNo.toLowerCase().includes(q) ||
+        cadet.certificateNumber.toLowerCase().includes(q) ||
+        cadet.fatherName.toLowerCase().includes(q) ||
+        cadet.batch.toLowerCase().includes(q);
+      return matchesCourse && matchesSearch;
+    });
+  }, [cadetSearch, cadetCourseFilter]);
 
   // --- 3-SLOT DAILY ATTENDANCE MUSTER STATE ---
   const [selectedMusterDate, setSelectedMusterDate] = useState(new Date().toISOString().split('T')[0]);
@@ -560,30 +585,18 @@ export const DashboardPage: React.FC = () => {
         {/* View Tabs */}
         <div className="flex flex-wrap items-center gap-2 mb-8 border-b border-gray-200 dark:border-white/10 pb-3">
           
-          {/* News & Events */}
+          {/* Cadets Directory */}
           <button
             type="button"
-            onClick={() => setActiveTab('news_events')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'news_events'
+            onClick={() => setActiveTab('students')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+              activeTab === 'students'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
             }`}
           >
-            News & Events ({posts.filter((p) => p.category !== 'Institute Updates').length})
-          </button>
-
-          {/* Institute Updates */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('updates')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'updates'
-                ? 'bg-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
-            }`}
-          >
-            Institute Updates ({posts.filter((p) => p.category === 'Institute Updates').length})
+            <GraduationCap className="w-3.5 h-3.5" />
+            <span>Cadets Directory ({studentsData.length})</span>
           </button>
 
           {/* Mark Attendance */}
@@ -614,6 +627,32 @@ export const DashboardPage: React.FC = () => {
             <span>Manage Results ({results.length})</span>
           </button>
 
+          {/* News & Events */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('news_events')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'news_events'
+                ? 'bg-primary text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
+            }`}
+          >
+            News & Events ({posts.filter((p) => p.category !== 'Institute Updates').length})
+          </button>
+
+          {/* Institute Updates */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('updates')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'updates'
+                ? 'bg-primary text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
+            }`}
+          >
+            Institute Updates ({posts.filter((p) => p.category === 'Institute Updates').length})
+          </button>
+
           {/* All News */}
           <button
             type="button"
@@ -627,23 +666,348 @@ export const DashboardPage: React.FC = () => {
             All News ({posts.length})
           </button>
 
-          {/* Reset Seeds */}
+          {/* Clear Muster Records */}
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Reset all news, attendance, and exam results to default seed data?')) {
-                resetNewsToSeed();
+              if (window.confirm('Clear all attendance muster and examination score records? This will purge local session records.')) {
                 resetStudentDataToSeed();
-                toast.success('Reset all storage to default seed data');
+                toast.success('Purged local attendance and examination records');
               }
             }}
-            title="Reset to default seed data"
-            className="ml-auto text-xs font-semibold text-gray-400 hover:text-accent flex items-center gap-1"
+            title="Clear all attendance muster and examination records"
+            className="ml-auto text-xs font-semibold text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Reset Seed Data</span>
+            <Trash2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Clear Muster Logs</span>
           </button>
         </div>
+
+        {/* ========================================================================= */}
+        {/* TAB: CADETS / STUDENT DIRECTORY                                          */}
+        {/* ========================================================================= */}
+        {activeTab === 'students' && (
+          <div className="space-y-6">
+            {/* Top Overview & Registry Metrics Card */}
+            <FlatCard className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-white/5">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Cadet & Trainee Registry</span>
+                  </div>
+                  <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
+                    Institutional Cadet Directory
+                  </h2>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Inspect cadet demographics, verify certificates, track live physical drill attendance, and review examination scorecards.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Mark Daily Muster</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('results')}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    <span>Record Exam Scores</span>
+                  </button>
+                  <Link
+                    to="/verify"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Public Verification</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Statistics Row */}
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Enrolled Cadets</div>
+                  <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
+                    {studentsData.length}
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-0.5">Across 4 Safety Programs</div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-emerald-500/5 dark:bg-white/5 border border-emerald-500/10 dark:border-white/5">
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Verified Credentials</div>
+                  <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                    {studentsData.filter((s) => s.verificationStatus === 'Verified').length}
+                  </div>
+                  <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">100% QR & Barcode Verified</div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-accent/5 dark:bg-white/5 border border-accent/10 dark:border-white/5">
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Muster Logs</div>
+                  <div className="text-2xl font-black text-accent mt-1">
+                    {attendance.length}
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-0.5">Physical & Theory Drill Slots</div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-purple-500/5 dark:bg-white/5 border border-purple-500/10 dark:border-white/5">
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Recorded Exam Papers</div>
+                  <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
+                    {results.length}
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-0.5">Subject & Practical Scores</div>
+                </div>
+              </div>
+
+              {/* Search & Course Filter Controls */}
+              <div className="pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                {/* Search Cadet */}
+                <div className="md:col-span-6 relative">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={cadetSearch}
+                    onChange={(e) => setCadetSearch(e.target.value)}
+                    placeholder="Search cadet by name, roll no, certificate ID, father's name..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  {cadetSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setCadetSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Course Filter */}
+                <div className="md:col-span-4">
+                  <select
+                    value={cadetCourseFilter}
+                    onChange={(e) => setCadetCourseFilter(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="All">All Programs ({studentsData.length} Cadets)</option>
+                    <option value="Diploma In Fire Safety">Diploma In Fire Safety</option>
+                    <option value="Sub Fire Officer">Sub Fire Officer</option>
+                    <option value="Certificate In Fire Safety">Certificate In Fire Safety</option>
+                    <option value="Industrial Safety">Industrial Safety</option>
+                  </select>
+                </div>
+
+                {/* Count Badge */}
+                <div className="md:col-span-2 text-right">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    Showing <span className="text-gray-900 dark:text-white font-bold">{filteredCadets.length}</span> of {studentsData.length}
+                  </span>
+                </div>
+              </div>
+            </FlatCard>
+
+            {/* Cadets Roster Table Card */}
+            <div className="bg-white dark:bg-[#12181f] rounded-2xl border border-gray-200/80 dark:border-white/10 shadow-md overflow-hidden">
+              <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
+                    Enrolled Cadet Roster
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Click "Inspect Details" to review comprehensive demographics, attendance breakdown, and exam scores.
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/80 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[11px] border-b border-gray-200/60 dark:border-white/10">
+                      <th className="py-3.5 px-4">Cadet Profile</th>
+                      <th className="py-3.5 px-4">Identifiers</th>
+                      <th className="py-3.5 px-4">Program & Batch</th>
+                      <th className="py-3.5 px-4 text-center">Drill Attendance</th>
+                      <th className="py-3.5 px-4 text-center">Exam Papers</th>
+                      <th className="py-3.5 px-4 text-center">Status</th>
+                      <th className="py-3.5 px-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                    {filteredCadets.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-gray-400 text-xs font-semibold">
+                          No cadets found matching "{cadetSearch}".
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredCadets.map((cadet) => {
+                        const attSummary = getStudentAttendanceSummary(cadet.certificateNumber);
+                        const cadetResults = getResultsByStudent(cadet.certificateNumber);
+
+                        return (
+                          <tr
+                            key={cadet.id}
+                            className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                          >
+                            {/* Cadet Profile */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/10 shrink-0 border border-gray-200 dark:border-white/10">
+                                  {cadet.photoUrl ? (
+                                    <img
+                                      src={cadet.photoUrl}
+                                      alt={cadet.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
+                                      {cadet.name.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedCadetDetail(cadet)}
+                                    className="font-bold text-sm text-gray-900 dark:text-white hover:text-primary transition-colors text-left"
+                                  >
+                                    {cadet.name}
+                                  </button>
+                                  <p className="text-[11px] text-gray-400">
+                                    S/O {cadet.fatherName}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Identifiers */}
+                            <td className="py-3.5 px-4">
+                              <div className="font-mono text-xs font-bold text-gray-900 dark:text-white">
+                                {cadet.certificateNumber}
+                              </div>
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                                Roll: {cadet.rollNo}
+                              </div>
+                            </td>
+
+                            {/* Course & Batch */}
+                            <td className="py-3.5 px-4">
+                              <span className="inline-block px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                                {cadet.course}
+                              </span>
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                {cadet.batch}
+                              </p>
+                            </td>
+
+                            {/* Drill Attendance */}
+                            <td className="py-3.5 px-4 text-center">
+                              {attSummary.total > 0 ? (
+                                <div className="inline-flex flex-col items-center">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                                      attSummary.percentage >= 75
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                                    }`}
+                                  >
+                                    {attSummary.percentage >= 75 ? (
+                                      <CheckCircle2 className="w-3 h-3" />
+                                    ) : (
+                                      <AlertCircle className="w-3 h-3" />
+                                    )}
+                                    <span>{attSummary.percentage}%</span>
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 mt-0.5">
+                                    {attSummary.present}/{attSummary.total} slots
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium text-gray-400 bg-gray-100 dark:bg-white/5">
+                                  No drills logged
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Exam Papers */}
+                            <td className="py-3.5 px-4 text-center">
+                              {cadetResults.length > 0 ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                  <Award className="w-3 h-3" />
+                                  <span>{cadetResults.length} Papers</span>
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium text-gray-400 bg-gray-100 dark:bg-white/5">
+                                  No papers
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>{cadet.verificationStatus}</span>
+                              </span>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3.5 px-4 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedCadetDetail(cadet)}
+                                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-all flex items-center gap-1 shadow-sm"
+                                  title="Inspect full cadet profile"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Inspect</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMusterSearch(cadet.name);
+                                    setActiveTab('attendance');
+                                  }}
+                                  className="p-1.5 rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
+                                  title="Mark Muster for this cadet"
+                                >
+                                  <Clock className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setResCertNo(cadet.certificateNumber);
+                                    setResCourse(cadet.course);
+                                    setActiveTab('results');
+                                  }}
+                                  className="p-1.5 rounded-xl bg-purple-500/10 text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
+                                  title="Record Exam Result for this cadet"
+                                >
+                                  <Award className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ========================================================================= */}
         {/* TAB: MARK ATTENDANCE (3-SLOT DAILY MUSTER TABLE)                          */}
@@ -1862,6 +2226,407 @@ export const DashboardPage: React.FC = () => {
 
           </div>
         )}
+
+        {/* ========================================================================= */}
+        {/* CADET DETAILS INSPECTION MODAL                                           */}
+        {/* ========================================================================= */}
+        <AnimatePresence>
+          {selectedCadetDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white dark:bg-[#12181f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              >
+                {/* Top Accent Strip */}
+                <div className="h-2 w-full bg-gradient-to-r from-primary via-accent to-primary" />
+
+                <div className="p-6 sm:p-8 space-y-6">
+                  {/* Modal Header */}
+                  <div className="flex items-start justify-between gap-4 pb-6 border-b border-gray-100 dark:border-white/10">
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 border-2 border-primary/20 shadow-md shrink-0">
+                        {selectedCadetDetail.photoUrl ? (
+                          <img
+                            src={selectedCadetDetail.photoUrl}
+                            alt={selectedCadetDetail.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-black">
+                            {selectedCadetDetail.name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 right-0 p-1 bg-emerald-500 text-white rounded-tl-lg" title="Verified">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                            {selectedCadetDetail.course}
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>{selectedCadetDetail.verificationStatus}</span>
+                          </span>
+                        </div>
+                        <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
+                          {selectedCadetDetail.name}
+                        </h2>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          Son / Ward of <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedCadetDetail.fatherName}</span> • {selectedCadetDetail.batch}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCadetDetail(null)}
+                      className="p-2 rounded-2xl text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                      title="Close Modal"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Section 1: Demographic & Enrollment Records */}
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-accent mb-3 flex items-center gap-1.5">
+                      <User className="w-4 h-4" />
+                      <span>Cadet Demographic & Institutional Record</span>
+                    </h3>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Certificate Number</div>
+                        <div className="font-mono text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.certificateNumber}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Institute Roll No</div>
+                        <div className="font-mono text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.rollNo}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Issue Date</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.issueDate}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Passing / Completion Year</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                          {selectedCadetDetail.passingYear}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Registered Grade</div>
+                        <div className="text-xs sm:text-sm font-bold text-primary dark:text-primary-light mt-0.5">
+                          {selectedCadetDetail.grade} ({selectedCadetDetail.percentage})
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <div className="text-[11px] font-semibold text-gray-400">Training Center Campus</div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5 truncate">
+                          {selectedCadetDetail.centerLocation}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Physical Drill & Muster Attendance Record */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        <span>Dynamic Drill Muster & Training Attendance</span>
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMusterSearch(selectedCadetDetail.name);
+                          setActiveTab('attendance');
+                          setSelectedCadetDetail(null);
+                        }}
+                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Log Drill Attendance</span>
+                      </button>
+                    </div>
+
+                    {(() => {
+                      const summary = getStudentAttendanceSummary(selectedCadetDetail.certificateNumber);
+                      const cadetAttRecords = getAttendanceByStudent(selectedCadetDetail.certificateNumber);
+
+                      return (
+                        <div className="space-y-3">
+                          {/* 4 Attendance Metric Tiles */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="p-3 rounded-xl bg-primary/5 dark:bg-white/5 border border-primary/10">
+                              <div className="text-[11px] text-gray-500">Attendance Rate</div>
+                              <div className="text-xl font-black text-primary dark:text-primary-light mt-0.5">
+                                {summary.percentage}%
+                              </div>
+                            </div>
+                            <div className="p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                              <div className="text-[11px] text-gray-500">Total Slots</div>
+                              <div className="text-xl font-black text-gray-900 dark:text-white mt-0.5">
+                                {summary.total}
+                              </div>
+                            </div>
+                            <div className="p-3 rounded-xl bg-emerald-500/5 dark:bg-white/5 border border-emerald-500/10">
+                              <div className="text-[11px] text-emerald-600 dark:text-emerald-400">Present Slots</div>
+                              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                {summary.present}
+                              </div>
+                            </div>
+                            <div className="p-3 rounded-xl bg-red-500/5 dark:bg-white/5 border border-red-500/10">
+                              <div className="text-[11px] text-red-600 dark:text-red-400">Absent Slots</div>
+                              <div className="text-xl font-black text-red-600 dark:text-red-400 mt-0.5">
+                                {summary.absent}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Compliance Bar */}
+                          {summary.total > 0 ? (
+                            <div className="p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                              <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                                <span className="text-gray-600 dark:text-gray-300">Ground Drill Compliance Progress</span>
+                                <span className={summary.percentage >= 75 ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>
+                                  {summary.percentage >= 75 ? 'Meets Statutory 75% Requirement' : 'Short of 75% Statutory Target'}
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${
+                                    summary.percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'
+                                  }`}
+                                  style={{ width: `${Math.min(summary.percentage, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 text-center">
+                              <p className="text-xs text-gray-500">
+                                No attendance records recorded for this cadet yet. Attendance records are created when marking daily drills.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMusterSearch(selectedCadetDetail.name);
+                                  setActiveTab('attendance');
+                                  setSelectedCadetDetail(null);
+                                }}
+                                className="mt-2 text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                              >
+                                <Clock className="w-3 h-3" />
+                                <span>Mark muster in Daily Attendance tab</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Recent Log Table if any */}
+                          {cadetAttRecords.length > 0 && (
+                            <div className="max-h-48 overflow-y-auto rounded-xl border border-gray-200/60 dark:border-white/10">
+                              <table className="w-full text-left text-xs">
+                                <thead className="bg-gray-50 dark:bg-white/5 text-[10px] uppercase font-bold text-gray-400 sticky top-0">
+                                  <tr>
+                                    <th className="py-2 px-3">Date</th>
+                                    <th className="py-2 px-3">Slot</th>
+                                    <th className="py-2 px-3">Drill Topic</th>
+                                    <th className="py-2 px-3 text-center">Status</th>
+                                    <th className="py-2 px-3">Instructor</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                  {cadetAttRecords.slice(0, 10).map((r) => (
+                                    <tr key={r.id}>
+                                      <td className="py-2 px-3 font-medium text-gray-800 dark:text-gray-200">{r.date}</td>
+                                      <td className="py-2 px-3 text-primary font-bold">{r.slot || 'Slot 1'}</td>
+                                      <td className="py-2 px-3 text-gray-600 dark:text-gray-300 truncate max-w-xs">{r.topicOrModule || 'Ground Drill'}</td>
+                                      <td className="py-2 px-3 text-center">
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                          r.status === 'Present' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'
+                                        }`}>
+                                          {r.status}
+                                        </span>
+                                      </td>
+                                      <td className="py-2 px-3 text-gray-400 text-[11px]">{r.markedBy || 'Instructor'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Section 3: Examination & Marks Records */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1.5">
+                        <Award className="w-4 h-4" />
+                        <span>Examination Papers & Practical Evaluations</span>
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResCertNo(selectedCadetDetail.certificateNumber);
+                          setResCourse(selectedCadetDetail.course);
+                          setActiveTab('results');
+                          setSelectedCadetDetail(null);
+                        }}
+                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Exam Score</span>
+                      </button>
+                    </div>
+
+                    {(() => {
+                      const cadetResults = getResultsByStudent(selectedCadetDetail.certificateNumber);
+                      const totalMarks = cadetResults.reduce((acc, curr) => acc + curr.marksObtained, 0);
+                      const totalMax = cadetResults.reduce((acc, curr) => acc + curr.maxMarks, 0);
+                      const avgPct = totalMax > 0 ? Math.round((totalMarks / totalMax) * 1000) / 10 : 0;
+
+                      return (
+                        <div className="space-y-3">
+                          {cadetResults.length > 0 ? (
+                            <>
+                              {/* Results Summary Bar */}
+                              <div className="p-3 rounded-xl bg-purple-500/5 dark:bg-white/5 border border-purple-500/10 flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-4">
+                                  <div>
+                                    <div className="text-[11px] text-gray-500">Evaluated Papers</div>
+                                    <div className="text-lg font-black text-purple-600 dark:text-purple-400">
+                                      {cadetResults.length} Papers
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[11px] text-gray-500">Aggregate Marks</div>
+                                    <div className="text-lg font-black text-gray-900 dark:text-white">
+                                      {totalMarks} / {totalMax}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-[11px] text-gray-500">Overall Calculated Percentage</div>
+                                  <div className="text-lg font-black text-primary dark:text-primary-light">
+                                    {avgPct}%
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Results Table */}
+                              <div className="max-h-48 overflow-y-auto rounded-xl border border-gray-200/60 dark:border-white/10">
+                                <table className="w-full text-left text-xs">
+                                  <thead className="bg-gray-50 dark:bg-white/5 text-[10px] uppercase font-bold text-gray-400 sticky top-0">
+                                    <tr>
+                                      <th className="py-2 px-3">Subject / Paper</th>
+                                      <th className="py-2 px-3">Marks</th>
+                                      <th className="py-2 px-3 text-center">Grade</th>
+                                      <th className="py-2 px-3">Term / Exam</th>
+                                      <th className="py-2 px-3">Remarks</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                    {cadetResults.map((r) => (
+                                      <tr key={r.id}>
+                                        <td className="py-2 px-3 font-bold text-gray-900 dark:text-white">{r.subject}</td>
+                                        <td className="py-2 px-3 font-mono font-bold text-gray-700 dark:text-gray-300">
+                                          {r.marksObtained} / {r.maxMarks}
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                                            {r.grade}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 px-3 text-gray-500">{r.semesterOrTerm || 'Term Final'}</td>
+                                        <td className="py-2 px-3 text-gray-400 italic text-[11px]">{r.remarks || '—'}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 text-center">
+                              <p className="text-xs text-gray-500">
+                                No examination papers or practical drill evaluations recorded yet for this cadet.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setResCertNo(selectedCadetDetail.certificateNumber);
+                                  setResCourse(selectedCadetDetail.course);
+                                  setActiveTab('results');
+                                  setSelectedCadetDetail(null);
+                                }}
+                                className="mt-2 text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                              >
+                                <Award className="w-3 h-3" />
+                                <span>Record exam marks in Manage Results tab</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Modal Footer Actions */}
+                  <div className="pt-4 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        to={`/verify?cert=${selectedCadetDetail.certificateNumber}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1.5"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Public Certificate</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Print Cadet Dossier</span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCadetDetail(null)}
+                      className="px-6 py-2 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>

@@ -49,36 +49,40 @@ const ATTENDANCE_STORAGE_KEY = 'cfsi_attendance';
 const RESULTS_STORAGE_KEY = 'cfsi_results';
 
 export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Attendance State
+  // Attendance State (Production clean, starts empty or with records saved by Admin)
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
     try {
       const saved = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+        if (Array.isArray(parsed)) {
+          // Filter out any stale mock demo records from earlier runs
+          return parsed.filter(
+            (r: any) => !r.id?.startsWith('att-seed-') && !r.id?.startsWith('att-today-')
+          );
         }
       }
     } catch (e) {
       console.error('Failed to parse attendance from localStorage', e);
     }
-    return initialAttendanceSeed;
+    return [];
   });
 
-  // Results State
+  // Results State (Production clean, starts empty or with records saved by Admin)
   const [results, setResults] = useState<ResultRecord[]>(() => {
     try {
       const saved = localStorage.getItem(RESULTS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+        if (Array.isArray(parsed)) {
+          // Filter out any stale mock demo results from earlier runs
+          return parsed.filter((r: any) => !r.id?.startsWith('res-seed-') && !r.id?.startsWith('res-10') && !r.id?.startsWith('res-20') && !r.id?.startsWith('res-30'));
         }
       }
     } catch (e) {
       console.error('Failed to parse results from localStorage', e);
     }
-    return initialResultsSeed;
+    return [];
   });
 
   // Sync Attendance to localStorage
