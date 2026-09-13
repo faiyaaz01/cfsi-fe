@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AttendanceRecord, AttendanceSlot, AttendanceStatus, ResultRecord } from '../types';
 import { initialAttendanceSeed } from '../data/attendance';
 import { initialResultsSeed } from '../data/results';
+import { api, getToken } from '../lib/api';
 
 interface AttendanceSummary {
   total: number;
@@ -98,6 +99,24 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [results]);
 
+  // Fetch from backend MongoDB when authenticated
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    api.getAttendance().then((remoteAtt) => {
+      if (Array.isArray(remoteAtt) && remoteAtt.length > 0) {
+        setAttendance(remoteAtt);
+      }
+    }).catch(() => {});
+
+    api.getResults().then((remoteRes) => {
+      if (Array.isArray(remoteRes) && remoteRes.length > 0) {
+        setResults(remoteRes);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Attendance Actions
   const addAttendance = (recordData: Omit<AttendanceRecord, 'id' | 'createdAt'>) => {
     const newRecord: AttendanceRecord = {
@@ -163,6 +182,18 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return [newRec, ...prev];
       }
     });
+
+    // Background sync to MongoDB backend
+    api.saveAttendanceSingle({
+      certificateNumber: certNumber,
+      date,
+      slot,
+      course: details?.course || 'Fire Safety Program',
+      status,
+      topicOrModule: details?.topicOrModule,
+      remarks: details?.remarks,
+      markedBy: details?.markedBy || 'Chief Instructor Dave',
+    }).catch(() => {});
   };
 
   // Bulk mark all or specific slots for given students on a date
@@ -176,6 +207,25 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   ) => {
     const slotsToMark: AttendanceSlot[] =
       slot === 'All' ? ['Slot 1', 'Slot 2', 'Slot 3'] : [slot];
+
+    // Background bulk sync to MongoDB backend
+    const recordsToSync: any[] = [];
+    students.forEach((st) => {
+      slotsToMark.forEach((s) => {
+        recordsToSync.push({
+          certificateNumber: st.certificateNumber,
+          date,
+          slot: s,
+          course: st.course,
+          status,
+          topicOrModule: topic || undefined,
+          markedBy: instructor || 'Chief Instructor Dave',
+        });
+      });
+    });
+    if (recordsToSync.length > 0) {
+      api.saveAttendanceBulk(recordsToSync).catch(() => {});
+    }
 
     setAttendance((prev) => {
       let current = [...prev];
@@ -234,6 +284,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       createdAt: new Date().toISOString()
     };
     setResults((prev) => [newResult, ...prev]);
+    api.createResult(newResult).catch(() => {});
   };
 
   const updateResult = (id: string, updated: Partial<Omit<ResultRecord, 'id' | 'createdAt'>>) => {

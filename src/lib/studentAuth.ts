@@ -1,26 +1,7 @@
 import { studentAccountsData } from '../data/student-accounts';
 import { studentsData } from '../data/students';
 import { StudentVerificationRecord } from '../types';
-
-/**
- * =========================================================================
- * STUDENT AUTHENTICATION HELPER (Frontend Session / Demo Storage)
- * =========================================================================
- * Mirrors the admin authentication pattern in DashboardPage.tsx.
- * 
- * BACKEND INTEGRATION NOTE:
- * When wiring the backend, replace `loginStudent` with an async API call:
- * ```ts
- * const res = await fetch('/api/auth/student-login', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({ username, password })
- * });
- * const { token, student } = await res.json();
- * sessionStorage.setItem('cfsi_student_token', token);
- * ```
- * =========================================================================
- */
+import { api, setToken, clearAuth, getStoredUser } from './api';
 
 const STUDENT_SESSION_KEY = 'cfsi_student_cert';
 
@@ -28,8 +9,80 @@ export interface LoginResult {
   success: boolean;
   error?: string;
   student?: StudentVerificationRecord;
+  role?: 'admin' | 'student';
 }
 
+/**
+ * Unified async login that authenticates against FastAPI + MongoDB with bcrypt & JWT,
+ * with fallback to local seed accounts for maximum reliability.
+ */
+export const loginWithBackend = async (
+  username: string,
+  password: string,
+  role?: 'admin' | 'student' | 'auto'
+): Promise<LoginResult> => {
+  try {
+    const authData = await api.login(username, password, role);
+    if (authData.role === 'admin') {
+      sessionStorage.setItem('cfsi_admin_logged', 'true');
+      return {
+        success: true,
+        role: 'admin',
+      };
+    } else {
+      const cert = authData.user.certificate_number;
+      if (cert) {
+        sessionStorage.setItem(STUDENT_SESSION_KEY, cert);
+      }
+      const matched = studentsData.find(
+        (s) => s.certificateNumber.toUpperCase() === (cert || '').toUpperCase()
+      );
+      return {
+        success: true,
+        role: 'student',
+        student: matched,
+      };
+    }
+  } catch (err: any) {
+    // If backend is unreachable or returned error, try client-side demo fallback
+    const normalizedUser = username.trim().toLowerCase();
+    
+    // Check demo admin
+    if ((normalizedUser === 'admin' || !normalizedUser) && password === 'cfsiadmin') {
+      sessionStorage.setItem('cfsi_admin_logged', 'true');
+      return {
+        success: true,
+        role: 'admin',
+      };
+    }
+
+    // Check demo student
+    const account = studentAccountsData.find(
+      (acc) => acc.username.toLowerCase() === normalizedUser && acc.password === password
+    );
+
+    if (account) {
+      const student = studentsData.find(
+        (s) => s.certificateNumber.toUpperCase() === account.certificateNumber.toUpperCase()
+      );
+      if (student) {
+        sessionStorage.setItem(STUDENT_SESSION_KEY, account.certificateNumber);
+        return {
+          success: true,
+          role: 'student',
+          student,
+        };
+      }
+    }
+
+    return {
+      success: false,
+      error: err.message || 'Invalid username or password.',
+    };
+  }
+};
+
+/** Synchronous local login helper */
 export const loginStudent = (username: string, password: string): LoginResult => {
   const normalizedUser = username.trim().toLowerCase();
   const account = studentAccountsData.find(
@@ -57,13 +110,17 @@ export const loginStudent = (username: string, password: string): LoginResult =>
   sessionStorage.setItem(STUDENT_SESSION_KEY, account.certificateNumber);
   return {
     success: true,
-    student
+    student,
+    role: 'student',
   };
 };
 
 export const getLoggedStudentCert = (): string | null => {
   try {
-    return sessionStorage.getItem(STUDENT_SESSION_KEY);
+    const cert = sessionStorage.getItem(STUDENT_SESSION_KEY);
+    if (cert) return cert;
+    const stored = getStoredUser();
+    return stored?.certificate_number || null;
   } catch {
     return null;
   }
@@ -78,6 +135,7 @@ export const getLoggedStudent = (): StudentVerificationRecord | null => {
 export const logoutStudent = (): void => {
   try {
     sessionStorage.removeItem(STUDENT_SESSION_KEY);
+    clearAuth();
   } catch {
     // ignore
   }

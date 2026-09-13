@@ -26,6 +26,7 @@ import { GlassCard } from '../components/common/GlassCard';
 import { FlatCard } from '../components/common/FlatCard';
 import { Link, useSearchParams, Navigate } from 'react-router-dom';
 import { getLoggedStudent } from '../lib/studentAuth';
+import { api } from '../lib/api';
 import { toast } from 'sonner';
 
 export const StudentVerificationPage: React.FC = () => {
@@ -84,12 +85,24 @@ export const StudentVerificationPage: React.FC = () => {
     }
   };
 
-  const handleSearch = (e?: React.FormEvent) => {
+  const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const query = searchInput.trim().toUpperCase();
     if (!query) return;
 
     setHasSearched(true);
+
+    try {
+      const res = await api.verifyCertificate(query);
+      if (res.verified && res.student) {
+        setVerifiedRecord(res.student);
+        triggerConfetti();
+        toast.success('Certificate Verified with CFSI Registry');
+        return;
+      }
+    } catch {
+      // fallback to local dataset
+    }
 
     const found = studentsData.find(
       (s) =>
@@ -106,9 +119,17 @@ export const StudentVerificationPage: React.FC = () => {
     }
   };
 
-  const quickSearch = (certNo: string) => {
+  const quickSearch = async (certNo: string) => {
     setSearchInput(certNo);
     setHasSearched(true);
+    try {
+      const res = await api.verifyCertificate(certNo);
+      if (res.verified && res.student) {
+        setVerifiedRecord(res.student);
+        triggerConfetti();
+        return;
+      }
+    } catch {}
     const found = studentsData.find((s) => s.certificateNumber === certNo);
     setVerifiedRecord(found || null);
     if (found) triggerConfetti();

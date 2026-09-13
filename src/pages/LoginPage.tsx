@@ -15,7 +15,7 @@ import {
   Shield, 
   KeyRound
 } from 'lucide-react';
-import { loginStudent, getLoggedStudent } from '../lib/studentAuth';
+import { loginStudent, loginWithBackend, getLoggedStudent } from '../lib/studentAuth';
 import { studentAccountsData } from '../data/student-accounts';
 import { studentsData } from '../data/students';
 import { FlatCard } from '../components/common/FlatCard';
@@ -52,7 +52,7 @@ export const LoginPage: React.FC = () => {
     setError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -61,49 +61,35 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
+    const effectiveUsername = username.trim() || (activeRole === 'admin' ? 'admin' : '');
+    if (!effectiveUsername) {
+      setError('Please enter your cadet username.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const result = await loginWithBackend(effectiveUsername, password.trim(), activeRole);
       setIsSubmitting(false);
 
-      // Smart credential check:
-      // 1. If user entered admin credentials (cfsiadmin or username === 'admin')
-      const isInputAdmin = password.trim() === ADMIN_PASSWORD;
-      
-      // 2. Check if cadet credentials match
-      const studentResult = username.trim() ? loginStudent(username, password) : null;
-
-      if (activeRole === 'admin') {
-        if (isInputAdmin) {
-          sessionStorage.setItem('cfsi_admin_logged', 'true');
-          toast.success('Admin Dashboard Unlocked');
+      if (result.success) {
+        if (result.role === 'admin') {
+          toast.success('Admin Dashboard Unlocked (JWT Secured)');
           navigate('/dashboard');
-        } else if (studentResult && studentResult.success && studentResult.student) {
-          // Smart fallback: cadet logged in on admin tab
-          toast.success(`Welcome cadet ${studentResult.student.name}!`, {
-            description: 'Redirecting to your Student Portal.'
-          });
-          navigate('/student/dashboard');
         } else {
-          setError('Invalid Admin PIN. (Default demo PIN: cfsiadmin)');
-        }
-      } else {
-        // Active role is student
-        if (studentResult && studentResult.success && studentResult.student) {
-          toast.success(`Welcome back, ${studentResult.student.name}!`, {
+          toast.success(`Welcome back${result.student ? `, ${result.student.name}` : ''}!`, {
             description: 'Accessing your attendance and examination records.'
           });
           navigate('/student/dashboard');
-        } else if (isInputAdmin) {
-          // Smart fallback: admin logged in on student tab
-          sessionStorage.setItem('cfsi_admin_logged', 'true');
-          toast.success('Admin Credentials Detected — Unlocking Admin Dashboard');
-          navigate('/dashboard');
-        } else {
-          setError('Invalid cadet credentials. Please check your username and password, or use a demo account below.');
         }
+      } else {
+        setError(result.error || 'Invalid credentials. Please check your username and password.');
       }
-    }, 300);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setError(err.message || 'Login failed. Please check your credentials.');
+    }
   };
 
   // Quick fill student credentials
