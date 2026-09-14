@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
@@ -22,6 +22,8 @@ import { getLoggedStudent, logoutStudent } from '../lib/studentAuth';
 import { useStudentData } from '../context/StudentDataContext';
 import { FlatCard } from '../components/common/FlatCard';
 import { GlassCard } from '../components/common/GlassCard';
+import { CountUp } from '../components/common/CountUp';
+import { TablePagination } from '../components/common/TablePagination';
 
 export const StudentDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,6 +90,20 @@ export const StudentDashboardPage: React.FC = () => {
     if (attendanceFilter === 'Present') return list.filter((l) => l.presentCount > 0);
     return list.filter((l) => l.presentCount < l.totalCount);
   }, [attendanceRecords, attendanceFilter]);
+
+  // Attendance Table Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  // Reset to page 1 on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [attendanceFilter]);
+
+  const paginatedGroupedByDate = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return groupedByDate.slice(start, start + pageSize);
+  }, [groupedByDate, currentPage, pageSize]);
 
   const handleLogout = () => {
     logoutStudent();
@@ -198,7 +214,7 @@ export const StudentDashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-heading font-black text-emerald-600 dark:text-emerald-400">
-                  {summary.present}
+                  <CountUp value={summary.present} />
                 </div>
                 <div className="text-[11px] text-gray-500 mt-1">Sessions attended</div>
               </GlassCard>
@@ -212,7 +228,7 @@ export const StudentDashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-heading font-black text-red-600 dark:text-red-400">
-                  {summary.absent}
+                  <CountUp value={summary.absent} />
                 </div>
                 <div className="text-[11px] text-gray-500 mt-1">Sessions missed</div>
               </GlassCard>
@@ -226,7 +242,7 @@ export const StudentDashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white">
-                  {summary.total}
+                  <CountUp value={summary.total} />
                 </div>
                 <div className="text-[11px] text-gray-500 mt-1">Total drill sessions</div>
               </GlassCard>
@@ -240,7 +256,7 @@ export const StudentDashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white flex items-center gap-2">
-                  <span>{summary.percentage}%</span>
+                  <CountUp value={summary.percentage} suffix="%" />
                   <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${
                     summary.percentage >= 75
                       ? 'bg-emerald-500/10 text-emerald-600'
@@ -275,7 +291,7 @@ export const StudentDashboardPage: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Official biometric & roll-call records verified by CFSI instructors • Synchronized in real time.
+                    Official biometric & roll-call records verified by CFSI instructors • Showing <span className="font-bold text-gray-700 dark:text-gray-200"><CountUp value={groupedByDate.length} /></span> drill date{groupedByDate.length === 1 ? '' : 's'}.
                   </p>
                 </div>
 
@@ -304,8 +320,9 @@ export const StudentDashboardPage: React.FC = () => {
                   <p className="text-sm font-semibold">No attendance records found matching "{attendanceFilter}".</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto border border-gray-200/80 dark:border-white/10 rounded-2xl bg-white dark:bg-[#161d27] shadow-sm">
-                  <table className="w-full text-left text-xs border-collapse">
+                <div className="border border-gray-200/80 dark:border-white/10 rounded-2xl bg-white dark:bg-[#161d27] shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-gray-50/90 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 uppercase font-extrabold text-[10px] sm:text-[11px] tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4 min-w-[160px]">DATE</th>
@@ -316,7 +333,7 @@ export const StudentDashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                      {groupedByDate.map((row) => {
+                      {paginatedGroupedByDate.map((row) => {
                         const dayRate = row.totalCount > 0 ? Math.round((row.presentCount / row.totalCount) * 100) : 0;
                         const renderSlotItem = (slotRec?: any) => {
                           if (!slotRec) {
@@ -396,7 +413,19 @@ export const StudentDashboardPage: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-              )}
+
+                {/* Table Footer with Demo Pagination Style */}
+                <TablePagination
+                  currentPage={currentPage}
+                  totalEntries={groupedByDate.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  itemLabel="days"
+                />
+              </div>
+            )}
             </FlatCard>
           </div>
 

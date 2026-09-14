@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { GraduationCap, BookOpen, Award, MapPin } from 'lucide-react';
 import { GlassCard } from '../common/GlassCard';
+import { CountUp } from '../common/CountUp';
 
 interface StatItem {
   icon: React.ElementType;
@@ -42,44 +43,6 @@ const stats: StatItem[] = [
   }
 ];
 
-const Counter: React.FC<{ target: number; suffix: string }> = ({ target, suffix }) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
-
-  useEffect(() => {
-    if (!isInView) return;
-
-    let startTime: number | null = null;
-    const duration = 1800; // ms
-
-    const animateCount = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      
-      // easeOutExpo
-      const easeOut = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      const current = Math.floor(easeOut * target);
-      setCount(current);
-
-      if (progress < 1) {
-        requestAnimationFrame(animateCount);
-      } else {
-        setCount(target);
-      }
-    };
-
-    requestAnimationFrame(animateCount);
-  }, [isInView, target]);
-
-  return (
-    <span ref={ref} className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-gray-900 dark:text-white">
-      {count}
-      <span className="text-accent">{suffix}</span>
-    </span>
-  );
-};
-
 export const StatsSection: React.FC = () => {
   return (
     <section className="py-16 sm:py-20 bg-gradient-to-b from-primary/5 via-primary/[0.02] to-transparent dark:from-[#161d27]/60 dark:to-dark-bg transition-colors duration-300 relative overflow-hidden">
@@ -106,7 +69,11 @@ export const StatsSection: React.FC = () => {
                     <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-accent" />
                   </div>
 
-                  <Counter target={stat.value} suffix={stat.suffix} />
+                  <CountUp 
+                    value={stat.value} 
+                    suffix={stat.suffix} 
+                    className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-gray-900 dark:text-white" 
+                  />
 
                   <h3 className="mt-2 text-sm sm:text-base font-extrabold text-gray-900 dark:text-white">
                     {stat.label}

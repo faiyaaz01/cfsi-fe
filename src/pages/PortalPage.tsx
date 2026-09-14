@@ -13,6 +13,9 @@ import {
   User,
   GraduationCap
 } from 'lucide-react';
+import { CountUp } from '../components/common/CountUp';
+import { SkeletonStats, SkeletonTable } from '../components/common/Skeleton';
+import { TablePagination } from '../components/common/TablePagination';
 
 export function PortalPage() {
   const { user } = useAuth();
@@ -161,6 +164,20 @@ export function PortalPage() {
     return Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
   }, [filteredRecords]);
 
+  // Attendance Table Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  // Reset to page 1 on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStudentFilter]);
+
+  const paginatedGroupedByDate = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return groupedByDate.slice(start, start + pageSize);
+  }, [groupedByDate, currentPage, pageSize]);
+
   const formatDateDisplay = (dateStr: string) => {
     try {
       const [year, month, day] = dateStr.split('-').map(Number);
@@ -306,101 +323,102 @@ export function PortalPage() {
       )}
 
       {/* 4 CORE ATTENDANCE SUMMARY WIDGETS */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Widget 1: Present Slots */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/30 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center justify-between shadow-xs">
-          <div>
-            <p className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Present Slots
-            </p>
-            <h3 className="text-2xl sm:text-3xl font-heading font-black text-emerald-800 dark:text-emerald-300 mt-1">
-              {presentSlots}
-            </h3>
-            <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/70 mt-0.5">
-              Sessions attended
-            </p>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Widget 2: Absent Slots */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-red-200/80 dark:border-red-800/30 bg-red-50/70 dark:bg-red-950/20 flex items-center justify-between shadow-xs">
-          <div>
-            <p className="text-[11px] font-extrabold text-red-700 dark:text-red-400 uppercase tracking-wider">
-              Absent Slots
-            </p>
-            <h3 className="text-2xl sm:text-3xl font-heading font-black text-red-800 dark:text-red-300 mt-1">
-              {absentSlots}
-            </h3>
-            <p className="text-[11px] text-red-600/80 dark:text-red-400/70 mt-0.5">
-              Sessions missed
-            </p>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-            <XCircle className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Widget 3: Total Slots */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-blue-200/80 dark:border-blue-800/30 bg-blue-50/70 dark:bg-blue-950/20 flex items-center justify-between shadow-xs">
-          <div>
-            <p className="text-[11px] font-extrabold text-primary dark:text-primary-light uppercase tracking-wider">
-              Total Slots
-            </p>
-            <h3 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white mt-1">
-              {totalSlots}
-            </h3>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-              Total drill sessions
-            </p>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Widget 4: Total Attendance */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#161d27] flex flex-col justify-between shadow-xs">
-          <div className="flex items-center justify-between">
+      {loading ? (
+        <SkeletonStats count={4} />
+      ) : (
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Widget 1: Present Slots */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/30 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center justify-between shadow-xs">
             <div>
-              <p className="text-[11px] font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Total Attendance
+              <p className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                Present Slots
+              </p>
+              <h3 className="text-2xl sm:text-3xl font-heading font-black text-emerald-800 dark:text-emerald-300 mt-1">
+                <CountUp value={presentSlots} />
+              </h3>
+              <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/70 mt-0.5">
+                Sessions attended
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+          </div>
+
+          {/* Widget 2: Absent Slots */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-red-200/80 dark:border-red-800/30 bg-red-50/70 dark:bg-red-950/20 flex items-center justify-between shadow-xs">
+            <div>
+              <p className="text-[11px] font-extrabold text-red-700 dark:text-red-400 uppercase tracking-wider">
+                Absent Slots
+              </p>
+              <h3 className="text-2xl sm:text-3xl font-heading font-black text-red-800 dark:text-red-300 mt-1">
+                <CountUp value={absentSlots} />
+              </h3>
+              <p className="text-[11px] text-red-600/80 dark:text-red-400/70 mt-0.5">
+                Sessions missed
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <XCircle className="w-6 h-6" />
+            </div>
+          </div>
+
+          {/* Widget 3: Total Slots */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-blue-200/80 dark:border-blue-800/30 bg-blue-50/70 dark:bg-blue-950/20 flex items-center justify-between shadow-xs">
+            <div>
+              <p className="text-[11px] font-extrabold text-primary dark:text-primary-light uppercase tracking-wider">
+                Total Slots
               </p>
               <h3 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white mt-1">
-                {totalAttendance}%
+                <CountUp value={totalSlots} />
               </h3>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                Total drill sessions
+              </p>
             </div>
-            <span
-              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                totalAttendance >= 75
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-              }`}
-            >
-              {totalAttendance >= 75 ? 'Eligible' : 'Warning (<75%)'}
-            </span>
+            <div className="w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Clock className="w-6 h-6" />
+            </div>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2 mt-3 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                totalAttendance >= 75 ? 'bg-emerald-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${Math.min(totalAttendance, 100)}%` }}
-            />
-          </div>
-        </div>
 
-      </section>
+          {/* Widget 4: Total Attendance */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#161d27] flex flex-col justify-between shadow-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Total Attendance
+                </p>
+                <h3 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white mt-1">
+                  <CountUp value={totalAttendance} suffix="%" />
+                </h3>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                  totalAttendance >= 75
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                }`}
+              >
+                {totalAttendance >= 75 ? 'Eligible' : 'Warning (<75%)'}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2 mt-3 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  totalAttendance >= 75 ? 'bg-emerald-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${Math.min(totalAttendance, 100)}%` }}
+              />
+            </div>
+          </div>
+
+        </section>
+      )}
 
       {/* ATTENDANCE MUSTER TABLE SECTION */}
       {loading ? (
-        <div className="py-12 text-center text-gray-500">
-          <Clock className="w-8 h-8 mx-auto mb-2 animate-spin text-primary" />
-          <p className="text-sm">Loading attendance records…</p>
-        </div>
+        <SkeletonTable rows={6} cols={5} />
       ) : (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -408,7 +426,7 @@ export function PortalPage() {
               Attendance Muster
             </h2>
             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-              {groupedByDate.length} {groupedByDate.length === 1 ? 'Date' : 'Dates'} Recorded
+              <CountUp value={groupedByDate.length} /> {groupedByDate.length === 1 ? 'Date' : 'Dates'} Recorded
             </span>
           </div>
 
@@ -433,7 +451,7 @@ export function PortalPage() {
 
                 {/* TABLE BODY (GROUPED BY DATE) */}
                 <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                  {groupedByDate.map((row) => {
+                  {paginatedGroupedByDate.map((row) => {
                     const dInfo = formatDateDisplay(row.date);
                     const dayRate = row.totalCount > 0 ? Math.round((row.presentCount / row.totalCount) * 100) : 0;
 
@@ -500,6 +518,17 @@ export function PortalPage() {
                 </tbody>
 
               </table>
+
+              {/* Table Footer with Demo Pagination Style */}
+              <TablePagination
+                currentPage={currentPage}
+                totalEntries={groupedByDate.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[10, 25, 50, 100]}
+                itemLabel="dates"
+              />
             </div>
           )}
         </section>

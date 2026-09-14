@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 import { StudentProfile } from '../types';
 import { toast } from 'sonner';
+import { SkeletonProfile } from '../components/common/Skeleton';
 import {
   User,
   Lock,
@@ -168,14 +169,7 @@ export const ProfilePage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-3">
-        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-          Loading student profile details...
-        </p>
-      </div>
-    );
+    return <SkeletonProfile />;
   }
 
   const hardcodedUserId = profile?.id || user?.student_id || user?.username || '262701';

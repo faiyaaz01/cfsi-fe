@@ -16,6 +16,9 @@ import { StudentVerificationRecord } from '../types';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { toast } from 'sonner';
+import { CountUp } from '../components/common/CountUp';
+import { SkeletonTable } from '../components/common/Skeleton';
+import { TablePagination } from '../components/common/TablePagination';
 
 export const StudentDataPage: React.FC = () => {
   const [students, setStudents] = useState<StudentVerificationRecord[]>([]);
@@ -23,6 +26,10 @@ export const StudentDataPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   useEffect(() => {
     api.getStudents()
@@ -48,6 +55,16 @@ export const StudentDataPage: React.FC = () => {
       return matchesSearch && matchesCourse && matchesYear;
     });
   }, [students, searchTerm, selectedCourse, selectedYear]);
+
+  // Reset to page 1 on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCourse, selectedYear]);
+
+  const paginatedStudents = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredStudents.slice(start, start + pageSize);
+  }, [filteredStudents, currentPage, pageSize]);
 
   const uniqueCourses = ['All', ...Array.from(new Set(students.map((s) => s.course)))];
   const uniqueYears = ['All', ...Array.from(new Set(students.map((s) => s.passingYear)))];
@@ -147,7 +164,9 @@ export const StudentDataPage: React.FC = () => {
           </div>
 
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>Showing <strong>{filteredStudents.length}</strong> of {students.length} pass-out records</span>
+            <span>
+              Showing <strong><CountUp value={filteredStudents.length} /></strong> of <CountUp value={students.length} /> pass-out records
+            </span>
             {(searchTerm || selectedCourse !== 'All' || selectedYear !== 'All') && (
               <button
                 type="button"
@@ -161,22 +180,25 @@ export const StudentDataPage: React.FC = () => {
         </FlatCard>
 
         {/* Responsive Table Container */}
-        <div className="rounded-2xl border border-gray-200/80 dark:border-white/10 overflow-hidden shadow-sm bg-white dark:bg-[#161d27]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm border-collapse">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="py-3.5 px-4 sm:px-6">Student Name</th>
-                  <th className="py-3.5 px-4 sm:px-6">Student ID</th>
-                  <th className="py-3.5 px-4 sm:px-6">Course Awarded</th>
-                  <th className="py-3.5 px-4 sm:px-6">Batch / Year</th>
-                  <th className="py-3.5 px-4 sm:px-6">Grade</th>
-                  <th className="py-3.5 px-4 sm:px-6 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-gray-700 dark:text-gray-300">
+        {loading ? (
+          <SkeletonTable rows={8} cols={6} />
+        ) : (
+          <div className="rounded-2xl border border-gray-200/80 dark:border-white/10 overflow-hidden shadow-sm bg-white dark:bg-[#161d27]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-4 sm:px-6">Student Name</th>
+                    <th className="py-3.5 px-4 sm:px-6">Student ID</th>
+                    <th className="py-3.5 px-4 sm:px-6">Course Awarded</th>
+                    <th className="py-3.5 px-4 sm:px-6">Batch / Year</th>
+                    <th className="py-3.5 px-4 sm:px-6">Grade</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-gray-700 dark:text-gray-300">
                 {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
+                  paginatedStudents.map((student) => (
                     <tr
                       key={student.id}
                       className="hover:bg-gray-50/80 dark:hover:bg-white/[0.02] transition-colors"
@@ -239,7 +261,19 @@ export const StudentDataPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Table Footer with Demo Pagination Style */}
+          <TablePagination
+            currentPage={currentPage}
+            totalEntries={filteredStudents.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            itemLabel="students"
+          />
         </div>
+      )}
 
       </div>
     </div>

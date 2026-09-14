@@ -37,6 +37,9 @@ import { useAuth } from '../context/AuthContext';
 import { StudentVerificationRecord } from '../types';
 import { FlatCard } from '../components/common/FlatCard';
 import { BulkStudentImportModal } from '../components/admin/BulkStudentImportModal';
+import { CountUp } from '../components/common/CountUp';
+import { SkeletonStats, Skeleton } from '../components/common/Skeleton';
+import { TablePagination } from '../components/common/TablePagination';
 
 interface UserFormData {
   username: string;
@@ -126,6 +129,20 @@ export function UsersPage() {
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [users, searchQuery, roleFilter, statusFilter]);
+
+  // User Table Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  // Reset to page 1 on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, statusFilter]);
+
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(start, start + pageSize);
+  }, [filteredUsers, currentPage, pageSize]);
 
   // Metric stats
   const stats = useMemo(() => {
@@ -427,71 +444,75 @@ export function UsersPage() {
         )}
 
         {/* Metrics Overview Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Accounts */}
-          <FlatCard hoverEffect={false} className="p-5 border border-gray-200/80 dark:border-white/10">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Total Accounts</span>
-              <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                <Users className="w-4 h-4" />
+        {busy && users.length === 0 ? (
+          <SkeletonStats count={4} />
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Accounts */}
+            <FlatCard hoverEffect={false} className="p-5 border border-gray-200/80 dark:border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Total Accounts</span>
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <Users className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-2">
-              {stats.total}
-            </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-              {stats.active} Active • {stats.total - stats.active} Suspended
-            </div>
-          </FlatCard>
+              <div className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-2">
+                <CountUp value={stats.total} />
+              </div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                <CountUp value={stats.active} /> Active • <CountUp value={stats.total - stats.active} /> Suspended
+              </div>
+            </FlatCard>
 
-          {/* Administrators */}
-          <FlatCard hoverEffect={false} className="p-5 border border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Administrators</span>
-              <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                <Shield className="w-4 h-4" />
+            {/* Administrators */}
+            <FlatCard hoverEffect={false} className="p-5 border border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Administrators</span>
+                <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                  <Shield className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">
-              {stats.admins}
-            </div>
-            <div className="text-[11px] text-amber-600/80 dark:text-amber-400/80 mt-1">
-              Full System Access & User Controls
-            </div>
-          </FlatCard>
+              <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">
+                <CountUp value={stats.admins} />
+              </div>
+              <div className="text-[11px] text-amber-600/80 dark:text-amber-400/80 mt-1">
+                Full System Access & User Controls
+              </div>
+            </FlatCard>
 
-          {/* Faculty / Instructors */}
-          <FlatCard hoverEffect={false} className="p-5 border border-emerald-500/20 dark:border-emerald-500/15 bg-emerald-500/[0.02]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Faculty & Staff</span>
-              <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                <BookOpen className="w-4 h-4" />
+            {/* Faculty / Instructors */}
+            <FlatCard hoverEffect={false} className="p-5 border border-emerald-500/20 dark:border-emerald-500/15 bg-emerald-500/[0.02]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Faculty & Staff</span>
+                <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  <BookOpen className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
-              {stats.teachers}
-            </div>
-            <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-1">
-              Attendance Muster & Drill Records
-            </div>
-          </FlatCard>
+              <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
+                <CountUp value={stats.teachers} />
+              </div>
+              <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-1">
+                Attendance Muster & Drill Records
+              </div>
+            </FlatCard>
 
-          {/* Active Students */}
-          <FlatCard hoverEffect={false} className="p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Active Students</span>
-              <div className="p-2 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
-                <GraduationCap className="w-4 h-4" />
+            {/* Active Students */}
+            <FlatCard hoverEffect={false} className="p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Active Students</span>
+                <div className="p-2 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-primary dark:text-primary-light mt-2">
-              {stats.students}
-            </div>
-            <div className="text-[11px] text-primary/80 dark:text-primary-light/80 mt-1">
-              Individual Portal & Training Dossier
-            </div>
-          </FlatCard>
-        </div>
+              <div className="text-2xl sm:text-3xl font-black text-primary dark:text-primary-light mt-2">
+                <CountUp value={stats.students} />
+              </div>
+              <div className="text-[11px] text-primary/80 dark:text-primary-light/80 mt-1">
+                Individual Portal & Training Dossier
+              </div>
+            </FlatCard>
+          </div>
+        )}
 
         {/* User Creation & Editing Card */}
         <div ref={formRef}>
@@ -902,14 +923,38 @@ export function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                  {filteredUsers.length === 0 ? (
+                  {busy && users.length === 0 ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="py-4 px-4 text-center">
+                          <div className="w-4 h-4 bg-gray-200 dark:bg-white/10 rounded mx-auto" />
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-36 mb-1.5" />
+                          <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-24" />
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="h-5 bg-gray-200 dark:bg-white/10 rounded-full w-20" />
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-24" />
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <div className="h-5 bg-gray-200 dark:bg-white/10 rounded-full w-16 mx-auto" />
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <div className="h-6 bg-gray-200 dark:bg-white/10 rounded w-16 mx-auto" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : filteredUsers.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-12 text-center text-gray-400 font-semibold">
                         No users found matching "{searchQuery}".
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((account) => {
+                    paginatedUsers.map((account) => {
                       const isSelf = account.id === currentUser?.id;
                       const isSelected = selectedUserIds.includes(account.id);
                       const roleColors = {
@@ -1042,6 +1087,17 @@ export function UsersPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Table Footer with Demo Pagination Style */}
+            <TablePagination
+              currentPage={currentPage}
+              totalEntries={filteredUsers.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[10, 25, 50, 100]}
+              itemLabel="users"
+            />
           </FlatCard>
         </div>
 
