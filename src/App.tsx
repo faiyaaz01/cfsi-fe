@@ -10,7 +10,6 @@ import { StudentDataProvider } from './context/StudentDataContext';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
-import { MissionPage } from './pages/MissionPage';
 import { ImageGalleryPage } from './pages/ImageGalleryPage';
 import { VideoGalleryPage } from './pages/VideoGalleryPage';
 import { CoursesPage } from './pages/CoursesPage';
@@ -20,6 +19,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ContactPage } from './pages/ContactPage';
 import { StudentDataPage } from './pages/StudentDataPage';
 import { LoginPage } from './pages/LoginPage';
+import { StudentLoginPage } from './pages/StudentLoginPage';
+import { InstituteLoginPage } from './pages/InstituteLoginPage';
 import { StudentDashboardPage } from './pages/StudentDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 
@@ -39,7 +40,7 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
-            <Route path="mission" element={<MissionPage />} />
+            <Route path="mission" element={<Navigate to="/about#mission" replace />} />
             <Route path="gallery/images" element={<ImageGalleryPage />} />
             <Route path="gallery/videos" element={<VideoGalleryPage />} />
             <Route path="courses" element={<CoursesPage />} />
@@ -47,9 +48,12 @@ const AppContent: React.FC = () => {
             <Route path="career" element={<CareerPage />} />
             <Route path="news" element={<NewsPage />} />
             <Route path="contact" element={<ContactPage />} />
-            {/* Unified Combined Login Portal (Admin & Student) */}
-            <Route path="student-login" element={<Navigate to="/login" replace />} />
-            <Route element={<GuestGuard />}><Route path="login" element={<LoginPage />} /></Route>
+            {/* Separate Login Portals (Student & Institute) */}
+            <Route element={<GuestGuard />}>
+              <Route path="student-login" element={<StudentLoginPage />} />
+              <Route path="institute-login" element={<InstituteLoginPage />} />
+              <Route path="login" element={<LoginPage />} />
+            </Route>
             <Route element={<AuthGuard roles={['admin']} />}>
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="users" element={<UsersPage />} />

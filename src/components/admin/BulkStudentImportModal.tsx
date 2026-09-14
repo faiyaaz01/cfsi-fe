@@ -537,9 +537,9 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
     if (!importResult?.students) return;
     const lines = importResult.students.map(
       (s: any) =>
-        `Roll No: ${s.roll_no} | Cadet User ID (Login): ${s.student_id} | Password: ${s.generated_password} | Name: ${s.name} | DOB: ${s.birth_date}`
+        `Roll No: ${s.roll_no} | Student User ID (Login): ${s.student_id} | Password: ${s.generated_password} | Name: ${s.name} | DOB: ${s.birth_date}`
     );
-    const text = `CFSI Cadet Generated Login Credentials:\n\n${lines.join('\n')}`;
+    const text = `CFSI Student Generated Login Credentials:\n\n${lines.join('\n')}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success('Credentials copied to clipboard!');
@@ -568,7 +568,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
               Bulk Import Students & Auto-Create Accounts
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Upload a CSV or Excel (.xlsx, .xls) file. Cadet User IDs (e.g. 262701) are automatically assigned by roll number for login, and passwords are set to birth dates (DDMMYYYY).
+              Upload a CSV or Excel (.xlsx, .xls) file. Student User IDs (e.g. 262701) are automatically assigned by roll number for login, and passwords are set to birth dates (DDMMYYYY).
             </p>
           </div>
         </div>
@@ -586,7 +586,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                     {importResult.message}
                   </h3>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                    Accounts are live in MongoDB and students can now log in immediately with their Cadet User ID.
+                    Accounts are live in MongoDB and students can now log in immediately with their Student User ID.
                   </p>
                 </div>
               </div>
@@ -607,8 +607,8 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                 <thead className="bg-gray-50 dark:bg-slate-800/80 sticky top-0 border-b border-gray-200 dark:border-white/10">
                   <tr>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Roll No</th>
-                    <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Cadet User ID (Login)</th>
-                    <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Cadet Name</th>
+                    <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Student User ID (Login)</th>
+                    <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Student Name</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Birth Date</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Generated Password</th>
                     <th className="p-3 font-bold text-gray-600 dark:text-gray-300">Status</th>
@@ -712,7 +712,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                      Live Preview: <strong className="text-primary">{parsedRows.length}</strong> Cadets Found
+                      Live Preview: <strong className="text-primary">{parsedRows.length}</strong> Students Found
                     </span>
                     <span className="text-xs text-gray-400">
                       ({parsedRows.filter((r) => r.isValid).length} valid)
@@ -738,8 +738,8 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                       <tr>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">#</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Roll</th>
-                        <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Cadet User ID</th>
-                        <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Cadet Name</th>
+                        <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Student User ID</th>
+                        <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Student Name</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Birth Date</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Auto Password (DDMMYYYY)</th>
                         <th className="p-2.5 font-bold text-gray-600 dark:text-gray-300">Course</th>
@@ -808,7 +808,7 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
                 <span>
                   {loading
                     ? 'Creating Accounts...'
-                    : `Generate Accounts (${parsedRows.filter((r) => r.isValid).length} Cadets)`}
+                    : `Generate Accounts (${parsedRows.filter((r) => r.isValid).length} Students)`}
                 </span>
               </button>
             </div>

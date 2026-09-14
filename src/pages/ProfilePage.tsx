@@ -172,7 +172,7 @@ export const ProfilePage: React.FC = () => {
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-3">
         <RefreshCw className="w-8 h-8 text-primary animate-spin" />
         <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-          Loading cadet profile details...
+          Loading student profile details...
         </p>
       </div>
     );
@@ -220,7 +220,7 @@ export const ProfilePage: React.FC = () => {
           <div className="text-center sm:text-left space-y-1.5 flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-md">
-                Cadet Profile
+                Student Profile
               </span>
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
                 <CheckCircle className="w-3.5 h-3.5" />
@@ -232,11 +232,11 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
-              {name || user?.full_name || 'Cadet Name'}
+              {name || user?.full_name || 'Student Name'}
             </h1>
 
             <p className="text-xs sm:text-sm text-white/80 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-              <span><strong>Cadet User ID:</strong> {hardcodedUserId}</span>
+              <span><strong>Student User ID:</strong> {hardcodedUserId}</span>
               {rollNo && (
                 <>
                   <span>•</span>
@@ -318,22 +318,22 @@ export const ProfilePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Section 2: Cadet Identification & Program Details */}
+        {/* Section 2: Student Identification & Program Details */}
         <section className="bg-white dark:bg-[#161d27] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-white/5">
             <Shield className="w-5 h-5 text-primary dark:text-primary-light" />
             <h2 className="text-base font-heading font-bold text-gray-900 dark:text-white">
-              Cadet Identification & Program Details
+              Student Identification & Program Details
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             
-            {/* Cadet Roll No */}
+            {/* Student Roll No */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Cadet Roll No
+                  Student Roll No
                 </label>
                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
                   <Lock className="w-3 h-3" />
@@ -351,15 +351,15 @@ export const ProfilePage: React.FC = () => {
                 <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               </div>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                Institute assigned cadet roll number.
+                Institute assigned student roll number.
               </p>
             </div>
 
-            {/* Cadet User ID (Student ID) */}
+            {/* Student User ID */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Cadet User ID (Login Username)
+                  Student User ID (Login Username)
                 </label>
                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
                   <Lock className="w-3 h-3" />
@@ -377,14 +377,14 @@ export const ProfilePage: React.FC = () => {
                 <User className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               </div>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                Cadet login identifier.
+                Student login identifier.
               </p>
             </div>
 
-            {/* Cadet Name / Full Name */}
+            {/* Student Name / Full Name */}
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                Cadet Name (Full Name) <span className="text-red-500">*</span>
+                Student Name (Full Name) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -789,7 +789,7 @@ export const ProfilePage: React.FC = () => {
             </button>
 
             <h3 className="text-base font-heading font-bold text-gray-900 dark:text-white mb-4">
-              Cadet Photo Preview
+              Student Photo Preview
             </h3>
 
             <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-4">

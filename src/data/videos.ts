@@ -7,7 +7,7 @@ export const videosData: VideoItem[] = [
     title: 'Live Foam Tender & Industrial Oil Fire Extinguishing Drill',
     category: 'Practical Drill',
     duration: '4:15',
-    description: 'CFSI cadets demonstrating real-time high-expansion foam blanket application on volatile liquid fuel fires at the Vadodara drill grounds.'
+    description: 'CFSI students demonstrating real-time high-expansion foam blanket application on volatile liquid fuel fires at the Vadodara drill grounds.'
   },
   {
     id: 'vid-02',
@@ -15,7 +15,7 @@ export const videosData: VideoItem[] = [
     title: 'High-Altitude Rope Rescue & Rappelling Training',
     category: 'Search & Rescue',
     duration: '3:45',
-    description: 'Cadets practicing vertical descent, casualty stretcher lowering, and knot mechanics from a 4-storey drill tower.'
+    description: 'Students practicing vertical descent, casualty stretcher lowering, and knot mechanics from a 4-storey drill tower.'
   },
   {
     id: 'vid-03',

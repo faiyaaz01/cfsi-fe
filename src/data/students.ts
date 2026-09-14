@@ -17,8 +17,8 @@ export function generateStudentId(batch: string, rollNo: string | number): strin
 }
 
 /**
- * Institutional Cadet & Trainee Registry.
+ * Institutional Student Registry.
  * Demo student data has been completely cleared.
- * Registered cadets are loaded dynamically from MongoDB or added via CSV/Excel Bulk Import.
+ * Registered students are loaded dynamically from MongoDB or added via CSV/Excel Bulk Import.
  */
 export const studentsData: StudentVerificationRecord[] = [];

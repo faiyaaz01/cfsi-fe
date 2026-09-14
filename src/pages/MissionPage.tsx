@@ -109,7 +109,7 @@ export const MissionPage: React.FC = () => {
             <div className="relative z-10 max-w-3xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-4">
                 <Flame className="w-3.5 h-3.5 text-accent" />
-                <span>The CFSI Cadet Pledge</span>
+                <span>The CFSI Student Pledge</span>
               </div>
 
               <blockquote className="text-lg sm:text-2xl font-heading font-bold text-white leading-relaxed italic mb-6">
@@ -117,7 +117,7 @@ export const MissionPage: React.FC = () => {
               </blockquote>
 
               <p className="text-xs sm:text-sm text-white/80 font-medium">
-                — Recited daily by all cadets at morning parade assembly on the Vadodara drill grounds.
+                — Recited daily by all students at morning parade assembly on the Vadodara drill grounds.
               </p>
             </div>
           </div>

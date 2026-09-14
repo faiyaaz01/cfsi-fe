@@ -92,7 +92,7 @@ export interface StudentVerificationRecord {
 }
 
 export interface StudentProfile {
-  id: string; // Cadet Student ID - Hardcoded / Read-only
+  id: string; // Student ID - Hardcoded / Read-only
   rollNo?: string;
   enrollmentNo?: string;
   name: string; // Full Name

@@ -360,7 +360,7 @@ export function UsersPage() {
               User Management & Access Control
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 max-w-3xl">
-              Create, configure, and maintain authenticated Administrator, Faculty Instructor, and Cadet access credentials.
+              Create, configure, and maintain authenticated Administrator, Faculty Instructor, and Student access credentials.
             </p>
           </div>
 
@@ -476,10 +476,10 @@ export function UsersPage() {
             </div>
           </FlatCard>
 
-          {/* Active Cadets */}
+          {/* Active Students */}
           <FlatCard hoverEffect={false} className="p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Active Cadets</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Active Students</span>
               <div className="p-2 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
                 <GraduationCap className="w-4 h-4" />
               </div>
@@ -622,7 +622,7 @@ export function UsersPage() {
                       onChange={(e) => setForm({ ...form, role: e.target.value as AuthUser['role'] })}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-semibold"
                     >
-                      <option value="student">Student / Cadet (Access personal training logs & muster)</option>
+                      <option value="student">Student (Access personal training logs & muster)</option>
                       <option value="teacher">Teacher / Instructor (Mark muster attendance & review roster)</option>
                       <option value="admin">Administrator (Full administrative authority & user management)</option>
                     </select>
@@ -636,20 +636,20 @@ export function UsersPage() {
                 <div className="p-4 sm:p-5 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/15 dark:border-white/10 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-bold text-primary dark:text-primary-light uppercase tracking-wider">
                     <GraduationCap className="w-4 h-4" />
-                    <span>Link Cadet Record</span>
+                    <span>Link Student Record</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-300 mb-1">
-                        Select from Registered Cadets
+                        Select from Registered Students
                       </label>
                       <select
                         value={form.student_id}
                         onChange={(e) => handleCadetSelect(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                       >
-                        <option value="">-- Choose cadet from directory --</option>
+                        <option value="">-- Choose student from directory --</option>
                         {enrolledStudents.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.id} — {s.name} (Roll {s.rollNo}, {s.course})
@@ -896,7 +896,7 @@ export function UsersPage() {
                     </th>
                     <th className="py-3.5 px-4">User Identity</th>
                     <th className="py-3.5 px-4">Access Role</th>
-                    <th className="py-3.5 px-4">Cadet User ID</th>
+                    <th className="py-3.5 px-4">Student User ID</th>
                     <th className="py-3.5 px-4 text-center">Account Status</th>
                     <th className="py-3.5 px-4 text-center">Actions</th>
                   </tr>

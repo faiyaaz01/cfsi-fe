@@ -10,6 +10,7 @@ import {
   Video, 
   Users,
   GraduationCap,
+  Building2,
   User,
   LogOut
 } from 'lucide-react';
@@ -120,10 +121,6 @@ export const Navbar: React.FC = () => {
 
             <NavLink to="/about" className={({ isActive }) => getNavLinkClass(isActive)}>
               About Us
-            </NavLink>
-
-            <NavLink to="/mission" className={({ isActive }) => getNavLinkClass(isActive)}>
-              Our Mission
             </NavLink>
 
             {/* Gallery Dropdown (Click to toggle) */}
@@ -352,7 +349,7 @@ export const Navbar: React.FC = () => {
                           onClick={async () => {
                             setProfileDropdownOpen(false);
                             await logout();
-                            navigate('/login');
+                            navigate('/student-login');
                           }}
                           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                         >
@@ -365,26 +362,45 @@ export const Navbar: React.FC = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white bg-accent hover:bg-accent-hover shadow-sm transition-all duration-200 active:scale-95"
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span>Portal Login</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/student-login"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-accent hover:bg-accent-hover shadow-xs hover:shadow-md transition-all duration-200 active:scale-95"
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Student Login</span>
+                </Link>
+
+                <Link
+                  to="/institute-login"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-primary hover:bg-primary-dark shadow-xs hover:shadow-md transition-all duration-200 active:scale-95"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Institute Login</span>
+                </Link>
+              </div>
             )}
           </div>
 
           {/* Mobile Hamburger Button */}
-          <div className="flex items-center gap-2 xl:hidden">
+          <div className="flex items-center gap-1.5 xl:hidden">
             {isLogged ? null : (
-              <Link
-                to="/login"
-                className="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-accent shadow-sm"
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Login</span>
-              </Link>
+              <div className="sm:hidden flex items-center gap-1">
+                <Link
+                  to="/student-login"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-white bg-accent shadow-xs"
+                >
+                  <GraduationCap className="w-3 h-3" />
+                  <span>Student</span>
+                </Link>
+                <Link
+                  to="/institute-login"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold text-white bg-primary shadow-xs"
+                >
+                  <Building2 className="w-3 h-3" />
+                  <span>Institute</span>
+                </Link>
+              </div>
             )}
 
             <button
@@ -425,12 +441,6 @@ export const Navbar: React.FC = () => {
                   className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
                 >
                   About Us
-                </Link>
-                <Link
-                  to="/mission"
-                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  Our Mission
                 </Link>
                 <Link
                   to="/career"
@@ -569,7 +579,7 @@ export const Navbar: React.FC = () => {
                       onClick={async () => {
                         setMobileMenuOpen(false);
                         await logout();
-                        navigate('/login');
+                        navigate('/student-login');
                       }}
                       className="w-full py-2.5 rounded-xl text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
@@ -588,14 +598,24 @@ export const Navbar: React.FC = () => {
                 ) : (
                   <>
                     <Link
-                      to="/login"
+                      to="/student-login"
+                      onClick={() => setMobileMenuOpen(false)}
                       className="w-full py-2.5 rounded-xl text-xs font-bold bg-accent text-white hover:bg-accent-hover transition-colors shadow-sm flex items-center justify-center gap-2"
                     >
                       <GraduationCap className="w-4 h-4" />
-                      <span>Portal Login (Student & Admin)</span>
+                      <span>Student Login</span>
+                    </Link>
+                    <Link
+                      to="/institute-login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      <span>Institute Login</span>
                     </Link>
                     <Link
                       to="/contact"
+                      onClick={() => setMobileMenuOpen(false)}
                       className="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-gray-200 transition-colors block"
                     >
                       Contact Us

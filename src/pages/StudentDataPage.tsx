@@ -86,7 +86,7 @@ export const StudentDataPage: React.FC = () => {
         <SectionHeading
           badge="Alumni Roster"
           title="PASS OUT STUDENT DIRECTORY"
-          subtitle="Searchable repository of alumni and cadets who have successfully completed vocational training and ground drills at CFSI Vadodara."
+          subtitle="Searchable repository of alumni and students who have successfully completed vocational training and ground drills at CFSI Vadodara."
         />
 
         {/* Filters and Controls Card */}

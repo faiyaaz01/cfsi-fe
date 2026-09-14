@@ -125,10 +125,10 @@ export const DashboardPage: React.FC = () => {
     loadCadets();
   }, [loadCadets]);
 
-  // Permanently delete a cadet from database (removes user login, profile, and attendance)
+  // Permanently delete a student from database (removes user login, profile, and attendance)
   const handleDeleteCadet = async (cadet: StudentVerificationRecord) => {
     const confirmed = window.confirm(
-      `Are you sure you want to permanently delete Cadet "${cadet.name}" (${cadet.id})?\n\nThis will permanently remove their user account, student record, and attendance logs from the database.`
+      `Are you sure you want to permanently delete Student "${cadet.name}" (${cadet.id})?\n\nThis will permanently remove their user account, student record, and attendance logs from the database.`
     );
     if (!confirmed) return;
 
@@ -139,9 +139,9 @@ export const DashboardPage: React.FC = () => {
       if (selectedCadetDetail?.id === cadet.id) {
         setSelectedCadetDetail(null);
       }
-      toast.success(`Cadet ${cadet.name} (${cadet.id}) permanently removed from database.`);
+      toast.success(`Student ${cadet.name} (${cadet.id}) permanently removed from database.`);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to delete cadet from database');
+      toast.error(err.message || 'Failed to delete student from database');
     } finally {
       setDeletingCadetId(null);
     }
@@ -202,7 +202,7 @@ export const DashboardPage: React.FC = () => {
     }
   });
 
-  const handleLogout = () => { void logout(); navigate('/login'); };
+  const handleLogout = () => { void logout(); navigate('/institute-login'); };
 
   // News Image file select preview
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -422,7 +422,7 @@ export const DashboardPage: React.FC = () => {
       course: s.course,
     }));
     if (targets.length === 0) {
-      toast.error('No cadets match the current filter.');
+      toast.error('No students match the current filter.');
       return;
     }
     const topic = slot === 'Slot 1' ? slot1Topic : slot === 'Slot 2' ? slot2Topic : slot3Topic;
@@ -430,8 +430,8 @@ export const DashboardPage: React.FC = () => {
     setHasPendingChanges(true);
     toast.success(
       slot === 'All'
-        ? `Marked ${targets.length} cadets ${status} for all 3 slots on ${selectedMusterDate}`
-        : `Marked ${targets.length} cadets ${status} for ${slot} on ${selectedMusterDate}`
+        ? `Marked ${targets.length} students ${status} for all 3 slots on ${selectedMusterDate}`
+        : `Marked ${targets.length} students ${status} for ${slot} on ${selectedMusterDate}`
     );
   };
 
@@ -528,9 +528,9 @@ export const DashboardPage: React.FC = () => {
     return true; // 'all'
   });
 
-  // If NOT Authenticated, redirect to unified login portal
+  // If NOT Authenticated, redirect to institute login portal
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/institute-login" replace />;
   }
 
   return (
@@ -601,7 +601,7 @@ export const DashboardPage: React.FC = () => {
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5" />
-            <span>Cadets Directory ({cadetsList.length})</span>
+            <span>Students Directory ({cadetsList.length})</span>
           </button>
 
           {/* Mark Attendance */}
@@ -684,13 +684,13 @@ export const DashboardPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <GraduationCap className="w-4 h-4" />
-                    <span>Cadet & Trainee Registry</span>
+                    <span>Student Registry</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Institutional Cadet Directory
+                    Institutional Student Directory
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Inspect cadet demographics and track live physical drill attendance.
+                    Inspect student demographics and track live physical drill attendance.
                   </p>
                 </div>
 
@@ -719,7 +719,7 @@ export const DashboardPage: React.FC = () => {
               {/* Statistics Row */}
               <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
-                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Cadets</div>
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Students</div>
                   <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
                     {cadetsList.length}
                   </div>
@@ -745,14 +745,14 @@ export const DashboardPage: React.FC = () => {
 
               {/* Search & Course Filter Controls */}
               <div className="pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                {/* Search Cadet */}
+                {/* Search Student */}
                 <div className="md:col-span-6 relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={cadetSearch}
                     onChange={(e) => setCadetSearch(e.target.value)}
-                    placeholder="Search cadet by name, roll no, student ID, father's name..."
+                    placeholder="Search student by name, roll no, student ID, father's name..."
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                   />
                   {cadetSearch && (
@@ -773,7 +773,7 @@ export const DashboardPage: React.FC = () => {
                     onChange={(e) => setCadetCourseFilter(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="All">All Programs ({cadetsList.length} Cadets)</option>
+                    <option value="All">All Programs ({cadetsList.length} Students)</option>
                     <option value="Diploma In Fire Safety">Diploma In Fire Safety</option>
                     <option value="Sub Fire Officer">Sub Fire Officer</option>
                     <option value="Certificate In Fire Safety">Certificate In Fire Safety</option>
@@ -795,7 +795,7 @@ export const DashboardPage: React.FC = () => {
               <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
-                    Cadet Directory & Roster
+                    Student Directory & Roster
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Click "Inspect Details" to review comprehensive demographics and attendance breakdown.
@@ -807,7 +807,7 @@ export const DashboardPage: React.FC = () => {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-gray-50/80 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[11px] border-b border-gray-200/60 dark:border-white/10">
-                      <th className="py-3.5 px-4">Cadet Profile</th>
+                      <th className="py-3.5 px-4">Student Profile</th>
                       <th className="py-3.5 px-4">Identifiers</th>
                       <th className="py-3.5 px-4">Program & Batch</th>
                       <th className="py-3.5 px-4 text-center">Drill Attendance</th>
@@ -820,8 +820,8 @@ export const DashboardPage: React.FC = () => {
                       <tr>
                         <td colSpan={6} className="py-12 text-center text-gray-400 text-xs font-semibold">
                           {cadetSearch
-                            ? `No cadets found matching "${cadetSearch}".`
-                            : 'No cadets registered in the institutional directory yet. Click "Bulk Import Students (CSV/Excel)" above to import students from your spreadsheet.'}
+                            ? `No students found matching "${cadetSearch}".`
+                            : 'No students registered in the institutional directory yet. Click "Bulk Import Students (CSV/Excel)" above to import students from your spreadsheet.'}
                         </td>
                       </tr>
                     ) : (
@@ -867,7 +867,7 @@ export const DashboardPage: React.FC = () => {
                             {/* Identifiers */}
                             <td className="py-3.5 px-4">
                               <div className="font-mono text-xs font-bold text-gray-900 dark:text-white">
-                                Cadet User ID: {cadet.id}
+                                Student User ID: {cadet.id}
                               </div>
                               <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
                                 Roll: {cadet.rollNo}
@@ -928,7 +928,7 @@ export const DashboardPage: React.FC = () => {
                                   type="button"
                                   onClick={() => setSelectedCadetDetail(cadet)}
                                   className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1 shadow-sm"
-                                  title="Inspect full cadet profile"
+                                  title="Inspect full student profile"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                   <span>Inspect</span>
@@ -940,7 +940,7 @@ export const DashboardPage: React.FC = () => {
                                     setActiveTab('attendance');
                                   }}
                                   className="p-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
-                                  title="Mark Muster for this cadet"
+                                  title="Mark Muster for this student"
                                 >
                                   <Clock className="w-3.5 h-3.5" />
                                 </button>
@@ -949,7 +949,7 @@ export const DashboardPage: React.FC = () => {
                                   disabled={deletingCadetId === cadet.id}
                                   onClick={() => handleDeleteCadet(cadet)}
                                   className="p-1.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
-                                  title="Permanently delete cadet from database"
+                                  title="Permanently delete student from database"
                                 >
                                   {deletingCadetId === cadet.id ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -987,7 +987,7 @@ export const DashboardPage: React.FC = () => {
                     <span>Daily Muster Roll • 3 Drill Slots Each Day</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Cadet Daily Attendance Table
+                    Student Daily Attendance Table
                   </h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     1-Click status toggles across Morning, Technical Theory, and Apparatus Practical slots.
@@ -1037,14 +1037,14 @@ export const DashboardPage: React.FC = () => {
               {/* Filter & Topic Bar */}
               <div className="pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                 
-                {/* Search Cadet */}
+                {/* Search Student */}
                 <div className="md:col-span-4 relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={musterSearch}
                     onChange={(e) => setMusterSearch(e.target.value)}
-                    placeholder="Search cadet by name, roll, or cert..."
+                    placeholder="Search student by name, roll, or cert..."
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -1250,7 +1250,7 @@ export const DashboardPage: React.FC = () => {
               <GlassCard hoverEffect={false} className="p-3.5 border border-gray-200/80 dark:border-white/10">
                 <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Filtered Roster</div>
                 <div className="text-xl font-heading font-black text-gray-900 dark:text-white mt-1">
-                  {musterStats.totalCadets} Cadets
+                  {musterStats.totalCadets} Students
                 </div>
                 <div className="text-[10px] text-gray-500 mt-0.5">{formattedDateLabel}</div>
               </GlassCard>
@@ -1415,7 +1415,7 @@ export const DashboardPage: React.FC = () => {
                   <thead>
                     <tr className="bg-gray-100/90 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-extrabold uppercase text-[10px] tracking-wider">
                       <th className="py-3.5 px-3 text-center w-10">#</th>
-                      <th className="py-3.5 px-4 min-w-[200px]">Cadet / Trainee Profile</th>
+                      <th className="py-3.5 px-4 min-w-[200px]">Student Profile</th>
                       <th className="py-3.5 px-4 min-w-[160px]">Program & Batch</th>
                       
                       {/* Slot 1 Header */}
@@ -1452,7 +1452,7 @@ export const DashboardPage: React.FC = () => {
                     {filteredStudentsForMuster.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="py-12 text-center text-gray-400 text-sm font-semibold">
-                          No cadets found matching the current search / filter.
+                          No students found matching the current search / filter.
                         </td>
                       </tr>
                     ) : (
@@ -2341,7 +2341,7 @@ export const DashboardPage: React.FC = () => {
                           ) : (
                             <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 text-center">
                               <p className="text-xs text-gray-500">
-                                No attendance records recorded for this cadet yet. Attendance records are created when marking daily drills.
+                                No attendance records recorded for this student yet. Attendance records are created when marking daily drills.
                               </p>
                               <button
                                 type="button"
@@ -2407,7 +2407,7 @@ export const DashboardPage: React.FC = () => {
                         className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5"
                       >
                         <Printer className="w-3.5 h-3.5" />
-                        <span>Print Cadet Dossier</span>
+                        <span>Print Student Dossier</span>
                       </button>
 
                       <button
@@ -2415,14 +2415,14 @@ export const DashboardPage: React.FC = () => {
                         disabled={deletingCadetId === selectedCadetDetail.id}
                         onClick={() => handleDeleteCadet(selectedCadetDetail)}
                         className="px-3.5 py-2 rounded-xl text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                        title="Permanently remove cadet from database"
+                        title="Permanently remove student from database"
                       >
                         {deletingCadetId === selectedCadetDetail.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <Trash2 className="w-3.5 h-3.5" />
                         )}
-                        <span>Delete Cadet</span>
+                        <span>Delete Student</span>
                       </button>
                     </div>
 

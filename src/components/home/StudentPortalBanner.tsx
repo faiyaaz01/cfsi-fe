@@ -25,7 +25,7 @@ export const StudentPortalBanner: React.FC = () => {
               <div className="max-w-2xl space-y-2.5">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-amber-300 text-xs font-bold uppercase tracking-wider">
                   <GraduationCap className="w-3.5 h-3.5" />
-                  <span>Cadet Academic Portal</span>
+                  <span>Student Academic Portal</span>
                 </div>
 
                 <h3 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
@@ -33,7 +33,7 @@ export const StudentPortalBanner: React.FC = () => {
                 </h3>
 
                 <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
-                  Cadets can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.
+                  Students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.
                 </p>
 
                 {/* Feature checklist */}
@@ -56,11 +56,11 @@ export const StudentPortalBanner: React.FC = () => {
               {/* Right CTA Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
                 <Link
-                  to="/login"
+                  to="/student-login"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs sm:text-sm text-gray-900 bg-white hover:bg-amber-300 transition-all duration-300 shadow-lg hover:scale-105 active:scale-95"
                 >
                   <GraduationCap className="w-4 h-4 text-primary" />
-                  <span>Cadet Portal Login</span>
+                  <span>Student Portal Login</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 

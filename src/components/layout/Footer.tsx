@@ -9,7 +9,8 @@ import {
   ShieldCheck, 
   ExternalLink, 
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  Building2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import cfsiLogo from '../../assets/cfsi-logo.jpg';
@@ -165,7 +166,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/mission" className="hover:text-accent transition-colors flex items-center gap-1.5">
+                <Link to="/about#mission" className="hover:text-accent transition-colors flex items-center gap-1.5">
                   <ChevronRight className="w-3.5 h-3.5 text-accent" />
                   <span>Our Mission & Values</span>
                 </Link>
@@ -195,9 +196,15 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/login" className="text-primary dark:text-primary-light font-bold hover:text-accent transition-colors flex items-center gap-1.5">
-                  <GraduationCap className="w-3.5 h-3.5 text-primary" />
-                  <span>Cadet & Admin Portal</span>
+                <Link to="/student-login" className="text-accent font-bold hover:underline transition-colors flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-accent" />
+                  <span>Student Login</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/institute-login" className="text-primary dark:text-primary-light font-bold hover:text-accent transition-colors flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-primary" />
+                  <span>Institute Staff Login</span>
                 </Link>
               </li>
             </ul>
@@ -380,7 +387,9 @@ export const Footer: React.FC = () => {
             <span>•</span>
             <Link to="/about" className="hover:underline">Terms of Admission</Link>
             <span>•</span>
-            <Link to="/login" className="hover:underline">Portal Access</Link>
+            <Link to="/student-login" className="hover:underline">Student Login</Link>
+            <span>•</span>
+            <Link to="/institute-login" className="hover:underline">Institute Login</Link>
           </div>
         </div>
 

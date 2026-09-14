@@ -46,7 +46,10 @@ export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
   const {user, loading} = useAuth();
   const location = useLocation();
   if (loading) return <p className="p-12 text-center" role="status">Checking your session…</p>;
-  if (!user) return <Navigate to="/login" state={{from: location.pathname}} replace />;
+  if (!user) {
+    const target = location.pathname.startsWith('/student') ? '/student-login' : '/institute-login';
+    return <Navigate to={target} state={{from: location.pathname}} replace />;
+  }
   if (roles && !roles.includes(user.role)) return <Navigate to={homeFor(user)} replace />;
   return <Outlet />;
 }

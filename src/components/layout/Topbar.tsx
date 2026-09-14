@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, GraduationCap, Lock, Users, LogOut, LayoutDashboard } from 'lucide-react';
+import { Phone, Mail, GraduationCap, Lock, Users, LogOut, LayoutDashboard, Building2 } from 'lucide-react';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { useAuth, homeFor } from '../../context/AuthContext';
 
@@ -89,26 +89,27 @@ export const Topbar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <>
-              {/* Combined Institutional Portal Entry (Student & Admin) */}
+            <div className="flex items-center gap-1.5">
+              {/* Student Login */}
               <Link
-                to="/login"
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-gray-950 hover:bg-amber-300 font-extrabold text-[11px] shadow-sm transition-all duration-200 hover:scale-105"
-                title="Institutional Portal (Student & Admin Login)"
+                to="/student-login"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400 text-gray-950 hover:bg-amber-300 font-extrabold text-[11px] shadow-xs transition-all duration-200 hover:scale-105"
+                title="Student Login Portal"
               >
                 <GraduationCap className="w-3.5 h-3.5" />
-                <span>Portal Login</span>
+                <span>Student Login</span>
               </Link>
 
-              {/* Admin Direct Tab Link */}
+              {/* Institute Staff Login */}
               <Link
-                to="/login"
-                title="Institutional Login"
-                className="p-1 rounded-md text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+                to="/institute-login"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/15 text-white hover:bg-white/25 font-bold text-[11px] shadow-xs transition-all duration-200 hover:scale-105"
+                title="Institute Staff & Faculty Login"
               >
-                <Lock className="w-3.5 h-3.5" />
+                <Building2 className="w-3.5 h-3.5 text-amber-300" />
+                <span>Institute Login</span>
               </Link>
-            </>
+            </div>
           )}
 
           <span className="text-white/30">|</span>

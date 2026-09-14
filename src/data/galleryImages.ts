@@ -19,7 +19,7 @@ export const galleryImagesData: GalleryImage[] = [
   },
   {
     id: 'img-03',
-    title: 'Annual Commendation & Cadet Distribution',
+    title: 'Annual Commendation & Student Distribution',
     category: 'Events',
     imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=80',
     caption: 'Diploma batch graduates receiving their honors and badges.',

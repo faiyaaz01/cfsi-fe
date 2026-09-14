@@ -30,9 +30,9 @@ export const StudentDashboardPage: React.FC = () => {
 
   const [attendanceFilter, setAttendanceFilter] = useState<'All' | 'Present' | 'Absent'>('All');
 
-  // If not authenticated, redirect to /login
+  // If not authenticated, redirect to /student-login
   if (!student) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/student-login" replace />;
   }
 
   const attendanceRecords = getAttendanceByStudent(student.id);
@@ -92,7 +92,7 @@ export const StudentDashboardPage: React.FC = () => {
   const handleLogout = () => {
     logoutStudent();
     toast.info('Signed out of Student Portal');
-    navigate('/login');
+    navigate('/student-login');
   };
 
   const handlePrint = () => {
@@ -126,7 +126,7 @@ export const StudentDashboardPage: React.FC = () => {
                       <User className="w-8 h-8" />
                     </div>
                   )}
-                  <div className="absolute bottom-0 right-0 p-1 bg-emerald-500 rounded-tl-lg text-white" title="Verified Cadet">
+                  <div className="absolute bottom-0 right-0 p-1 bg-emerald-500 rounded-tl-lg text-white" title="Verified Student">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
                 </div>

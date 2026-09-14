@@ -236,7 +236,7 @@ export function PortalPage() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white capitalize">
-            {user?.role === 'student' ? 'Cadet Attendance Dashboard' : `${user?.role} Portal`}
+            {user?.role === 'student' ? 'Student Attendance Dashboard' : `${user?.role} Portal`}
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
             Welcome, <span className="font-semibold text-gray-900 dark:text-white">{user?.full_name || user?.username}</span>
@@ -297,9 +297,9 @@ export function PortalPage() {
             onChange={(e) => setSelectedStudentFilter(e.target.value)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-300 dark:border-white/10 bg-white dark:bg-slate-800 text-gray-900 dark:text-white outline-none"
           >
-            <option value="All">All Cadets ({uniqueStudentIds.length})</option>
+            <option value="All">All Students ({uniqueStudentIds.length})</option>
             {uniqueStudentIds.map((id) => (
-              <option key={id} value={id}>Cadet ID: {id}</option>
+              <option key={id} value={id}>Student ID: {id}</option>
             ))}
           </select>
         </div>
