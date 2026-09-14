@@ -30,7 +30,7 @@ export const StudentDashboardPage: React.FC = () => {
   const student = getLoggedStudent();
   const { getAttendanceByStudent, getStudentAttendanceSummary } = useStudentData();
 
-  const [attendanceFilter, setAttendanceFilter] = useState<'All' | 'Present' | 'Absent'>('All');
+  const [attendanceFilter, setAttendanceFilter] = useState<'All' | 'Present' | 'Absent' | 'NA'>('All');
 
   // If not authenticated, redirect to /student-login
   if (!student) {
@@ -50,6 +50,7 @@ export const StudentDashboardPage: React.FC = () => {
         slot2?: any;
         slot3?: any;
         presentCount: number;
+        naCount: number;
         totalCount: number;
       }
     >();
@@ -62,6 +63,7 @@ export const StudentDashboardPage: React.FC = () => {
         map.set(d, {
           date: d,
           presentCount: 0,
+          naCount: 0,
           totalCount: 0,
         });
       }
@@ -82,13 +84,15 @@ export const StudentDashboardPage: React.FC = () => {
       }
 
       if (r.status === 'Present') row.presentCount++;
+      if (r.status === 'NA') row.naCount++;
       row.totalCount++;
     });
 
     const list = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
     if (attendanceFilter === 'All') return list;
     if (attendanceFilter === 'Present') return list.filter((l) => l.presentCount > 0);
-    return list.filter((l) => l.presentCount < l.totalCount);
+    if (attendanceFilter === 'NA') return list.filter((l) => l.naCount > 0);
+    return list.filter((l) => l.presentCount < l.totalCount && l.naCount < l.totalCount);
   }, [attendanceRecords, attendanceFilter]);
 
   // Attendance Table Pagination State
@@ -297,7 +301,7 @@ export const StudentDashboardPage: React.FC = () => {
 
                 {/* Filter buttons */}
                 <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-                  {(['All', 'Present', 'Absent'] as const).map((filter) => (
+                  {(['All', 'Present', 'Absent', 'NA'] as const).map((filter) => (
                     <button
                       key={filter}
                       type="button"
@@ -334,20 +338,32 @@ export const StudentDashboardPage: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                       {paginatedGroupedByDate.map((row) => {
-                        const dayRate = row.totalCount > 0 ? Math.round((row.presentCount / row.totalCount) * 100) : 0;
+                        const countNA = row.naCount || 0;
+                        const countable = row.totalCount - countNA;
+                        const dayRate = countable > 0 ? Math.round((row.presentCount / countable) * 100) : (countNA > 0 ? 100 : 0);
+
                         const renderSlotItem = (slotRec?: any) => {
                           if (!slotRec) {
                             return <span className="text-gray-400 dark:text-gray-500 text-xs italic">—</span>;
                           }
                           const isPresent = slotRec.status === 'Present';
+                          const isNA = slotRec.status === 'NA';
                           return (
                             <div className="flex flex-col items-start gap-1">
                               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                 isPresent
                                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                  : isNA
+                                  ? 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border border-slate-500/20'
                                   : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
                               }`}>
-                                {isPresent ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                                {isPresent ? (
+                                  <CheckCircle2 className="w-3 h-3" />
+                                ) : isNA ? (
+                                  <Clock className="w-3 h-3" />
+                                ) : (
+                                  <XCircle className="w-3 h-3" />
+                                )}
                                 <span>{slotRec.status}</span>
                               </span>
                               {slotRec.topicOrModule && (
@@ -388,24 +404,30 @@ export const StudentDashboardPage: React.FC = () => {
 
                             {/* TOTAL ATTENDANCE */}
                             <td className="py-4 px-4 text-center whitespace-nowrap">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                  row.presentCount === 3
-                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                    : row.presentCount === 0
-                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-                                    : 'bg-primary/10 text-primary dark:text-primary-light border border-primary/20'
-                                }`}
-                              >
-                                {row.presentCount === 3 ? (
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                ) : row.presentCount === 0 ? (
-                                  <XCircle className="w-3.5 h-3.5" />
-                                ) : (
-                                  <Clock className="w-3.5 h-3.5" />
-                                )}
-                                <span>{row.presentCount}/3 Present ({dayRate}%)</span>
-                              </span>
+                              {countNA === 3 ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-600 dark:text-slate-300 border border-slate-500/20">
+                                  <span>NA (Exempt)</span>
+                                </span>
+                              ) : (
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                                    row.presentCount === countable && countable > 0
+                                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                      : row.presentCount === 0
+                                      ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                                      : 'bg-primary/10 text-primary dark:text-primary-light border border-primary/20'
+                                  }`}
+                                >
+                                  {row.presentCount === countable && countable > 0 ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                  ) : row.presentCount === 0 ? (
+                                    <XCircle className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Clock className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>{row.presentCount}/{countable} Present ({dayRate}%){countNA > 0 ? ` • ${countNA} NA` : ''}</span>
+                                </span>
+                              )}
                             </td>
                           </tr>
                         );

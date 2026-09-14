@@ -165,7 +165,7 @@ export interface StudentAccount {
   password: string;
 }
 
-export type AttendanceStatus = 'Present' | 'Absent';
+export type AttendanceStatus = 'Present' | 'Absent' | 'NA';
 
 export type AttendanceSlot = 'Slot 1' | 'Slot 2' | 'Slot 3';
 

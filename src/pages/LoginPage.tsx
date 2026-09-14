@@ -108,7 +108,7 @@ export const LoginPage: React.FC = () => {
                 <div className="space-y-1.5 text-[11px] text-gray-600 dark:text-gray-400 mb-6">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-accent" />
-                    <span>Real-time 48h attendance logs</span>
+                    <span>Real-time 24h attendance logs</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-accent" />

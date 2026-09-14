@@ -289,7 +289,7 @@ export const SlotAttendancePage: React.FC = () => {
   // Bulk mark all filtered
   const handleBulkMarkActiveSlot = (status: AttendanceStatus) => {
     if (isLocked) {
-      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
       return;
     }
 
@@ -313,7 +313,7 @@ export const SlotAttendancePage: React.FC = () => {
   // Mark selected students from bottom action bar
   const handleMarkSelectedAttendance = (status: AttendanceStatus) => {
     if (isLocked) {
-      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
       return;
     }
 
@@ -359,7 +359,7 @@ export const SlotAttendancePage: React.FC = () => {
   // Upload attendance to MongoDB
   const handleUploadActiveDateAttendance = async () => {
     if (isLocked) {
-      toast.error('Attendance for this date is permanently locked (48-hour edit window expired).');
+      toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
       return;
     }
 
@@ -414,14 +414,14 @@ export const SlotAttendancePage: React.FC = () => {
               <span>Back to Dashboard</span>
             </button>
 
-            {/* Compact Live Sync & 48h Lock Status Pill */}
+            {/* Compact Live Sync & 24h Lock Status Pill */}
             {isLocked ? (
               <span
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20"
-                title={`Uploaded on ${new Date(dateLock.uploadedAt!).toLocaleString()}. 48-hour edit window expired.`}
+                title={`Uploaded on ${new Date(dateLock.uploadedAt!).toLocaleString()}. 24-hour edit window expired.`}
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Locked (48h Ended)</span>
+                <span>Locked (24h Ended)</span>
               </span>
             ) : dateLock.uploadedAt ? (
               <span
@@ -431,7 +431,7 @@ export const SlotAttendancePage: React.FC = () => {
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Live Synced</span>
                 <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                  • {dateLock.remainingHours ?? 48}h left to edit
+                  • {dateLock.remainingHours ?? 24}h left to edit
                 </span>
               </span>
             ) : (

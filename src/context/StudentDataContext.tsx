@@ -375,7 +375,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  // Upload and commit whole day muster to MongoDB with 48-hour timestamp
+  // Upload and commit whole day muster to MongoDB with 24-hour timestamp
   const uploadDayAttendance = async (
     date: string,
     records: Array<{
@@ -405,7 +405,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return saved;
   };
 
-  // Check whether attendance records for a specific date are locked (> 48h since upload)
+  // Check whether attendance records for a specific date are locked (> 24h since upload)
   const isDateLocked = useCallback((date: string): { locked: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number } => {
     const dayRecords = attendance.filter((r) => r.date === date);
     if (dayRecords.length === 0) {
@@ -432,7 +432,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }, Infinity);
 
       if (earliestUpload !== Infinity) {
-        const deadline = earliestUpload + 48 * 60 * 60 * 1000;
+        const deadline = earliestUpload + 24 * 60 * 60 * 1000;
         const now = Date.now();
         const diffMs = deadline - now;
         if (diffMs <= 0) {
@@ -484,8 +484,10 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const records = getAttendanceByStudent(studentId);
     const total = records.length;
     const present = records.filter((r) => r.status === 'Present').length;
-    const absent = total - present;
-    const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+    const na = records.filter((r) => r.status === 'NA').length;
+    const countable = total - na;
+    const absent = Math.max(0, countable - present);
+    const percentage = countable > 0 ? Math.round((present / countable) * 100) : (total > 0 && na === total ? 100 : 0);
     return { total, present, absent, percentage };
   };
 
