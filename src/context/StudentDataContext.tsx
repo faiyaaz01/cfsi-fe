@@ -95,6 +95,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     window.addEventListener('storage', handleAuthSync);
     window.addEventListener('auth-cleared', handleAuthSync);
     window.addEventListener('focus', handleAuthSync);
+    window.addEventListener('attendance-refresh', handleAuthSync);
 
     // Real-time Server-Sent Events (SSE) Stream Subscription
     let eventSource: EventSource | null = null;
@@ -104,7 +105,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.event === 'attendance_updated') {
+          if (data.event === 'attendance_updated' || data.event === 'attendance_deleted') {
             void fetchAttendance();
           }
         } catch {
@@ -129,6 +130,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       window.removeEventListener('storage', handleAuthSync);
       window.removeEventListener('auth-cleared', handleAuthSync);
       window.removeEventListener('focus', handleAuthSync);
+      window.removeEventListener('attendance-refresh', handleAuthSync);
       if (eventSource) {
         eventSource.close();
       }

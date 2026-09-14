@@ -122,12 +122,25 @@ export const DashboardPage: React.FC = () => {
   const [isLoadingCadets, setIsLoadingCadets] = useState<boolean>(false);
   const [deletingCadetId, setDeletingCadetId] = useState<string | null>(null);
 
+  // Helper to extract numeric roll number for natural ascending sort
+  const getNumericRoll = (cadet: StudentVerificationRecord): number => {
+    const raw = cadet.rollNo ?? cadet.id ?? '';
+    const match = String(raw).match(/\d+/);
+    return match ? parseInt(match[0], 10) : 999999;
+  };
+
   // Fetch registered cadets dynamically from backend MongoDB
   const loadCadets = useCallback(async () => {
     try {
       setIsLoadingCadets(true);
       const data = await api.getStudents();
-      setCadetsList(data || []);
+      const sorted = (data || []).sort((a, b) => {
+        const rollA = getNumericRoll(a);
+        const rollB = getNumericRoll(b);
+        if (rollA !== rollB) return rollA - rollB;
+        return a.name.localeCompare(b.name);
+      });
+      setCadetsList(sorted);
     } catch (err: any) {
       console.warn('Could not fetch cadets from backend:', err);
       setCadetsList([]);
@@ -154,6 +167,7 @@ export const DashboardPage: React.FC = () => {
       if (selectedCadetDetail?.id === cadet.id) {
         setSelectedCadetDetail(null);
       }
+      window.dispatchEvent(new Event('attendance-refresh'));
       toast.success(`Student ${cadet.name} (${cadet.id}) permanently removed from database.`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete student from database');
@@ -162,19 +176,26 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Filtered Cadets for Student Directory
+  // Filtered Cadets for Student Directory (sorted by Roll Number in ascending order)
   const filteredCadets = useMemo(() => {
-    return cadetsList.filter((cadet) => {
-      const matchesCourse = cadetCourseFilter === 'All' || cadet.course === cadetCourseFilter;
-      const q = cadetSearch.trim().toLowerCase();
-      const matchesSearch = !q ||
-        cadet.name.toLowerCase().includes(q) ||
-        cadet.rollNo.toLowerCase().includes(q) ||
-        cadet.id.toLowerCase().includes(q) ||
-        cadet.fatherName.toLowerCase().includes(q) ||
-        cadet.batch.toLowerCase().includes(q);
-      return matchesCourse && matchesSearch;
-    });
+    return cadetsList
+      .filter((cadet) => {
+        const matchesCourse = cadetCourseFilter === 'All' || cadet.course === cadetCourseFilter;
+        const q = cadetSearch.trim().toLowerCase();
+        const matchesSearch = !q ||
+          cadet.name.toLowerCase().includes(q) ||
+          cadet.rollNo.toLowerCase().includes(q) ||
+          cadet.id.toLowerCase().includes(q) ||
+          cadet.fatherName.toLowerCase().includes(q) ||
+          cadet.batch.toLowerCase().includes(q);
+        return matchesCourse && matchesSearch;
+      })
+      .sort((a, b) => {
+        const rollA = getNumericRoll(a);
+        const rollB = getNumericRoll(b);
+        if (rollA !== rollB) return rollA - rollB;
+        return a.name.localeCompare(b.name);
+      });
   }, [cadetSearch, cadetCourseFilter, cadetsList]);
 
   // Directory Pagination State
@@ -855,7 +876,7 @@ export const DashboardPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => setSelectedCadetDetail(cadet)}
-                                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1 shadow-sm"
+                                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
                                   title="Inspect full student profile"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
@@ -871,6 +892,19 @@ export const DashboardPage: React.FC = () => {
                                   title="Mark attendance for this student"
                                 >
                                   <Clock className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCadet(cadet)}
+                                  disabled={deletingCadetId === cadet.id}
+                                  className="p-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                                  title="Permanently delete student & all attendance records"
+                                >
+                                  {deletingCadetId === cadet.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  )}
                                 </button>
                               </div>
                             </td>

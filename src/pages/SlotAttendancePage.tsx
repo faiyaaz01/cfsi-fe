@@ -115,12 +115,25 @@ export const SlotAttendancePage: React.FC = () => {
   const [isUploadingMuster, setIsUploadingMuster] = useState<boolean>(false);
   const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
 
+  // Helper to extract numeric roll number for natural ascending sort
+  const getNumericRoll = (cadet: StudentVerificationRecord): number => {
+    const raw = cadet.rollNo ?? cadet.id ?? '';
+    const match = String(raw).match(/\d+/);
+    return match ? parseInt(match[0], 10) : 999999;
+  };
+
   // Load cadets list
   const loadCadets = useCallback(async () => {
     try {
       setIsLoadingCadets(true);
       const data = await api.getStudents();
-      setCadetsList(data || []);
+      const sorted = (data || []).sort((a, b) => {
+        const rollA = getNumericRoll(a);
+        const rollB = getNumericRoll(b);
+        if (rollA !== rollB) return rollA - rollB;
+        return a.name.localeCompare(b.name);
+      });
+      setCadetsList(sorted);
     } catch (err) {
       console.warn('Could not fetch cadets:', err);
       setCadetsList([]);
@@ -207,6 +220,11 @@ export const SlotAttendancePage: React.FC = () => {
         }
       }
       return true;
+    }).sort((a, b) => {
+      const rollA = getNumericRoll(a);
+      const rollB = getNumericRoll(b);
+      if (rollA !== rollB) return rollA - rollB;
+      return a.name.localeCompare(b.name);
     });
   }, [cadetsList, activeDate, activeSlot, slotCourseFilter, slotStudentSearch, slotStatusFilter, getSlotRecord]);
 

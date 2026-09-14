@@ -127,6 +127,21 @@ export function UsersPage() {
         (statusFilter === 'inactive' && !u.is_active);
 
       return matchesSearch && matchesRole && matchesStatus;
+    }).sort((a, b) => {
+      // Prioritize admin, teacher, then students in natural order
+      const roleWeight = { admin: 1, teacher: 2, student: 3 };
+      const weightA = roleWeight[a.role as keyof typeof roleWeight] || 4;
+      const weightB = roleWeight[b.role as keyof typeof roleWeight] || 4;
+      if (weightA !== weightB) return weightA - weightB;
+
+      if (a.role === 'student' && b.role === 'student') {
+        const matchA = (a.student_id || a.username || '').match(/\d+/);
+        const matchB = (b.student_id || b.username || '').match(/\d+/);
+        const numA = matchA ? parseInt(matchA[0], 10) : 999999;
+        const numB = matchB ? parseInt(matchB[0], 10) : 999999;
+        if (numA !== numB) return numA - numB;
+      }
+      return (a.full_name || a.username).localeCompare(b.full_name || b.username);
     });
   }, [users, searchQuery, roleFilter, statusFilter]);
 
@@ -240,6 +255,7 @@ export function UsersPage() {
     setBusy(true);
     try {
       await api.users('DELETE', deleteConfirmUser.id);
+      window.dispatchEvent(new Event('attendance-refresh'));
       toast.success(`User "${deleteConfirmUser.full_name || deleteConfirmUser.username}" removed.`);
       setDeleteConfirmUser(null);
       if (editingId === deleteConfirmUser.id) {
@@ -322,6 +338,7 @@ export function UsersPage() {
     setIsBulkProcessing(false);
     setBulkDeleteModalOpen(false);
     setSelectedUserIds([]);
+    window.dispatchEvent(new Event('attendance-refresh'));
     await loadUsers();
 
     if (successCount > 0) {
