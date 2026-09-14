@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -29,7 +30,14 @@ import {
   FileSpreadsheet,
   UserCheck,
   UserX,
-  Check
+  Check,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Building,
+  CreditCard,
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, AuthUser } from '../lib/api';
@@ -48,6 +56,24 @@ interface UserFormData {
   role: AuthUser['role'];
   student_id: string;
   is_active: boolean;
+  // Student 18 CSV fields:
+  enrollment_no: string;
+  session_year: string;
+  father_name: string;
+  mother_name: string;
+  present_address: string;
+  student_phone: string;
+  father_phone: string;
+  birth_date: string;
+  gender: string;
+  category: string;
+  aadhar_card: string;
+  center_name: string;
+  course: string;
+  mode: string;
+  email: string;
+  nationality: string;
+  state: string;
 }
 
 const emptyForm: UserFormData = {
@@ -57,6 +83,23 @@ const emptyForm: UserFormData = {
   role: 'student',
   student_id: '',
   is_active: true,
+  enrollment_no: '',
+  session_year: '01-Jul',
+  father_name: '',
+  mother_name: '',
+  present_address: '',
+  student_phone: '',
+  father_phone: '',
+  birth_date: '',
+  gender: 'MALE',
+  category: '',
+  aadhar_card: '',
+  center_name: 'CENTRAL FIRE AND SAFETY INSTITUTE',
+  course: 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+  mode: 'REGULAR',
+  email: '',
+  nationality: 'INDIAN',
+  state: 'GUJARAT',
 };
 
 export function UsersPage() {
@@ -65,6 +108,7 @@ export function UsersPage() {
   const [enrolledStudents, setEnrolledStudents] = useState<StudentVerificationRecord[]>([]);
   const [form, setForm] = useState<UserFormData>({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -110,6 +154,25 @@ export function UsersPage() {
     loadUsers();
   }, [loadUsers]);
 
+  // Modal ESC key listener and scroll locking
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFormOpen) {
+        handleCancelEdit();
+      }
+    };
+    if (isFormOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFormOpen]);
+
   // Filtered users calculation
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -145,18 +208,18 @@ export function UsersPage() {
     });
   }, [users, searchQuery, roleFilter, statusFilter]);
 
-  // User Table Pagination State
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  // Pagination state & calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Reset to page 1 on filter changes
+  // Reset to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, roleFilter, statusFilter]);
 
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredUsers.slice(start, start + pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(startIndex, startIndex + pageSize);
   }, [filteredUsers, currentPage, pageSize]);
 
   // Metric stats
@@ -173,23 +236,48 @@ export function UsersPage() {
   // Initiate Edit
   const handleStartEdit = (account: AuthUser) => {
     setEditingId(account.id);
+    const student = enrolledStudents.find(
+      (s) => s.id === account.student_id || s.id === account.username || s.enrollmentNo === account.student_id || s.enrollmentNo === account.username
+    );
+
     setForm({
       username: account.username,
       password: '',
-      full_name: account.full_name || '',
+      full_name: account.full_name || student?.name || '',
       role: account.role,
-      student_id: account.student_id || '',
+      student_id: account.student_id || student?.id || account.username || '',
       is_active: account.is_active,
+      enrollment_no: student?.enrollmentNo || '',
+      session_year: student?.sessionYear || '01-Jul',
+      father_name: student?.fatherName || '',
+      mother_name: student?.motherName || '',
+      present_address: student?.presentAddress || '',
+      student_phone: student?.studentPhone || '',
+      father_phone: student?.fatherPhone || '',
+      birth_date: student?.birthDate || '',
+      gender: student?.gender || 'MALE',
+      category: student?.category || '',
+      aadhar_card: student?.aadharCard || '',
+      center_name: student?.centerName || student?.centerLocation || 'CENTRAL FIRE AND SAFETY INSTITUTE',
+      course: student?.course || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+      mode: student?.mode || 'REGULAR',
+      email: student?.email || '',
+      nationality: student?.nationality || 'INDIAN',
+      state: student?.state || 'GUJARAT',
     });
+    setIsFormOpen(true);
     setError('');
     setShowPassword(false);
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   // Cancel Edit
   const handleCancelEdit = () => {
     setEditingId(null);
     setForm({ ...emptyForm });
+    setIsFormOpen(false);
     setError('');
     setShowPassword(false);
   };
@@ -197,15 +285,65 @@ export function UsersPage() {
   // Quick Cadet Selector handler
   const handleCadetSelect = (studentId: string) => {
     if (!studentId) {
-      setForm((prev) => ({ ...prev, student_id: '' }));
+      setForm((prev) => ({
+        ...prev,
+        student_id: '',
+        full_name: '',
+        username: '',
+        enrollment_no: '',
+        session_year: '01-Jul',
+        father_name: '',
+        mother_name: '',
+        present_address: '',
+        student_phone: '',
+        father_phone: '',
+        birth_date: '',
+        gender: 'MALE',
+        category: '',
+        aadhar_card: '',
+        center_name: 'CENTRAL FIRE AND SAFETY INSTITUTE',
+        course: 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+        mode: 'REGULAR',
+        email: '',
+        nationality: 'INDIAN',
+        state: 'GUJARAT',
+      }));
       return;
     }
     const student = enrolledStudents.find((s) => s.id === studentId);
+    if (!student) return;
+
+    let autoDobPassword = '';
+    if (student.birthDate) {
+      const digits = student.birthDate.replace(/\D/g, '');
+      if (digits.length >= 8) {
+        autoDobPassword = digits.slice(0, 8);
+      }
+    }
+
     setForm((prev) => ({
       ...prev,
-      student_id: studentId,
-      full_name: prev.full_name || (student ? student.name : ''),
-      username: student ? student.id : (prev.username || studentId.toLowerCase()),
+      student_id: student.id,
+      username: student.id,
+      full_name: student.name || prev.full_name,
+      enrollment_no: student.enrollmentNo || student.id,
+      session_year: student.sessionYear || '01-Jul',
+      father_name: student.fatherName || '',
+      mother_name: student.motherName || '',
+      present_address: student.presentAddress || '',
+      student_phone: student.studentPhone || '',
+      father_phone: student.fatherPhone || '',
+      birth_date: student.birthDate || '',
+      gender: student.gender || 'MALE',
+      category: student.category || '',
+      aadhar_card: student.aadharCard || '',
+      center_name: student.centerName || student.centerLocation || 'CENTRAL FIRE AND SAFETY INSTITUTE',
+      course: student.course || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+      mode: student.mode || 'REGULAR',
+      email: student.email || '',
+      nationality: student.nationality || 'INDIAN',
+      state: student.state || 'GUJARAT',
+      password: autoDobPassword || prev.password,
     }));
   };
 
@@ -216,30 +354,91 @@ export function UsersPage() {
     setError('');
 
     try {
-      const payload: any = {
-        full_name: form.full_name.trim(),
-        role: form.role,
-        is_active: form.is_active,
-        student_id: form.role === 'student' ? (form.student_id.trim() || null) : null,
-      };
-
-      if (editingId) {
-        // PATCH update
-        if (form.password) {
-          payload.password = form.password;
+      if (form.role === 'student') {
+        const studentIdVal = form.student_id.trim() || form.username.trim() || form.enrollment_no.trim();
+        if (!studentIdVal) {
+          throw new Error('Student ID / Login ID is required.');
         }
-        await api.users('PATCH', editingId, payload);
-        toast.success(`User "${form.full_name || form.username}" updated successfully.`);
+        if (!form.full_name.trim()) {
+          throw new Error('Student Name is required.');
+        }
+
+        // Prepare student item with all 18 fields
+        const studentItem = {
+          student_id: studentIdVal,
+          roll_no: form.enrollment_no.slice(-2) || '01',
+          enrollment_no: form.enrollment_no.trim() || studentIdVal,
+          session_year: form.session_year.trim(),
+          name: form.full_name.trim(),
+          father_name: form.father_name.trim(),
+          mother_name: form.mother_name.trim(),
+          present_address: form.present_address.trim(),
+          student_phone: form.student_phone.trim(),
+          father_phone: form.father_phone.trim(),
+          birth_date: form.birth_date.trim() || '01-01-2006',
+          gender: form.gender.trim() || 'MALE',
+          category: form.category.trim() || 'General',
+          aadhar_card: form.aadhar_card.trim(),
+          center_name: form.center_name.trim() || 'CENTRAL FIRE AND SAFETY INSTITUTE',
+          course: form.course.trim() || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
+          mode: form.mode.trim() || 'REGULAR',
+          email: form.email.trim() || `${studentIdVal.toLowerCase()}@cfsi.edu.in`,
+          nationality: form.nationality.trim() || 'INDIAN',
+          state: form.state.trim() || 'GUJARAT',
+          password: form.password.trim() || undefined,
+          is_active: form.is_active,
+        };
+
+        // Sync with MongoDB students and users collections via bulkImport
+        await api.bulkImportStudents([studentItem], form.session_year.trim() || 'Batch 2026-2027');
+
+        if (editingId) {
+          const userPatch: any = {
+            full_name: form.full_name.trim(),
+            is_active: form.is_active,
+          };
+          if (form.password.trim()) {
+            userPatch.password = form.password.trim();
+          }
+          await api.users('PATCH', editingId, userPatch);
+        }
+
+        toast.success(`Student user "${form.full_name}" saved successfully.`);
       } else {
-        // POST create
-        payload.username = form.username.trim();
-        payload.password = form.password;
-        await api.users('POST', '', payload);
-        toast.success(`User "${payload.full_name}" created successfully.`);
+        const usernameVal = form.username.trim();
+        if (!usernameVal) {
+          throw new Error('Username is required.');
+        }
+
+        const payload: any = {
+          full_name: form.full_name.trim(),
+          role: form.role,
+          is_active: form.is_active,
+          student_id: null,
+        };
+
+        if (editingId) {
+          if (form.password) {
+            payload.password = form.password;
+          }
+          await api.users('PATCH', editingId, payload);
+          toast.success(`User "${form.full_name || usernameVal}" updated successfully.`);
+        } else {
+          payload.username = usernameVal;
+          payload.password = form.password;
+          await api.users('POST', '', payload);
+          toast.success(`User "${form.full_name}" created successfully.`);
+        }
       }
 
       handleCancelEdit();
       await loadUsers();
+      try {
+        const studs = await api.getStudents();
+        setEnrolledStudents(studs);
+      } catch {
+        // ignore
+      }
     } catch (err: any) {
       const msg = err.message || 'Unable to save user. Please verify input fields.';
       setError(msg);
@@ -386,15 +585,11 @@ export function UsersPage() {
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Admin Dashboard</span>
             </Link>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
-              <Shield className="w-4 h-4" />
-              <span>Institutional Identity & Access Control</span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-heading font-black tracking-tight text-gray-900 dark:text-white">
-              User Management & Access Control
+              User Management
             </h1>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 max-w-3xl">
-              Create, configure, and maintain authenticated Administrator, Faculty Instructor, and Student access credentials.
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Manage accounts, roles, and access credentials.
             </p>
           </div>
 
@@ -413,32 +608,17 @@ export function UsersPage() {
             <button
               type="button"
               onClick={() => {
-                handleCancelEdit();
-                formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setEditingId(null);
+                setForm({ ...emptyForm });
+                setIsFormOpen(true);
+                setError('');
+                setShowPassword(false);
               }}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-dark text-white flex items-center gap-1.5 transition-colors shadow-sm active:scale-95"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-dark text-white flex items-center gap-1.5 transition-colors shadow-sm active:scale-95 cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Add New User</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setBulkImportModalOpen(true)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-colors shadow-sm active:scale-95 cursor-pointer"
-              title="Bulk import students from CSV or Excel and auto-generate accounts"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Bulk Import Students (CSV/Excel)</span>
-            </button>
-
-            <Link
-              to="/dashboard"
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 flex items-center gap-1.5 transition-opacity shadow-sm"
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Dashboard</span>
-            </Link>
           </div>
         </div>
 
@@ -466,9 +646,9 @@ export function UsersPage() {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Accounts */}
-            <FlatCard hoverEffect={false} className="p-5 border border-gray-200/80 dark:border-white/10">
+            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-gray-200/80 dark:border-white/10">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Total Accounts</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Users</span>
                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   <Users className="w-4 h-4" />
                 </div>
@@ -477,14 +657,14 @@ export function UsersPage() {
                 <CountUp value={stats.total} />
               </div>
               <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                <CountUp value={stats.active} /> Active • <CountUp value={stats.total - stats.active} /> Suspended
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{stats.active} Active</span> • {stats.total - stats.active} Suspended
               </div>
             </FlatCard>
 
             {/* Administrators */}
-            <FlatCard hoverEffect={false} className="p-5 border border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
+            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Administrators</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Admins</span>
                 <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
                   <Shield className="w-4 h-4" />
                 </div>
@@ -492,15 +672,15 @@ export function UsersPage() {
               <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">
                 <CountUp value={stats.admins} />
               </div>
-              <div className="text-[11px] text-amber-600/80 dark:text-amber-400/80 mt-1">
-                Full System Access & User Controls
+              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                System Administrators
               </div>
             </FlatCard>
 
             {/* Faculty / Instructors */}
-            <FlatCard hoverEffect={false} className="p-5 border border-emerald-500/20 dark:border-emerald-500/15 bg-emerald-500/[0.02]">
+            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-emerald-500/20 dark:border-emerald-500/15 bg-emerald-500/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Faculty & Staff</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Faculty</span>
                 <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                   <BookOpen className="w-4 h-4" />
                 </div>
@@ -508,15 +688,15 @@ export function UsersPage() {
               <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
                 <CountUp value={stats.teachers} />
               </div>
-              <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-1">
-                Attendance Muster & Drill Records
+              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                Instructors & Staff
               </div>
             </FlatCard>
 
             {/* Active Students */}
-            <FlatCard hoverEffect={false} className="p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
+            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Active Students</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Students</span>
                 <div className="p-2 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
                   <GraduationCap className="w-4 h-4" />
                 </div>
@@ -524,249 +704,685 @@ export function UsersPage() {
               <div className="text-2xl sm:text-3xl font-black text-primary dark:text-primary-light mt-2">
                 <CountUp value={stats.students} />
               </div>
-              <div className="text-[11px] text-primary/80 dark:text-primary-light/80 mt-1">
-                Individual Portal & Training Dossier
+              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                Enrolled Cadets
               </div>
             </FlatCard>
           </div>
         )}
 
-        {/* User Creation & Editing Card */}
-        <div ref={formRef}>
-          <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-gray-100 dark:border-white/5">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-2xl ${editingId ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-primary/10 text-primary'}`}>
-                  {editingId ? <Edit3 className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
-                </div>
-                <div>
-                  <h2 className="font-heading font-black text-lg sm:text-xl text-gray-900 dark:text-white">
-                    {editingId ? 'Edit User Credentials & Access Role' : 'Create New System Account'}
-                  </h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {editingId 
-                      ? 'Modifying credentials terminates existing sessions and requires the user to log in again.'
-                      : 'Create accounts with assigned permissions. Student accounts must link to an official student ID.'}
-                  </p>
-                </div>
-              </div>
-
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-500 hover:text-red-500 hover:bg-red-500/10 border border-gray-200 dark:border-white/10 transition-colors flex items-center gap-1.5 self-start sm:self-auto"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>Cancel Edit</span>
-                </button>
-              )}
-            </div>
-
-            <form onSubmit={handleSaveUser} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                
-                {/* Full Name */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                    Full Name *
-                  </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      required
-                      maxLength={200}
-                      value={form.full_name}
-                      onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                      placeholder="e.g. Rahul V. Patel"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Username */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                    Username / Login ID *
-                    {editingId && <span className="text-[10px] text-gray-400 font-normal lowercase ml-1">(cannot be altered)</span>}
-                  </label>
-                  <div className="relative">
-                    <AtSign className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      required
-                      minLength={3}
-                      maxLength={100}
-                      disabled={!!editingId}
-                      value={form.username}
-                      onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().trim() })}
-                      placeholder="e.g. 262701"
-                      autoComplete="off"
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border font-mono ${
-                        editingId 
-                          ? 'border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/5 text-gray-500 cursor-not-allowed'
-                          : 'border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                    {editingId ? 'New Password (optional)' : 'Password *'}
-                    <span className="text-[10px] text-gray-400 font-normal lowercase ml-1">
-                      {editingId ? '(leave blank to keep unchanged)' : '(min. 8 characters)'}
-                    </span>
-                  </label>
-                  <div className="relative">
-                    <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required={!editingId}
-                      minLength={8}
-                      maxLength={72}
-                      value={form.password}
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      placeholder={editingId ? '••••••••  (unchanged)' : 'Enter strong password (8+ chars)'}
-                      autoComplete={editingId ? 'new-password' : 'current-password'}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="p-1 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                      title={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Role Selector */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                    System Access Role *
-                    {editingId === currentUser?.id && (
-                      <span className="text-[10px] text-amber-500 font-normal ml-1">(you cannot change your own role)</span>
-                    )}
-                  </label>
-                  <div className="relative">
-                    <Shield className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <select
-                      value={form.role}
-                      disabled={editingId === currentUser?.id}
-                      onChange={(e) => setForm({ ...form, role: e.target.value as AuthUser['role'] })}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-semibold"
-                    >
-                      <option value="student">Student (Access personal training logs & muster)</option>
-                      <option value="teacher">Teacher / Instructor (Mark muster attendance & review roster)</option>
-                      <option value="admin">Administrator (Full administrative authority & user management)</option>
-                    </select>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Conditional Student ID Linking */}
-              {form.role === 'student' && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/15 dark:border-white/10 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-primary dark:text-primary-light uppercase tracking-wider">
-                    <GraduationCap className="w-4 h-4" />
-                    <span>Link Student Record</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-300 mb-1">
-                        Select from Registered Students
-                      </label>
-                      <select
-                        value={form.student_id}
-                        onChange={(e) => handleCadetSelect(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="">-- Choose student from directory --</option>
-                        {enrolledStudents.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.id} — {s.name} (Roll {s.rollNo}, {s.course})
-                          </option>
-                        ))}
-                      </select>
+        {/* User Creation & Editing Modal Popup */}
+        {createPortal(
+          <AnimatePresence>
+            {isFormOpen && (
+              <div 
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/75 backdrop-blur-md overflow-y-auto"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) handleCancelEdit();
+                }}
+              >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="w-full max-w-4xl bg-white dark:bg-[#161d27] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl my-auto flex flex-col max-h-[92vh] overflow-hidden"
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/70 dark:bg-white/[0.02] shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-xl ${editingId ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-primary/10 text-primary'}`}>
+                      {editingId ? <Edit3 className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
                     </div>
-
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-300 mb-1">
-                        Or Type Student ID *
-                      </label>
-                      <input
-                        type="text"
-                        required={form.role === 'student'}
-                        value={form.student_id}
-                        onChange={(e) => setForm({ ...form, student_id: e.target.value.trim() })}
-                        placeholder="e.g. 262701"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                      />
+                      <h2 className="font-heading font-black text-base sm:text-lg text-gray-900 dark:text-white">
+                        {editingId ? 'Edit User Credentials' : 'Create New User Account'}
+                      </h2>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {editingId 
+                          ? 'Update user information or assign a new password.'
+                          : 'Enter details below to register a new system account.'}
+                      </p>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Account Status Toggle & Actions */}
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-gray-100 dark:border-white/5">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={form.is_active}
-                    disabled={editingId === currentUser?.id}
-                    onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                      Active Account Status
-                    </span>
-                    <p className="text-[11px] text-gray-400">
-                      {form.is_active ? 'User is permitted to authenticate.' : 'Suspended — login requests will be denied.'}
-                    </p>
-                  </div>
-                </label>
-
-                <div className="flex items-center gap-3 self-end sm:self-auto">
-                  {editingId && (
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  )}
 
                   <button
-                    type="submit"
-                    disabled={busy}
-                    className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-200 shadow-md flex items-center gap-2 disabled:opacity-50 active:scale-95"
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="p-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close"
                   >
-                    {busy ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>{editingId ? 'Update User Credentials' : 'Create User Account'}</span>
-                      </>
-                    )}
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
-              </div>
 
-            </form>
-          </FlatCard>
-        </div>
+                <form onSubmit={handleSaveUser} autoComplete="off" className="flex flex-col flex-1 overflow-hidden">
+                  <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+                  {/* Account Role Selector */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2">
+                      Account Role *
+                      {editingId === currentUser?.id && (
+                        <span className="text-[10px] text-amber-500 font-normal ml-1">(you cannot change your own role)</span>
+                      )}
+                    </label>
+                    <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                      <button
+                        type="button"
+                        disabled={editingId === currentUser?.id}
+                        onClick={() => setForm(prev => ({ ...prev, role: 'student' }))}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          form.role === 'student'
+                            ? 'bg-white dark:bg-white/15 text-primary dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                        <span>Student</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={editingId === currentUser?.id}
+                        onClick={() => setForm(prev => ({ ...prev, role: 'teacher', student_id: '' }))}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          form.role === 'teacher'
+                            ? 'bg-white dark:bg-white/15 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        <span>Teacher</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={editingId === currentUser?.id}
+                        onClick={() => setForm(prev => ({ ...prev, role: 'admin', student_id: '' }))}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          form.role === 'admin'
+                            ? 'bg-white dark:bg-white/15 text-amber-600 dark:text-amber-400 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Shield className="w-4 h-4" />
+                        <span>Administrator</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Student Account Flow (All 18 Fields) */}
+                  {form.role === 'student' ? (
+                    <div className="space-y-5">
+                      {/* Section 1: Academic & Enrollment Information */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200/60 dark:border-white/5">
+                          <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                            <GraduationCap className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                              1. Academic & Enrollment Details
+                            </h3>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                              Official enrollment number, academic session, course, mode, and institute center
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                          {/* Field 1: Enrollment No. */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Enrollment No. *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={form.enrollment_no}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setForm(prev => ({
+                                  ...prev,
+                                  enrollment_no: val,
+                                  student_id: prev.student_id ? prev.student_id : val,
+                                  username: prev.username ? prev.username : val,
+                                }));
+                              }}
+                              placeholder="e.g. 2600DFS26101"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 2: Session/Year */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Session / Year *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={form.session_year}
+                              onChange={(e) => setForm({ ...form, session_year: e.target.value })}
+                              placeholder="e.g. 01-Jul or 2026-2027"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 15: Mode (Reg/Corresponding ) */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Mode (Reg / Corresponding) *
+                            </label>
+                            <select
+                              value={form.mode}
+                              onChange={(e) => setForm({ ...form, mode: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            >
+                              <option value="REGULAR">REGULAR</option>
+                              <option value="CORRESPONDING">CORRESPONDING</option>
+                            </select>
+                          </div>
+
+                          {/* Field 14: Course Name */}
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Course Name *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={form.course}
+                              onChange={(e) => setForm({ ...form, course: e.target.value })}
+                              placeholder="e.g. DIPLOMA IN FIRE AND SAFETY MANAGEMENT"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+
+                          {/* Field 13: Center Name */}
+                          <div className="sm:col-span-1 lg:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Center Name *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={form.center_name}
+                              onChange={(e) => setForm({ ...form, center_name: e.target.value })}
+                              placeholder="e.g. CENTRAL FIRE AND SAFETY INSTITUTE"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 2: Personal & Family Identity */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200/60 dark:border-white/5">
+                          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                              2. Personal & Family Identity
+                            </h3>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                              Student name, parentage, date of birth, identity card, and demographics
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                          {/* Field 3: Student Name */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Student Name *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              maxLength={200}
+                              value={form.full_name}
+                              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                              placeholder="e.g. Rahul Vijay Patel"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+
+                          {/* Field 4: Father Name */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Father Name
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={200}
+                              value={form.father_name}
+                              onChange={(e) => setForm({ ...form, father_name: e.target.value })}
+                              placeholder="e.g. Vijay Patel"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+
+                          {/* Field 5: Mother Name */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Mother Name
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={200}
+                              value={form.mother_name}
+                              onChange={(e) => setForm({ ...form, mother_name: e.target.value })}
+                              placeholder="e.g. Geeta Patel"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+
+                          {/* Field 9: Date of Birth */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Date of Birth (DD-MM-YYYY) *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={form.birth_date}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const digits = val.replace(/\D/g, '');
+                                setForm(prev => ({
+                                  ...prev,
+                                  birth_date: val,
+                                  password: (!prev.password || prev.password.length === 8) && digits.length >= 8 ? digits.slice(0, 8) : prev.password
+                                }));
+                              }}
+                              placeholder="e.g. 18-01-2007"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 10: Gender */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Gender *
+                            </label>
+                            <select
+                              value={form.gender}
+                              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            >
+                              <option value="MALE">MALE</option>
+                              <option value="FEMALE">FEMALE</option>
+                              <option value="OTHER">OTHER</option>
+                            </select>
+                          </div>
+
+                          {/* Field 11: Category */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Category
+                            </label>
+                            <input
+                              type="text"
+                              value={form.category}
+                              onChange={(e) => setForm({ ...form, category: e.target.value })}
+                              placeholder="e.g. General / OBC / SC / ST"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 12: Aadhar Card */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Aadhar Card
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={20}
+                              value={form.aadhar_card}
+                              onChange={(e) => setForm({ ...form, aadhar_card: e.target.value })}
+                              placeholder="e.g. 1234 5678 9012"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 17: Nationality */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Nationality
+                            </label>
+                            <input
+                              type="text"
+                              value={form.nationality}
+                              onChange={(e) => setForm({ ...form, nationality: e.target.value })}
+                              placeholder="e.g. INDIAN"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 18: State */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              State
+                            </label>
+                            <input
+                              type="text"
+                              value={form.state}
+                              onChange={(e) => setForm({ ...form, state: e.target.value })}
+                              placeholder="e.g. GUJARAT"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 3: Contact & Address Information */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200/60 dark:border-white/5">
+                          <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                            <Phone className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                              3. Contact & Address Details
+                            </h3>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                              Cadet phone, parents emergency contact, email address, and residential address
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                          {/* Field 7: Student Contact Details */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Student Contact Details (Phone)
+                            </label>
+                            <input
+                              type="tel"
+                              maxLength={15}
+                              value={form.student_phone}
+                              onChange={(e) => setForm({ ...form, student_phone: e.target.value })}
+                              placeholder="e.g. 9876543210"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 8: Parents Contact Details */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Parents Contact Details (Phone)
+                            </label>
+                            <input
+                              type="tel"
+                              maxLength={15}
+                              value={form.father_phone}
+                              onChange={(e) => setForm({ ...form, father_phone: e.target.value })}
+                              placeholder="e.g. 9876543211"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 16: Email ID */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Email ID
+                            </label>
+                            <input
+                              type="email"
+                              value={form.email}
+                              onChange={(e) => setForm({ ...form, email: e.target.value })}
+                              placeholder="e.g. student@cfsi.edu.in"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
+
+                          {/* Field 6: Present Address */}
+                          <div className="sm:col-span-2 lg:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Present Address
+                            </label>
+                            <input
+                              type="text"
+                              value={form.present_address}
+                              onChange={(e) => setForm({ ...form, present_address: e.target.value })}
+                              placeholder="e.g. At & Po. Limda, Ta. Waghodia, Dist. Vadodara, Gujarat - 391760"
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 4: Login & Authentication Credentials */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-primary/[0.03] border border-primary/20 space-y-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-primary/10">
+                          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                            <Key className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                              4. Portal Login Credentials
+                            </h3>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                              Cadet user credentials for student dashboard and attendance login
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                          {/* Student ID / Username */}
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                              Student ID / Login ID *
+                              {editingId && <span className="text-[10px] text-gray-400 font-normal lowercase ml-1">(locked)</span>}
+                            </label>
+                            <div className="relative">
+                              <AtSign className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                type="text"
+                                required
+                                maxLength={100}
+                                disabled={!!editingId}
+                                value={form.student_id || form.username}
+                                onChange={(e) => {
+                                  const val = e.target.value.trim();
+                                  setForm({ ...form, student_id: val, username: val });
+                                }}
+                                placeholder="e.g. 262701"
+                                autoComplete="off"
+                                className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm border font-mono ${
+                                  editingId
+                                    ? 'border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/5 text-gray-500 cursor-not-allowed'
+                                    : 'border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary'
+                                }`}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Password */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                {editingId ? 'Password (optional)' : 'Password *'}
+                              </label>
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                {editingId ? 'Leave blank to keep current' : 'Default is DOB (DDMMYYYY)'}
+                              </span>
+                            </div>
+                            <div className="relative">
+                              <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                type={showPassword ? 'text' : 'password'}
+                                name="cfsi_student_pwd"
+                                id="cfsi_student_pwd"
+                                required={!editingId}
+                                minLength={8}
+                                maxLength={72}
+                                value={form.password}
+                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                placeholder={editingId ? '••••••••  (unchanged)' : 'DDMMYYYY or custom (min 8 chars)'}
+                                autoComplete="new-password"
+                                className="w-full pl-10 pr-10 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-mono"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="p-1 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                title={showPassword ? 'Hide password' : 'Show password'}
+                              >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  ) : (
+                    /* Teacher / Admin Account Flow */
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                            Full Name *
+                          </label>
+                          <div className="relative">
+                            <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="text"
+                              required
+                              maxLength={200}
+                              value={form.full_name}
+                              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                              placeholder={form.role === 'admin' ? 'e.g. System Administrator' : 'e.g. Dr. Rajesh Kumar'}
+                              autoComplete="off"
+                              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                            Username / Login ID *
+                            {editingId && <span className="text-[10px] text-gray-400 font-normal lowercase ml-1">(cannot be altered)</span>}
+                          </label>
+                          <div className="relative">
+                            <AtSign className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="text"
+                              required
+                              minLength={3}
+                              maxLength={100}
+                              disabled={!!editingId}
+                              value={form.username}
+                              onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().trim() })}
+                              placeholder={form.role === 'admin' ? 'e.g. admin.officer' : 'e.g. rajesh.kumar'}
+                              autoComplete="off"
+                              className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border font-mono ${
+                                editingId
+                                  ? 'border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/5 text-gray-500 cursor-not-allowed'
+                                  : 'border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary'
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Password */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                          {editingId ? 'New Password (optional)' : 'Password *'}
+                          <span className="text-[10px] text-gray-400 font-normal lowercase ml-1">
+                            {editingId ? '(leave blank to keep current)' : '(min. 8 characters)'}
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            name="cfsi_staff_secret_key"
+                            id="cfsi_staff_secret_key"
+                            required={!editingId}
+                            minLength={8}
+                            maxLength={72}
+                            value={form.password}
+                            onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            placeholder={editingId ? '••••••••  (unchanged)' : 'Enter strong password (8+ chars)'}
+                            autoComplete="new-password"
+                            className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="p-1 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                            title={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  </div>
+
+                  {/* Modal Footer - Pinned */}
+                  <div className="px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/80 dark:bg-white/[0.02] shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={form.is_active}
+                        disabled={editingId === currentUser?.id}
+                        onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                        className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                        Active Account Status
+                      </span>
+                    </label>
+
+                    <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={busy}
+                        className="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-dark transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 active:scale-95 cursor-pointer"
+                      >
+                        {busy ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>
+                              {editingId
+                                ? 'Update User'
+                                : form.role === 'student'
+                                ? 'Create Student Account'
+                                : 'Create User Account'}
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
         {/* User Directory Filter & Table Section */}
         <div className="space-y-4">
@@ -1121,121 +1737,128 @@ export function UsersPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {deleteConfirmUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="w-full max-w-md rounded-3xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-6 space-y-4 text-gray-900 dark:text-white"
-            >
-              <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-                <div className="p-3 rounded-2xl bg-red-500/10">
-                  <AlertTriangle className="w-6 h-6" />
+      {/* Delete Confirmation Modal */}
+      {createPortal(
+        <AnimatePresence>
+          {deleteConfirmUser && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-md rounded-3xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-6 space-y-4 text-gray-900 dark:text-white"
+              >
+                <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+                  <div className="p-3 rounded-2xl bg-red-500/10">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-lg">Confirm Account Deletion</h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Permanent security action</span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-heading font-black text-lg">Confirm Account Deletion</h3>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Permanent security action</span>
+
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                  Are you sure you want to permanently delete the account for{' '}
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {deleteConfirmUser.full_name || deleteConfirmUser.username}
+                  </span>{' '}
+                  (<span className="font-mono">{deleteConfirmUser.username}</span>)?
+                  <p className="mt-2 text-xs text-red-500 font-medium">
+                    • This will invalidate all active sessions and permanently revoke portal access.
+                  </p>
                 </div>
-              </div>
 
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                Are you sure you want to permanently delete the account for{' '}
-                <span className="font-bold text-gray-900 dark:text-white">
-                  {deleteConfirmUser.full_name || deleteConfirmUser.username}
-                </span>{' '}
-                (<span className="font-mono">{deleteConfirmUser.username}</span>)?
-                <p className="mt-2 text-xs text-red-500 font-medium">
-                  • This will invalidate all active sessions and permanently revoke portal access.
-                </p>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setDeleteConfirmUser(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={confirmDelete}
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md flex items-center gap-1.5"
-                >
-                  {busy ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  <span>Delete User</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <div className="pt-2 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setDeleteConfirmUser(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={confirmDelete}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md flex items-center gap-1.5"
+                  >
+                    {busy ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    <span>Delete User</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Bulk Delete Confirmation Modal */}
-      <AnimatePresence>
-        {bulkDeleteModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="w-full max-w-md rounded-3xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-6 space-y-4 text-gray-900 dark:text-white"
-            >
-              <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-                <div className="p-3 rounded-2xl bg-red-500/10">
-                  <ShieldAlert className="w-6 h-6" />
+      {createPortal(
+        <AnimatePresence>
+          {bulkDeleteModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="w-full max-w-md rounded-3xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-6 space-y-4 text-gray-900 dark:text-white"
+              >
+                <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+                  <div className="p-3 rounded-2xl bg-red-500/10">
+                    <ShieldAlert className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-lg">Confirm Bulk Account Deletion</h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Permanent security action</span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-heading font-black text-lg">Confirm Bulk Account Deletion</h3>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Permanent security action</span>
-                </div>
-              </div>
 
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                Are you sure you want to permanently delete{' '}
-                <span className="font-bold text-gray-900 dark:text-white">
-                  {selectedUserIds.filter((id) => id !== currentUser?.id).length}
-                </span>{' '}
-                selected user account(s) from MongoDB?
-                {selectedUserIds.includes(currentUser?.id || '') && (
-                  <p className="mt-2 text-xs text-amber-500 font-medium">
-                    • Note: Your active administrator account will be protected and preserved.
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                  Are you sure you want to permanently delete{' '}
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {selectedUserIds.filter((id) => id !== currentUser?.id).length}
+                  </span>{' '}
+                  selected user account(s) from MongoDB?
+                  {selectedUserIds.includes(currentUser?.id || '') && (
+                    <p className="mt-2 text-xs text-amber-500 font-medium">
+                      • Note: Your active administrator account will be protected and preserved.
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-red-500 font-medium">
+                    • This will invalidate all credentials, delete associated profiles, and purge attendance records.
                   </p>
-                )}
-                <p className="mt-2 text-xs text-red-500 font-medium">
-                  • This will invalidate all credentials, delete associated profiles, and purge attendance records.
-                </p>
-              </div>
+                </div>
 
-              <div className="pt-2 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  disabled={isBulkProcessing}
-                  onClick={() => setBulkDeleteModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={isBulkProcessing}
-                  onClick={handleBulkDelete}
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md flex items-center gap-1.5"
-                >
-                  {isBulkProcessing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  <span>Delete Selected Accounts</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <div className="pt-2 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={() => setBulkDeleteModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={handleBulkDelete}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md flex items-center gap-1.5"
+                  >
+                    {isBulkProcessing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    <span>Delete Selected Accounts</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Bulk Student Import Modal */}
       <BulkStudentImportModal

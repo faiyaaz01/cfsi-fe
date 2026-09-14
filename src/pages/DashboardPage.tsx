@@ -81,8 +81,8 @@ export const DashboardPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
 
-  // Tabs: 'students' | 'attendance' | 'news_events' | 'updates' | 'all'
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'news_events' | 'updates' | 'all'>(
+  // Tabs: 'students' | 'attendance' | 'news'
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'news'>(
     tabParam === 'attendance' ? 'attendance' : 'students'
   );
 
@@ -109,8 +109,7 @@ export const DashboardPage: React.FC = () => {
     clearDayAttendance,
     getAttendanceByStudent,
     getStudentAttendanceSummary,
-    isDateLocked,
-    resetToSeed: resetStudentDataToSeed 
+    isDateLocked
   } = useStudentData();
 
   // --- CADET / STUDENT DIRECTORY STATE ---
@@ -384,7 +383,7 @@ export const DashboardPage: React.FC = () => {
 
   // Level 1: Computed stats for each date
   const getDateSlotStats = useCallback((dateStr: string) => {
-    const totalCadets = cadetsList.length || 138;
+    const totalCadets = cadetsList.length;
     const dayRecords = attendance.filter((a) => a.date === dateStr);
 
     const getSlotInfo = (slot: AttendanceSlot) => {
@@ -472,11 +471,13 @@ export const DashboardPage: React.FC = () => {
 
 
 
+  // News Category Filter State
+  const [newsCategoryFilter, setNewsCategoryFilter] = useState<string>('All');
+
   // Filtered News items
   const displayedPosts = posts.filter((p) => {
-    if (activeTab === 'news_events') return p.category !== 'Institute Updates';
-    if (activeTab === 'updates') return p.category === 'Institute Updates';
-    return true; // 'all'
+    if (newsCategoryFilter === 'All') return true;
+    return p.category === newsCategoryFilter;
   });
 
   // If NOT Authenticated, redirect to institute login portal
@@ -503,35 +504,11 @@ export const DashboardPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              to="/users"
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-600 hover:text-white border border-amber-500/30 flex items-center gap-1.5 transition-colors shadow-sm"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Manage Users</span>
-            </Link>
-
-            <Link
-              to="/student/dashboard"
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white flex items-center gap-1.5 transition-colors"
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Student Portal</span>
-            </Link>
-
-            <Link
-              to="/"
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 border border-gray-200 dark:border-white/10 flex items-center gap-1.5 transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>View Website</span>
-            </Link>
-
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleLogout}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-colors"
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-white/5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 transition-colors shadow-xs"
             >
               Sign Out
             </button>
@@ -566,15 +543,15 @@ export const DashboardPage: React.FC = () => {
             }`}
           >
             <Clock className="w-4 h-4" />
-            <span>Mark Attendance (<CountUp value={attendance.length} />)</span>
+            <span>Mark Attendance</span>
           </button>
 
           {/* News & Updates */}
           <button
             type="button"
-            onClick={() => setActiveTab(activeTab === 'news_events' || activeTab === 'updates' ? activeTab : 'all')}
+            onClick={() => setActiveTab('news')}
             className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-              activeTab === 'news_events' || activeTab === 'updates' || activeTab === 'all'
+              activeTab === 'news'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
             }`}
@@ -582,6 +559,15 @@ export const DashboardPage: React.FC = () => {
             <FileText className="w-4 h-4" />
             <span>News & Updates (<CountUp value={posts.length} />)</span>
           </button>
+
+          {/* Manage Users */}
+          <Link
+            to="/users"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10"
+          >
+            <Users className="w-4 h-4" />
+            <span>Manage Users</span>
+          </Link>
         </div>
 
         {/* ========================================================================= */}
@@ -935,290 +921,244 @@ export const DashboardPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'attendance' && (
           <div className="space-y-6">
-            {/* Top Overview Control Card */}
-                <FlatCard hoverEffect={false} className="p-6 sm:p-8 border border-gray-200/80 dark:border-white/10 shadow-md">
-                  {/* Header Title & Date Selection */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-white/5">
-                    <div>
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>Daily Attendance Master Schedule</span>
-                      </div>
-                      <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                        Mark Student Attendance
-                      </h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Overview of daily sessions across dates. Click any slot or row to open its dedicated student roster and record attendance.
-                      </p>
-                    </div>
+            {/* Top Toolbar: Date Selector, Quick Today, Search & Stats */}
+            <div className="bg-white dark:bg-[#161d27] p-5 sm:p-6 rounded-2xl border border-gray-200/80 dark:border-white/10 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-heading font-extrabold text-lg sm:text-xl text-gray-900 dark:text-white flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    <span>Daily Attendance</span>
+                  </h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Select any date to take attendance across Morning PT, Theory, and Drill slots.
+                  </p>
+                </div>
 
-                    {/* Quick Date Picker / Jump */}
-                    <div className="flex flex-wrap items-center gap-2 bg-gray-100/80 dark:bg-white/5 p-1.5 rounded-2xl border border-gray-200/60 dark:border-white/5">
-                      <div className="flex items-center gap-2 px-2">
-                        <Calendar className="w-4 h-4 text-primary" />
-                        <input
-                          type="date"
-                          value={newDateInput}
-                          onChange={(e) => setNewDateInput(e.target.value)}
-                          className="bg-transparent text-xs sm:text-sm font-bold text-gray-900 dark:text-white outline-none cursor-pointer"
-                        />
-                      </div>
+                {/* Date Picker & Actions */}
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-white/5 p-1.5 rounded-xl border border-gray-200/80 dark:border-white/10 self-start sm:self-auto">
+                  <input
+                    type="date"
+                    value={newDateInput}
+                    onChange={(e) => setNewDateInput(e.target.value)}
+                    className="bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 px-2 py-1 outline-none cursor-pointer"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const today = new Date().toISOString().split('T')[0];
+                      setNewDateInput(today);
+                      handleOpenNewDate(today);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenNewDate(newDateInput)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Mark Date</span>
+                  </button>
+                </div>
+              </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleOpenNewDate(newDateInput)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Mark This Date</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const today = new Date().toISOString().split('T')[0];
-                          setNewDateInput(today);
-                          handleOpenNewDate(today);
-                        }}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-800 dark:text-gray-200 transition-colors cursor-pointer"
-                      >
-                        Today
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Quick Metrics & Search Toolbar */}
-                  <div className="pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                    {/* Search Dates */}
-                    <div className="md:col-span-6 relative">
-                      <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        value={datesSearchQuery}
-                        onChange={(e) => setDatesSearchQuery(e.target.value)}
-                        placeholder="Search dates (e.g. 14 Sep, 2026, Monday)..."
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    {/* Quick Stat Highlights */}
-                    <div className="md:col-span-6 flex flex-wrap items-center justify-end gap-3 text-xs">
-                      <div className="px-3 py-2 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light border border-primary/20 font-bold flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span><CountUp value={recordedDates.length} /> Total Dates</span>
-                      </div>
-                      <div className="px-3 py-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 font-bold flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        <span><CountUp value={cadetsList.length || 138} /> Students Enrolled</span>
-                      </div>
-                    </div>
-                  </div>
-                </FlatCard>
-
-                {/* Level 1 Dates Overview Table */}
-                <div className="bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 rounded-2xl shadow-md overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100/90 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-extrabold uppercase text-[10px] tracking-wider">
-                          <th className="py-4 px-4 min-w-[200px]">Date</th>
-                          <th className="py-4 px-3 text-center min-w-[170px]">Slot One (PT)</th>
-                          <th className="py-4 px-3 text-center min-w-[170px]">Slot Two (Theory)</th>
-                          <th className="py-4 px-3 text-center min-w-[170px]">Slot Three (Drill)</th>
-                          <th className="py-4 px-3 text-center min-w-[170px]">Filled Slots</th>
-                          <th className="py-4 px-4 text-center min-w-[140px]">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                        {paginatedDates.length === 0 ? (
-                          <tr>
-                            <td colSpan={6} className="py-12 text-center text-gray-400 text-sm font-semibold">
-                              No attendance dates found matching your search.
-                            </td>
-                          </tr>
-                        ) : (
-                          paginatedDates.map((dateStr) => {
-                            const stats = getDateSlotStats(dateStr);
-                            const isToday = isTodayDate(dateStr);
-
-                            return (
-                              <tr
-                                key={dateStr}
-                                className="hover:bg-gray-50/70 dark:hover:bg-white/5 transition-colors"
-                              >
-                                {/* Date Column */}
-                                <td className="py-4 px-4">
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-extrabold mt-0.5">
-                                      <Calendar className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-extrabold text-sm text-gray-900 dark:text-white">
-                                          {formatDateLabel(dateStr)}
-                                        </span>
-                                        {isToday && (
-                                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary text-white shadow-xs">
-                                            Today
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400 font-mono">
-                                        <span>{dateStr}</span>
-                                        {stats.isLocked ? (
-                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-500">
-                                            • <Lock className="w-3 h-3" /> Locked
-                                          </span>
-                                        ) : stats.uploadedAt ? (
-                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500">
-                                            • <CheckCircle2 className="w-3 h-3" /> Live Synced
-                                          </span>
-                                        ) : (
-                                          <span className="text-[10px] font-bold text-amber-500">
-                                            • Draft
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-
-                                {/* Slot One Column */}
-                                <td className="py-4 px-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => navigate(`/dashboard/attendance/${dateStr}/Slot 1`)}
-                                    className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer hover:scale-[1.02] shadow-xs ${
-                                      stats.s1.isFilled
-                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20'
-                                        : stats.s1.marked > 0
-                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20'
-                                        : 'bg-gray-100/70 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 hover:border-primary/50'
-                                    }`}
-                                    title="Open Slot 1 (Morning PT) Attendance"
-                                  >
-                                    <span className="font-extrabold flex items-center gap-1.5">
-                                      <span className={`w-2 h-2 rounded-full ${stats.s1.isFilled ? 'bg-emerald-500' : stats.s1.marked > 0 ? 'bg-amber-500 animate-ping' : 'bg-gray-400'}`} />
-                                      <span>{stats.s1.isFilled ? '138 Marked' : stats.s1.marked > 0 ? `${stats.s1.marked} Marked` : 'Pending (0/138)'}</span>
-                                    </span>
-                                    <span className="text-[10px] opacity-80 font-normal">
-                                      {stats.s1.marked > 0 ? `${stats.s1.present} P • ${stats.s1.absent} A` : 'Click to Mark'}
-                                    </span>
-                                  </button>
-                                </td>
-
-                                {/* Slot Two Column */}
-                                <td className="py-4 px-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => navigate(`/dashboard/attendance/${dateStr}/Slot 2`)}
-                                    className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer hover:scale-[1.02] shadow-xs ${
-                                      stats.s2.isFilled
-                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20'
-                                        : stats.s2.marked > 0
-                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20'
-                                        : 'bg-gray-100/70 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 hover:border-primary/50'
-                                    }`}
-                                    title="Open Slot 2 (Theory) Attendance"
-                                  >
-                                    <span className="font-extrabold flex items-center gap-1.5">
-                                      <span className={`w-2 h-2 rounded-full ${stats.s2.isFilled ? 'bg-emerald-500' : stats.s2.marked > 0 ? 'bg-amber-500 animate-ping' : 'bg-gray-400'}`} />
-                                      <span>{stats.s2.isFilled ? '138 Marked' : stats.s2.marked > 0 ? `${stats.s2.marked} Marked` : 'Pending (0/138)'}</span>
-                                    </span>
-                                    <span className="text-[10px] opacity-80 font-normal">
-                                      {stats.s2.marked > 0 ? `${stats.s2.present} P • ${stats.s2.absent} A` : 'Click to Mark'}
-                                    </span>
-                                  </button>
-                                </td>
-
-                                {/* Slot Three Column */}
-                                <td className="py-4 px-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => navigate(`/dashboard/attendance/${dateStr}/Slot 3`)}
-                                    className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer hover:scale-[1.02] shadow-xs ${
-                                      stats.s3.isFilled
-                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20'
-                                        : stats.s3.marked > 0
-                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20'
-                                        : 'bg-gray-100/70 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 hover:border-primary/50'
-                                    }`}
-                                    title="Open Slot 3 (Drill) Attendance"
-                                  >
-                                    <span className="font-extrabold flex items-center gap-1.5">
-                                      <span className={`w-2 h-2 rounded-full ${stats.s3.isFilled ? 'bg-emerald-500' : stats.s3.marked > 0 ? 'bg-amber-500 animate-ping' : 'bg-gray-400'}`} />
-                                      <span>{stats.s3.isFilled ? '138 Marked' : stats.s3.marked > 0 ? `${stats.s3.marked} Marked` : 'Pending (0/138)'}</span>
-                                    </span>
-                                    <span className="text-[10px] opacity-80 font-normal">
-                                      {stats.s3.marked > 0 ? `${stats.s3.present} P • ${stats.s3.absent} A` : 'Click to Mark'}
-                                    </span>
-                                  </button>
-                                </td>
-
-                                {/* Filled Slots Column */}
-                                <td className="py-4 px-3">
-                                  <div className="flex flex-col items-center justify-center gap-1.5">
-                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
-                                      stats.filledCount === 3
-                                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                                        : stats.filledCount === 2
-                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
-                                        : stats.filledCount === 1
-                                        ? 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30'
-                                        : 'bg-gray-100 dark:bg-white/5 text-gray-500 border border-gray-200 dark:border-white/10'
-                                    }`}>
-                                      {stats.filledCount === 3 ? (
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                      ) : (
-                                        <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                      )}
-                                      <span>{stats.filledCount} of 3 Filled</span>
-                                    </span>
-
-                                    <div className="w-24 bg-gray-200 dark:bg-white/10 rounded-full h-1.5 overflow-hidden">
-                                      <div
-                                        className={`h-full rounded-full transition-all ${
-                                          stats.filledCount === 3 ? 'bg-emerald-500' : stats.filledCount === 2 ? 'bg-amber-500' : stats.filledCount === 1 ? 'bg-orange-500' : 'bg-transparent'
-                                        }`}
-                                        style={{ width: `${(stats.filledCount / 3) * 100}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                </td>
-
-                                {/* Actions Column */}
-                                <td className="py-4 px-4 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const targetSlot = !stats.s1.isFilled ? 'Slot 1' : !stats.s2.isFilled ? 'Slot 2' : !stats.s3.isFilled ? 'Slot 3' : 'Slot 1';
-                                      navigate(`/dashboard/attendance/${dateStr}/${encodeURIComponent(targetSlot)}`);
-                                    }}
-                                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer hover:shadow-md"
-                                  >
-                                    <span>{stats.filledCount === 3 ? 'View / Edit' : 'Mark Slots'}</span>
-                                    <ChevronRight className="w-3.5 h-3.5" />
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Table Footer with Demo Pagination Style */}
-                  <TablePagination
-                    currentPage={datesPage}
-                    totalEntries={filteredRecordedDates.length}
-                    pageSize={datesPageSize}
-                    onPageChange={setDatesPage}
-                    onPageSizeChange={setDatesPageSize}
-                    pageSizeOptions={[5, 10, 25, 50]}
-                    itemLabel="dates"
+              {/* Search & Counter Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-white/5">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={datesSearchQuery}
+                    onChange={(e) => setDatesSearchQuery(e.target.value)}
+                    placeholder="Search dates (e.g. 14 Sep, 2026, Monday)..."
+                    className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-[#121820] text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary focus:bg-white dark:focus:bg-[#161d27] transition-all"
                   />
                 </div>
+
+                <div className="flex items-center gap-2.5 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="inline-flex items-center gap-1.5 font-medium">
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <strong>{recordedDates.length}</strong> Dates Recorded
+                  </span>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1.5 font-medium">
+                    <Users className="w-3.5 h-3.5 text-emerald-500" />
+                    <strong>{cadetsList.length}</strong> Enrolled Students
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Level 1 Dates Overview Table */}
+            <div className="bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 rounded-2xl shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold uppercase text-[11px] tracking-wider">
+                      <th className="py-3.5 px-4 min-w-[190px]">Date</th>
+                      <th className="py-3.5 px-3 text-center min-w-[150px]">Slot 1 (Morning PT)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[150px]">Slot 2 (Theory)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[150px]">Slot 3 (Drill)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[120px]">Progress</th>
+                      <th className="py-3.5 px-4 text-center min-w-[110px]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                    {paginatedDates.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-10 text-center text-gray-400 text-xs font-medium">
+                          No attendance dates found matching your search.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedDates.map((dateStr) => {
+                        const stats = getDateSlotStats(dateStr);
+                        const isToday = isTodayDate(dateStr);
+                        const totalStudents = cadetsList.length;
+
+                        const renderSlotBadge = (
+                          slotName: AttendanceSlot,
+                          slotData: { marked: number; present: number; absent: number; isFilled: boolean }
+                        ) => {
+                          const isFilled = slotData.isFilled;
+                          const isMarked = slotData.marked > 0;
+
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/dashboard/attendance/${dateStr}/${encodeURIComponent(slotName)}`)}
+                              className={`w-full py-1.5 px-2.5 rounded-xl text-xs font-semibold transition-all border flex items-center justify-between gap-1.5 cursor-pointer hover:shadow-xs ${
+                                isFilled
+                                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20'
+                                  : isMarked
+                                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20'
+                                  : 'bg-gray-50 dark:bg-white/5 border-gray-200/80 dark:border-white/10 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10'
+                              }`}
+                              title={`Open ${slotName} Attendance`}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    isFilled ? 'bg-emerald-500' : isMarked ? 'bg-amber-500' : 'bg-gray-400'
+                                  }`}
+                                />
+                                <span className="font-semibold">
+                                  {isFilled ? 'Done' : isMarked ? 'In Progress' : 'Pending'}
+                                </span>
+                              </div>
+                              <span className="text-[11px] font-mono opacity-85">
+                                {isMarked ? `${slotData.marked}/${totalStudents}` : `0/${totalStudents}`}
+                              </span>
+                            </button>
+                          );
+                        };
+
+                        return (
+                          <tr
+                            key={dateStr}
+                            className="hover:bg-gray-50/70 dark:hover:bg-white/5 transition-colors"
+                          >
+                            {/* Date Column */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">
+                                  <Calendar className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">
+                                      {formatDateLabel(dateStr)}
+                                    </span>
+                                    {isToday && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary text-white">
+                                        Today
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400 font-mono">
+                                    <span>{dateStr}</span>
+                                    {stats.isLocked ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-500">
+                                        • <Lock className="w-3 h-3" /> Locked
+                                      </span>
+                                    ) : stats.uploadedAt ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-500">
+                                        • <CheckCircle2 className="w-3 h-3" /> Synced
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-semibold text-amber-500">
+                                        • Draft
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Slot 1 Column */}
+                            <td className="py-3.5 px-2.5">
+                              {renderSlotBadge('Slot 1', stats.s1)}
+                            </td>
+
+                            {/* Slot 2 Column */}
+                            <td className="py-3.5 px-2.5">
+                              {renderSlotBadge('Slot 2', stats.s2)}
+                            </td>
+
+                            {/* Slot 3 Column */}
+                            <td className="py-3.5 px-2.5">
+                              {renderSlotBadge('Slot 3', stats.s3)}
+                            </td>
+
+                            {/* Progress Column */}
+                            <td className="py-3.5 px-2 text-center">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/5 border border-gray-200/80 dark:border-white/10 text-gray-700 dark:text-gray-300">
+                                <div className="flex items-center gap-1">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${stats.s1.isFilled ? 'bg-emerald-500' : stats.s1.marked > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                                  <span className={`w-1.5 h-1.5 rounded-full ${stats.s2.isFilled ? 'bg-emerald-500' : stats.s2.marked > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                                  <span className={`w-1.5 h-1.5 rounded-full ${stats.s3.isFilled ? 'bg-emerald-500' : stats.s3.marked > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                                </div>
+                                <span className="text-[11px]">
+                                  {stats.filledCount === 3 ? '3/3 Done' : `${stats.filledCount}/3 Slots`}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Actions Column */}
+                            <td className="py-3.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const targetSlot = !stats.s1.isFilled ? 'Slot 1' : !stats.s2.isFilled ? 'Slot 2' : !stats.s3.isFilled ? 'Slot 3' : 'Slot 1';
+                                  navigate(`/dashboard/attendance/${dateStr}/${encodeURIComponent(targetSlot)}`);
+                                }}
+                                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-xs transition-all inline-flex items-center gap-1 cursor-pointer hover:shadow-sm"
+                              >
+                                <span>{stats.filledCount === 3 ? 'View' : 'Mark'}</span>
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Table Pagination */}
+              <TablePagination
+                currentPage={datesPage}
+                totalEntries={filteredRecordedDates.length}
+                pageSize={datesPageSize}
+                onPageChange={setDatesPage}
+                onPageSizeChange={setDatesPageSize}
+                pageSizeOptions={[5, 10, 25, 50]}
+                itemLabel="dates"
+              />
+            </div>
 
                 {/* Historical Logs Accordion Button */}
                 <div className="pt-2">
@@ -1379,71 +1319,14 @@ export const DashboardPage: React.FC = () => {
                     />
                   </div>
                 )}
-
-                {/* Database Maintenance Card */}
-                <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-xs font-bold text-rose-800 dark:text-rose-300">Attendance Database Maintenance</h4>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Clear attendance records back to sample demo data. Enrolled student directory profiles will not be touched.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (window.confirm('Reset all attendance records? This action cannot be undone.')) {
-                        await resetStudentDataToSeed();
-                        toast.success('Attendance records reset successfully');
-                      }
-                    }}
-                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-300 dark:border-rose-800 transition-colors shrink-0 cursor-pointer"
-                  >
-                    Reset Attendance Records
-                  </button>
-                </div>
               </div>
             )}
 
         {/* ========================================================================= */}
         {/* TABS: NEWS & UPDATES (Content Manager)                                    */}
         {/* ========================================================================= */}
-        {(activeTab === 'news_events' || activeTab === 'updates' || activeTab === 'all') && (
+        {activeTab === 'news' && (
           <div className="space-y-6">
-            {/* Sub-Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2 pb-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('all')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'all'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
-                }`}
-              >
-                All Posts ({posts.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('news_events')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'news_events'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
-                }`}
-              >
-                News & Events ({posts.filter((p) => p.category !== 'Institute Updates').length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('updates')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'updates'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
-                }`}
-              >
-                Institute Updates ({posts.filter((p) => p.category === 'Institute Updates').length})
-              </button>
-            </div>
-
             {/* Create / Edit Post Form Card */}
             <FlatCard hoverEffect={false} className="p-6 sm:p-8 mb-6 border border-gray-200/80 dark:border-white/10 shadow-md">
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100 dark:border-white/5">
@@ -1615,73 +1498,96 @@ export const DashboardPage: React.FC = () => {
 
             {/* List of Posted Items */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-heading font-extrabold text-xl text-gray-900 dark:text-white">
-                  Published Announcements ({displayedPosts.length})
-                </h3>
-                <span className="text-xs text-gray-400">Manage published updates and notices</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-heading font-extrabold text-xl text-gray-900 dark:text-white">
+                    Published Announcements ({displayedPosts.length})
+                  </h3>
+                  <span className="text-xs text-gray-400">Manage published updates and notices</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-medium">Category:</span>
+                  <select
+                    value={newsCategoryFilter}
+                    onChange={(e) => setNewsCategoryFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                  >
+                    <option value="All">All Categories</option>
+                    <option value="News">News</option>
+                    <option value="Event">Event</option>
+                    <option value="Announcement">Announcement</option>
+                    <option value="Institute Updates">Institute Updates</option>
+                  </select>
+                </div>
               </div>
 
-              {displayedPosts.map((post) => (
-                <div key={post.id}>
-                  <GlassCard hoverEffect={false} className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10">
-                    
-                    {/* Left Info */}
-                    <div className="flex items-start gap-4 flex-1">
-                      {post.imageUrl && (
-                        <img
-                          src={post.imageUrl}
-                          alt={post.title}
-                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-white/10"
-                        />
-                      )}
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
-                            {post.category}
-                          </span>
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{post.date}</span>
-                          </span>
-                          {post.author && (
-                            <span className="text-xs text-gray-400">• {post.author}</span>
-                          )}
-                        </div>
-                        <h4 className="font-heading font-bold text-base text-gray-900 dark:text-white leading-snug">
-                          {post.title}
-                        </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                          {post.excerpt}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Right Actions: Edit & Delete */}
-                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                      <button
-                        type="button"
-                        onClick={() => handleEditNewsClick(post)}
-                        className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
-                        title="Edit this post"
-                        aria-label="Edit post"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePost(post.id, post.title)}
-                        className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                        title="Delete this post"
-                        aria-label="Delete post"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                  </GlassCard>
+              {displayedPosts.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 bg-white dark:bg-[#161d27] rounded-2xl border border-gray-200 dark:border-white/10 text-xs font-semibold">
+                  No announcements found{newsCategoryFilter !== 'All' ? ` for "${newsCategoryFilter}"` : ''}.
                 </div>
-              ))}
+              ) : (
+                displayedPosts.map((post) => (
+                  <div key={post.id}>
+                    <GlassCard hoverEffect={false} className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10">
+                      
+                      {/* Left Info */}
+                      <div className="flex items-start gap-4 flex-1">
+                        {post.imageUrl && (
+                          <img
+                            src={post.imageUrl}
+                            alt={post.title}
+                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-white/10"
+                          />
+                        )}
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                              {post.category}
+                            </span>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{post.date}</span>
+                            </span>
+                            {post.author && (
+                              <span className="text-xs text-gray-400">• {post.author}</span>
+                            )}
+                          </div>
+                          <h4 className="font-heading font-bold text-base text-gray-900 dark:text-white leading-snug">
+                            {post.title}
+                          </h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                            {post.excerpt}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right Actions: Edit & Delete */}
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          type="button"
+                          onClick={() => handleEditNewsClick(post)}
+                          className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
+                          title="Edit this post"
+                          aria-label="Edit post"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePost(post.id, post.title)}
+                          className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+                          title="Delete this post"
+                          aria-label="Delete post"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                    </GlassCard>
+                  </div>
+                ))
+              )}
             </div>
 
           </div>

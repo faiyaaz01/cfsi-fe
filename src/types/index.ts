@@ -64,6 +64,7 @@ export interface StudentVerificationRecord {
   id: string; // Student ID (e.g. 262701 or 2600DFS26101)
   rollNo: string; // Roll number (e.g. 01)
   enrollmentNo?: string;
+  sessionYear?: string;
   name: string;
   fatherName: string;
   course: string;

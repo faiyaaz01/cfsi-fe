@@ -411,7 +411,7 @@ export const SlotAttendancePage: React.FC = () => {
               className="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-800 dark:text-gray-200 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs hover:shadow"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Dates Table</span>
+              <span>Back to Dashboard</span>
             </button>
 
             {/* Compact Live Sync & 48h Lock Status Pill */}
@@ -525,7 +525,7 @@ export const SlotAttendancePage: React.FC = () => {
               const cfg = slotConfigMap[slotKey];
               const daySlotRecs = attendance.filter((a) => a.date === activeDate && (a.slot === slotKey || (!a.slot && slotKey === 'Slot 1')));
               const marked = daySlotRecs.length;
-              const total = cadetsList.length || 138;
+              const total = cadetsList.length;
               const isFilled = total > 0 && marked >= total;
 
               return (

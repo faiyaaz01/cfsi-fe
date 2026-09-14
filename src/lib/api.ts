@@ -418,6 +418,7 @@ export const api = {
       id: String(doc.id || doc._id || ''),
       rollNo: String(doc.rollNo || doc.roll_no || ''),
       enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
+      sessionYear: doc.sessionYear || doc.session_year || undefined,
       name: doc.name || doc.full_name || '',
       fatherName: doc.fatherName || doc.father_name || '',
       course: doc.course || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',

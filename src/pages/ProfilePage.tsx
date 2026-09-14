@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { useAuth, homeFor } from '../context/AuthContext';
 import { api } from '../lib/api';
 import { StudentProfile } from '../types';
 import { toast } from 'sonner';
@@ -23,7 +24,9 @@ import {
   X,
   AlertCircle,
   GraduationCap,
-  Building
+  Building,
+  ArrowLeft,
+  LayoutDashboard
 } from 'lucide-react';
 
 const INDIAN_STATES = [
@@ -177,71 +180,95 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       
+      {/* Back to Dashboard Navigation Link */}
+      <div className="mb-4 flex items-center justify-between">
+        <Link
+          to={user ? homeFor(user) : '/student/dashboard'}
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:white transition-colors group cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span>Back to Dashboard</span>
+        </Link>
+      </div>
+
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-primary via-[#2055be] to-[#12387d] rounded-3xl p-6 sm:p-8 text-white shadow-lg mb-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
         
-        <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
-          {/* Avatar with Preview Trigger */}
-          <div className="relative group">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white/30 overflow-hidden bg-white/10 shadow-xl flex items-center justify-center">
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={name || 'Student Profile'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-12 h-12 text-white/70" />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {/* Avatar with Preview Trigger */}
+            <div className="relative group shrink-0">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white/30 overflow-hidden bg-white/10 shadow-xl flex items-center justify-center">
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={name || 'Student Profile'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-white/70" />
+                )}
+              </div>
+
+              {/* Quick Preview Button */}
+              {photoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalOpen(true)}
+                  className="absolute bottom-0 right-0 p-2 rounded-full bg-white text-primary hover:bg-gray-100 shadow-md transition-transform active:scale-95 cursor-pointer"
+                  title="Preview Photo"
+                  aria-label="Preview Photo"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
               )}
             </div>
 
-            {/* Quick Preview Button */}
-            {photoUrl && (
-              <button
-                type="button"
-                onClick={() => setPreviewModalOpen(true)}
-                className="absolute bottom-0 right-0 p-2 rounded-full bg-white text-primary hover:bg-gray-100 shadow-md transition-transform active:scale-95 cursor-pointer"
-                title="Preview Photo"
-                aria-label="Preview Photo"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
-            )}
+            {/* User & Registry Status */}
+            <div className="text-center sm:text-left space-y-1.5 flex-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-md">
+                  Student Profile
+                </span>
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>{profile?.verificationStatus || 'Verified'}</span>
+                </span>
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90">
+                  {profile?.batch || 'Batch 2026-2027'}
+                </span>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
+                {name || user?.full_name || 'Student Name'}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-white/80 flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                <span><strong>Student User ID:</strong> {hardcodedUserId}</span>
+                {rollNo && (
+                  <>
+                    <span>•</span>
+                    <span><strong>Roll No:</strong> {rollNo}</span>
+                  </>
+                )}
+                <span>•</span>
+                <span><strong>Program:</strong> {course || profile?.course || 'Fire Safety Program'}</span>
+                <span>•</span>
+                <span><strong>Mode:</strong> {mode}</span>
+              </p>
+            </div>
           </div>
 
-          {/* User & Registry Status */}
-          <div className="text-center sm:text-left space-y-1.5 flex-1">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-md">
-                Student Profile
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>{profile?.verificationStatus || 'Verified'}</span>
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90">
-                {profile?.batch || 'Batch 2026-2027'}
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
-              {name || user?.full_name || 'Student Name'}
-            </h1>
-
-            <p className="text-xs sm:text-sm text-white/80 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-              <span><strong>Student User ID:</strong> {hardcodedUserId}</span>
-              {rollNo && (
-                <>
-                  <span>•</span>
-                  <span><strong>Roll No:</strong> {rollNo}</span>
-                </>
-              )}
-              <span>•</span>
-              <span><strong>Program:</strong> {course || profile?.course || 'Fire Safety Program'}</span>
-              <span>•</span>
-              <span><strong>Mode:</strong> {mode}</span>
-            </p>
+          {/* Back to Dashboard Button inside Banner */}
+          <div className="flex items-center justify-center lg:justify-end shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/10">
+            <Link
+              to={user ? homeFor(user) : '/student/dashboard'}
+              className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-primary hover:bg-slate-50 shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-95 group cursor-pointer"
+            >
+              <LayoutDashboard className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+              <span>Back to Dashboard</span>
+            </Link>
           </div>
         </div>
       </div>
