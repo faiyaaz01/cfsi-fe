@@ -42,7 +42,8 @@ import {
   Printer,
   UploadCloud,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  Globe
 } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { useStudentData } from '../context/StudentDataContext';
@@ -766,6 +767,15 @@ export const DashboardPage: React.FC = () => {
           >
             <Users className="w-4 h-4" />
             <span>Manage Users</span>
+          </Link>
+
+          {/* Web Management */}
+          <Link
+            to="/dashboard/web-management"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10"
+          >
+            <Globe className="w-4 h-4 text-blue-500" />
+            <span>Web Management</span>
           </Link>
         </div>
 

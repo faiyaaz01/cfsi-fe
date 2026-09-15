@@ -1,5 +1,6 @@
 import { AuthProvider, AuthGuard, GuestGuard } from './context/AuthContext';
 import { UsersPage } from './pages/UsersPage';
+import { WebManagementPage } from './pages/WebManagementPage';
 import { PortalPage } from './pages/PortalPage';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ import { Toaster } from 'sonner';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { NewsProvider } from './context/NewsContext';
 import { StudentDataProvider } from './context/StudentDataContext';
+import { WebContentProvider } from './context/WebContentContext';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
@@ -55,6 +57,7 @@ const AppContent: React.FC = () => {
             </Route>
             <Route element={<AuthGuard roles={['admin']} />}>
               <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="dashboard/web-management" element={<WebManagementPage />} />
               <Route path="users" element={<UsersPage />} />
             </Route>
             <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
@@ -76,11 +79,13 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <NewsProvider>
-        <StudentDataProvider>
-          <AppContent />
-        </StudentDataProvider>
-      </NewsProvider>
+      <WebContentProvider>
+        <NewsProvider>
+          <StudentDataProvider>
+            <AppContent />
+          </StudentDataProvider>
+        </NewsProvider>
+      </WebContentProvider>
     </ThemeProvider>
   );
 }

@@ -1,32 +1,48 @@
 import React from 'react';
 import { Flame, AlertTriangle, FileText, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const marqueeItems = [
-  {
-    icon: Flame,
-    text: "🔥 Fire Destruction is One Man's Job, Fire Prevention is Everybody's Job",
-    badge: 'Motto'
-  },
-  {
-    icon: AlertTriangle,
-    text: "⚠️ Safety Tip: When you see Smoke — Run! Never wait for fire.",
-    badge: 'Safety'
-  },
-  {
-    icon: FileText,
-    text: "📋 Admissions Open — Certificate & Diploma in Fire Safety 2024-25 | Apply Now",
-    badge: 'Admissions',
-    link: '/courses'
-  },
-  {
-    icon: Award,
-    text: "🏆 Affiliated with IFSMA — Best Fire Safety Education & Practical Ground Drills in India",
-    badge: 'Accreditation'
-  }
-];
+import { useWebContent } from '../../context/WebContentContext';
+import { useNews } from '../../context/NewsContext';
 
 export const Marquee: React.FC = () => {
+  const { displaySettings } = useWebContent();
+  const { posts } = useNews();
+
+  if (!displaySettings.newsTickerMarquee) return null;
+
+  // Build live marquee items: if there are real news bulletins, include them!
+  const liveNewsItems = posts.map(p => ({
+    icon: FileText,
+    text: `📢 ${p.title} (${p.category})`,
+    badge: p.category,
+    link: '/news'
+  }));
+
+  const standardItems = [
+    {
+      icon: Flame,
+      text: "🔥 Fire Destruction is One Man's Job, Fire Prevention is Everybody's Job",
+      badge: 'Motto',
+      link: undefined
+    },
+    {
+      icon: AlertTriangle,
+      text: "⚠️ Safety Tip: When you see Smoke — Run! Never wait for fire.",
+      badge: 'Safety',
+      link: undefined
+    },
+    {
+      icon: Award,
+      text: "🏆 Affiliated with IFSMA — Best Fire Safety Education & Practical Ground Drills in India",
+      badge: 'Accreditation',
+      link: undefined
+    }
+  ];
+
+  const marqueeItems = liveNewsItems.length > 0
+    ? [...liveNewsItems, ...standardItems]
+    : standardItems;
+
   return (
     <div className="bg-[#ff7a29] text-white py-2 px-3 overflow-hidden select-none relative shadow-sm z-20 border-b border-orange-600/20">
       <div className="max-w-7xl mx-auto flex items-center">
@@ -36,7 +52,7 @@ export const Marquee: React.FC = () => {
           <span>Latest Updates</span>
         </div>
 
-        {/* Marquee Ticker — Continuous Non-Stop Smooth Motion (Never stops on hover) */}
+        {/* Marquee Ticker */}
         <div className="relative flex overflow-x-hidden w-full">
           <div
             className="flex shrink-0 items-center gap-10 text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap animate-marquee will-change-transform"

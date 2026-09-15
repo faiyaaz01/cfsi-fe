@@ -12,6 +12,8 @@ export const LatestNewsSection: React.FC = () => {
   // Show 3 latest posts
   const latestPosts = posts.slice(0, 3);
 
+  if (latestPosts.length === 0) return null;
+
   const getCategoryBadgeClass = (cat: string) => {
     switch (cat) {
       case 'Announcement':

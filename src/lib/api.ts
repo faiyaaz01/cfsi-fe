@@ -1,4 +1,4 @@
-import { AttendanceRecord, StudentProfile, StudentVerificationRecord } from '../types';
+import { AttendanceRecord, StudentProfile, StudentVerificationRecord, Course, TrainingPost, GalleryImage, VideoItem, NewsPost } from '../types';
 
 /**
  * Central Fire Safety Institute (CFSI) Universal API Client
@@ -256,15 +256,6 @@ export const api = {
     return response.json();
   },
 
-  /** Fetch news bulletins */
-  async getNews(): Promise<any[]> {
-    const response = await fetchWithAuth('/news');
-    if (!response.ok) {
-      throw new Error('Failed to fetch news');
-    }
-    return response.json();
-  },
-
   /** Check backend health and database mode */
   async checkHealth(): Promise<{ status: string; database: string; is_mock: boolean }> {
     const response = await fetch(`${API_BASE_URL}/health`);
@@ -466,6 +457,247 @@ export const api = {
     if (!response.ok && response.status !== 204) {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to delete user from database');
+    }
+  },
+
+  // ==========================================
+  // REAL-TIME WEB & CONTENT MANAGEMENT (MongoDB)
+  // ==========================================
+  async getCourses(): Promise<Course[]> {
+    const response = await fetch(`${API_BASE_URL}/web/courses`);
+    if (!response.ok) throw new Error('Failed to fetch courses from database');
+    return response.json();
+  },
+
+  async createCourse(course: any): Promise<Course> {
+    const response = await fetchWithAuth('/web/courses', {
+      method: 'POST',
+      body: JSON.stringify(course),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create course');
+    }
+    return response.json();
+  },
+
+  async updateCourse(id: string, updates: any): Promise<Course> {
+    const response = await fetchWithAuth(`/web/courses/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update course');
+    }
+    return response.json();
+  },
+
+  async deleteCourse(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/web/courses/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete course');
+    }
+  },
+
+  async clearAllCourses(): Promise<void> {
+    const response = await fetchWithAuth('/web/courses', { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to clear courses');
+  },
+
+  async getDrills(): Promise<TrainingPost[]> {
+    const response = await fetch(`${API_BASE_URL}/web/drills`);
+    if (!response.ok) throw new Error('Failed to fetch training drills from database');
+    return response.json();
+  },
+
+  async createDrill(drill: any): Promise<TrainingPost> {
+    const response = await fetchWithAuth('/web/drills', {
+      method: 'POST',
+      body: JSON.stringify(drill),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create drill');
+    }
+    return response.json();
+  },
+
+  async updateDrill(id: string, updates: any): Promise<TrainingPost> {
+    const response = await fetchWithAuth(`/web/drills/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update drill');
+    }
+    return response.json();
+  },
+
+  async deleteDrill(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/web/drills/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete drill');
+    }
+  },
+
+  async clearAllDrills(): Promise<void> {
+    const response = await fetchWithAuth('/web/drills', { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to clear drills');
+  },
+
+  async getPhotos(): Promise<GalleryImage[]> {
+    const response = await fetch(`${API_BASE_URL}/web/photos`);
+    if (!response.ok) throw new Error('Failed to fetch photos from database');
+    return response.json();
+  },
+
+  async createPhoto(photo: any): Promise<GalleryImage> {
+    const response = await fetchWithAuth('/web/photos', {
+      method: 'POST',
+      body: JSON.stringify(photo),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to add photo');
+    }
+    return response.json();
+  },
+
+  async updatePhoto(id: string, updates: any): Promise<GalleryImage> {
+    const response = await fetchWithAuth(`/web/photos/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update photo');
+    }
+    return response.json();
+  },
+
+  async deletePhoto(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/web/photos/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete photo');
+    }
+  },
+
+  async clearAllPhotos(): Promise<void> {
+    const response = await fetchWithAuth('/web/photos', { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to clear photos');
+  },
+
+  async getVideos(): Promise<VideoItem[]> {
+    const response = await fetch(`${API_BASE_URL}/web/videos`);
+    if (!response.ok) throw new Error('Failed to fetch videos from database');
+    return response.json();
+  },
+
+  async createVideo(video: any): Promise<VideoItem> {
+    const response = await fetchWithAuth('/web/videos', {
+      method: 'POST',
+      body: JSON.stringify(video),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to add video');
+    }
+    return response.json();
+  },
+
+  async updateVideo(id: string, updates: any): Promise<VideoItem> {
+    const response = await fetchWithAuth(`/web/videos/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update video');
+    }
+    return response.json();
+  },
+
+  async deleteVideo(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/web/videos/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete video');
+    }
+  },
+
+  async clearAllVideos(): Promise<void> {
+    const response = await fetchWithAuth('/web/videos', { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to clear videos');
+  },
+
+  async getDisplaySettings(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/web/display-settings`);
+    if (!response.ok) throw new Error('Failed to fetch display settings');
+    return response.json();
+  },
+
+  async updateDisplaySettings(settings: any): Promise<any> {
+    const response = await fetchWithAuth('/web/display-settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update display settings');
+    }
+    return response.json();
+  },
+
+  async getNews(): Promise<NewsPost[]> {
+    const response = await fetch(`${API_BASE_URL}/news`);
+    if (!response.ok) throw new Error('Failed to fetch news from database');
+    return response.json();
+  },
+
+  async createNews(post: any): Promise<NewsPost> {
+    const response = await fetchWithAuth('/news', {
+      method: 'POST',
+      body: JSON.stringify(post),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to publish news');
+    }
+    return response.json();
+  },
+
+  async updateNews(id: string, updates: any): Promise<NewsPost> {
+    const response = await fetchWithAuth(`/news/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update news');
+    }
+    return response.json();
+  },
+
+  async deleteNews(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/news/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete news');
     }
   },
 };
