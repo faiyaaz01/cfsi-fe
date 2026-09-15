@@ -125,20 +125,6 @@ export interface StudentProfile {
 
 export type CadetRecord = StudentVerificationRecord;
 
-export interface JobListing {
-  id: string;
-  title: string;
-  department: string;
-  type: string;
-  experience: string;
-  location: string;
-  salary: string;
-  description: string;
-  requirements: string[];
-  responsibilities: string[];
-  postedDate: string;
-}
-
 export interface ContactFormData {
   name: string;
   email: string;
@@ -146,16 +132,6 @@ export interface ContactFormData {
   courseInterest: string;
   subject: string;
   message: string;
-}
-
-export interface CareerApplicationData {
-  fullName: string;
-  email: string;
-  phone: string;
-  position: string;
-  experience: string;
-  coverLetter?: string;
-  resumeFileName?: string;
 }
 
 // Student Portal & Attendance Types (Designed for REST backend)

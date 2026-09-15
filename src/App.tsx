@@ -13,7 +13,6 @@ import { AboutPage } from './pages/AboutPage';
 import { ImageGalleryPage } from './pages/ImageGalleryPage';
 import { VideoGalleryPage } from './pages/VideoGalleryPage';
 import { CoursesPage } from './pages/CoursesPage';
-import { CareerPage } from './pages/CareerPage';
 import { NewsPage } from './pages/NewsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ContactPage } from './pages/ContactPage';
@@ -46,7 +45,6 @@ const AppContent: React.FC = () => {
             <Route path="gallery/videos" element={<VideoGalleryPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="courses/:slug" element={<CoursesPage />} />
-            <Route path="career" element={<CareerPage />} />
             <Route path="news" element={<NewsPage />} />
             <Route path="contact" element={<ContactPage />} />
             {/* Separate Login Portals (Student & Institute) */}

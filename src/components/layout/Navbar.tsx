@@ -237,10 +237,6 @@ export const Navbar: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            <NavLink to="/career" className={({ isActive }) => getNavLinkClass(isActive)}>
-              Career
-            </NavLink>
-
             <NavLink to="/news" className={({ isActive }) => getNavLinkClass(isActive)}>
               News & Events
             </NavLink>
@@ -441,12 +437,6 @@ export const Navbar: React.FC = () => {
                   className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
                 >
                   About Us
-                </Link>
-                <Link
-                  to="/career"
-                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  Career
                 </Link>
                 <Link
                   to="/news"
