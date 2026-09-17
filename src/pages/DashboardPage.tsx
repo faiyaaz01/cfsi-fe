@@ -618,13 +618,13 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* View Tabs */}
-        <div className="flex flex-wrap items-center gap-2 mb-8 border-b border-gray-200 dark:border-white/10 pb-3">
+        <div className="flex items-center gap-2 mb-8 border-b border-gray-200 dark:border-white/10 pb-3 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           
           {/* Students Directory */}
           <button
             type="button"
             onClick={() => setActiveTab('students')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${
               activeTab === 'students'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -638,7 +638,7 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('attendance')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${
               activeTab === 'attendance'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -651,7 +651,7 @@ export const DashboardPage: React.FC = () => {
           {/* Manage Users */}
           <Link
             to="/users"
-            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10 shrink-0"
           >
             <Users className="w-4 h-4" />
             <span>Manage Users</span>
@@ -660,7 +660,7 @@ export const DashboardPage: React.FC = () => {
           {/* Web Management */}
           <Link
             to="/dashboard/web-management"
-            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10 shrink-0"
           >
             <Globe className="w-4 h-4 text-blue-500" />
             <span>Web Management</span>
@@ -669,7 +669,7 @@ export const DashboardPage: React.FC = () => {
           {/* Leadership & Faculty Assignment */}
           <Link
             to="/dashboard/leadership"
-            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10 shrink-0"
           >
             <Award className="w-4 h-4 text-indigo-500" />
             <span>Leadership & Faculty</span>

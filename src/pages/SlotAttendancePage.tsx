@@ -863,9 +863,9 @@ export const SlotAttendancePage: React.FC = () => {
         {/* ROW 5: TOOLBAR (Search, Course Filter, Status Pills, Bulk Actions)        */}
         {/* ========================================================================= */}
         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-xs space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[240px] max-w-md">
+            <div className="relative w-full sm:flex-1 sm:min-w-0 sm:max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -877,12 +877,12 @@ export const SlotAttendancePage: React.FC = () => {
             </div>
 
             {/* Course Filter Dropdown */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-3.5 h-3.5 text-gray-400" />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter className="w-3.5 h-3.5 text-gray-400 shrink-0" />
               <select
                 value={slotCourseFilter}
                 onChange={(e) => setSlotCourseFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/10 text-xs font-bold text-gray-700 dark:text-gray-200 focus:outline-hidden focus:ring-2 focus:ring-primary cursor-pointer"
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/10 text-xs font-bold text-gray-700 dark:text-gray-200 focus:outline-hidden focus:ring-2 focus:ring-primary cursor-pointer"
               >
                 {availableCourses.map((c) => (
                   <option key={c} value={c}>
@@ -893,7 +893,7 @@ export const SlotAttendancePage: React.FC = () => {
             </div>
 
             {/* Quick Status Filter Pills */}
-            <div className="flex items-center gap-1.5 bg-gray-100/70 dark:bg-white/5 p-1 rounded-xl">
+            <div className="flex items-center gap-1.5 bg-gray-100/70 dark:bg-white/5 p-1 rounded-xl overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setSlotStatusFilter('all')}

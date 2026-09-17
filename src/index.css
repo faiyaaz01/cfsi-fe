@@ -82,6 +82,14 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-600;
   }
+  /* Hide scrollbar but keep functionality (for horizontal scrolling tabs on mobile) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* Shimmer effect for skeleton loaders */

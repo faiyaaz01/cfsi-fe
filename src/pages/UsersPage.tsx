@@ -1542,13 +1542,13 @@ export function UsersPage() {
             {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Role filter */}
-              <div className="flex items-center rounded-xl p-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-semibold">
+              <div className="flex items-center rounded-xl p-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-semibold overflow-x-auto no-scrollbar">
                 {(['all', 'admin', 'teacher', 'leader', 'student'] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
                     onClick={() => setRoleFilter(r)}
-                    className={`px-3 py-1 rounded-lg capitalize transition-colors ${
+                    className={`px-3 py-1 rounded-lg capitalize transition-colors shrink-0 ${
                       roleFilter === r
                         ? 'bg-white dark:bg-white/15 text-primary dark:text-white shadow-sm font-bold'
                         : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
