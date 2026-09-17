@@ -5,7 +5,10 @@ import { AttendanceRecord, StudentProfile, StudentVerificationRecord, Course, Tr
  * Connects Frontend to FastAPI + MongoDB Backend with JWT Authentication.
  */
 
-const API_BASE_URL = '/api';
+const rawApiEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const API_BASE_URL = rawApiEnv
+  ? (rawApiEnv.endsWith('/api') ? rawApiEnv.replace(/\/$/, '') : `${rawApiEnv.replace(/\/$/, '')}/api`)
+  : '/api';
 const TOKEN_STORAGE_KEY = 'cfsi_jwt_token';
 const USER_STORAGE_KEY = 'cfsi_auth_user';
 
@@ -33,10 +36,12 @@ export function getAttendanceStreamUrl(): string {
   return `${API_BASE_URL}/attendance/stream`;
 }
 
+export type UserRole = 'admin' | 'teacher' | 'student' | 'leader';
+
 export interface AuthUser {
   id: string;
   username: string;
-  role: 'admin' | 'teacher' | 'student';
+  role: UserRole;
   student_id?: string | null;
   enrollment_no?: string | null;
   roll_no?: string | null;
@@ -52,12 +57,14 @@ export interface AuthUser {
   phone?: string | null;
   email?: string | null;
   is_active: boolean;
+  assigned_modules?: string[];
+  assigned_slots?: string[];
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  role: 'admin' | 'teacher' | 'student';
+  role: UserRole;
   user: AuthUser;
 }
 
@@ -136,10 +143,10 @@ export const api = {
   },
   /** Login with username and password against MongoDB hashed credentials */
   async login(username: string, password: string, role?: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/token`, {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({username, password, grant_type: 'password'}),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, role: role || 'auto' }),
     });
 
     if (!response.ok) {
@@ -148,7 +155,18 @@ export const api = {
     }
 
     const data: AuthResponse = await response.json();
-    if (role && role !== 'auto' && data.role !== role) throw new Error(`This account does not have ${role} access.`);
+    if (role && role !== 'auto') {
+      const target = role.toLowerCase();
+      if (target === 'student' && !['student', 'leader'].includes(data.role)) {
+        clearAuth();
+        throw new Error('Access restricted: Administration and Faculty accounts must log in via the Institute Login portal.');
+      }
+      if ((target === 'institute' || target === 'admin') && !['admin', 'teacher'].includes(data.role)) {
+        clearAuth();
+        throw new Error('Access restricted: Student and Cadet Leader accounts must log in via the Student Login portal.');
+      }
+    }
+
     setToken(data.access_token);
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));

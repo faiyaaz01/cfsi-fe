@@ -37,7 +37,8 @@ import {
   Calendar,
   Building,
   CreditCard,
-  Globe
+  Globe,
+  Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, AuthUser } from '../lib/api';
@@ -113,7 +114,7 @@ export function UsersPage() {
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'teacher' | 'student'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'teacher' | 'leader' | 'student'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<AuthUser | null>(null);
   const [bulkImportModalOpen, setBulkImportModalOpen] = useState(false);
@@ -191,10 +192,10 @@ export function UsersPage() {
 
       return matchesSearch && matchesRole && matchesStatus;
     }).sort((a, b) => {
-      // Prioritize admin, teacher, then students in natural order
-      const roleWeight = { admin: 1, teacher: 2, student: 3 };
-      const weightA = roleWeight[a.role as keyof typeof roleWeight] || 4;
-      const weightB = roleWeight[b.role as keyof typeof roleWeight] || 4;
+      // Prioritize admin, teacher, leader, then students in natural order
+      const roleWeight = { admin: 1, teacher: 2, leader: 3, student: 4 };
+      const weightA = roleWeight[a.role as keyof typeof roleWeight] || 5;
+      const weightB = roleWeight[b.role as keyof typeof roleWeight] || 5;
       if (weightA !== weightB) return weightA - weightB;
 
       if (a.role === 'student' && b.role === 'student') {
@@ -228,6 +229,7 @@ export function UsersPage() {
       total: users.length,
       admins: users.filter((u) => u.role === 'admin').length,
       teachers: users.filter((u) => u.role === 'teacher').length,
+      leaders: users.filter((u) => u.role === 'leader').length,
       students: users.filter((u) => u.role === 'student').length,
       active: users.filter((u) => u.is_active).length,
     };
@@ -414,8 +416,13 @@ export function UsersPage() {
           full_name: form.full_name.trim(),
           role: form.role,
           is_active: form.is_active,
-          student_id: null,
+          student_id: form.role === 'leader' ? (form.student_id.trim() || null) : null,
         };
+
+        if (form.role === 'leader' && !editingId) {
+          payload.assigned_modules = ['attendance'];
+          payload.assigned_slots = ['Slot 1', 'Slot 2', 'Slot 3'];
+        }
 
         if (editingId) {
           if (form.password) {
@@ -443,6 +450,51 @@ export function UsersPage() {
       const msg = err.message || 'Unable to save user. Please verify input fields.';
       setError(msg);
       toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Quick Promote Student to Cadet Leader
+  const handlePromoteStudentToLeader = async (account: AuthUser) => {
+    if (!window.confirm(`Assign Cadet Leader role to "${account.full_name || account.username}"?\n\nThey will gain access to the Leader Portal and slot-wise attendance marking.`)) {
+      return;
+    }
+
+    try {
+      setBusy(true);
+      await api.users('PATCH', account.id, {
+        role: 'leader',
+        student_id: account.student_id || account.username,
+        assigned_modules: ['attendance'],
+        assigned_slots: ['Slot 1', 'Slot 2', 'Slot 3'],
+      });
+      toast.success(`Assigned Leader role to ${account.full_name || account.username}!`);
+      await loadUsers();
+    } catch (err: any) {
+      toast.error('Failed to assign Leader role: ' + (err.message || 'Error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Demote Leader to regular Student
+  const handleDemoteLeaderToStudent = async (account: AuthUser) => {
+    if (!window.confirm(`Demote "${account.full_name || account.username}" from Cadet Leader back to regular Student?`)) {
+      return;
+    }
+
+    try {
+      setBusy(true);
+      await api.users('PATCH', account.id, {
+        role: 'student',
+        assigned_modules: [],
+        assigned_slots: [],
+      });
+      toast.success(`Demoted ${account.full_name || account.username} back to Student.`);
+      await loadUsers();
+    } catch (err: any) {
+      toast.error('Failed to update role: ' + (err.message || 'Error'));
     } finally {
       setBusy(false);
     }
@@ -642,69 +694,85 @@ export function UsersPage() {
 
         {/* Metrics Overview Cards */}
         {busy && users.length === 0 ? (
-          <SkeletonStats count={4} />
+          <SkeletonStats count={5} />
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
             {/* Total Accounts */}
-            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-gray-200/80 dark:border-white/10">
+            <FlatCard hoverEffect={false} className="p-4 border border-gray-200/80 dark:border-white/10">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Users</span>
-                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Users</span>
+                <div className="p-1.5 rounded-xl bg-primary/10 text-primary">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-2">
+              <div className="text-2xl font-black text-gray-900 dark:text-white mt-1.5">
                 <CountUp value={stats.total} />
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 truncate">
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{stats.active} Active</span> • {stats.total - stats.active} Suspended
               </div>
             </FlatCard>
 
             {/* Administrators */}
-            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
+            <FlatCard hoverEffect={false} className="p-4 border border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Admins</span>
-                <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Admins</span>
+                <div className="p-1.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
                   <Shield className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">
+              <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1.5">
                 <CountUp value={stats.admins} />
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 System Administrators
               </div>
             </FlatCard>
 
             {/* Faculty / Instructors */}
-            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-emerald-500/20 dark:border-emerald-500/15 bg-emerald-500/[0.02]">
+            <FlatCard hoverEffect={false} className="p-4 border border-emerald-500/20 dark:border-emerald-500/15 bg-emerald-500/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Faculty</span>
-                <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Faculty</span>
+                <div className="p-1.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                   <BookOpen className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
+              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5">
                 <CountUp value={stats.teachers} />
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 Instructors & Staff
               </div>
             </FlatCard>
 
-            {/* Active Students */}
-            <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
+            {/* Leaders (Squad Leaders) */}
+            <FlatCard hoverEffect={false} className="p-4 border border-indigo-500/20 dark:border-indigo-500/15 bg-indigo-500/[0.02]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">Students</span>
-                <div className="p-2 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Leaders</span>
+                <div className="p-1.5 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
+                  <Award className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1.5">
+                <CountUp value={stats.leaders} />
+              </div>
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                Squad Leaders
+              </div>
+            </FlatCard>
+
+            {/* Active Students */}
+            <FlatCard hoverEffect={false} className="p-4 border border-primary/20 dark:border-primary/15 bg-primary/[0.02]">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary dark:text-primary-light">Students</span>
+                <div className="p-1.5 rounded-xl bg-primary/15 text-primary dark:text-primary-light">
                   <GraduationCap className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-primary dark:text-primary-light mt-2">
+              <div className="text-2xl font-black text-primary dark:text-primary-light mt-1.5">
                 <CountUp value={stats.students} />
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 Enrolled Cadets
               </div>
             </FlatCard>
@@ -766,18 +834,18 @@ export function UsersPage() {
                         <span className="text-[10px] text-amber-500 font-normal ml-1">(you cannot change your own role)</span>
                       )}
                     </label>
-                    <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                       <button
                         type="button"
                         disabled={editingId === currentUser?.id}
                         onClick={() => setForm(prev => ({ ...prev, role: 'student' }))}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                           form.role === 'student'
                             ? 'bg-white dark:bg-white/15 text-primary dark:text-white shadow-sm'
                             : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                         }`}
                       >
-                        <GraduationCap className="w-4 h-4" />
+                        <GraduationCap className="w-3.5 h-3.5" />
                         <span>Student</span>
                       </button>
 
@@ -785,28 +853,42 @@ export function UsersPage() {
                         type="button"
                         disabled={editingId === currentUser?.id}
                         onClick={() => setForm(prev => ({ ...prev, role: 'teacher', student_id: '' }))}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                           form.role === 'teacher'
                             ? 'bg-white dark:bg-white/15 text-emerald-600 dark:text-emerald-400 shadow-sm'
                             : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                         }`}
                       >
-                        <BookOpen className="w-4 h-4" />
+                        <BookOpen className="w-3.5 h-3.5" />
                         <span>Teacher</span>
                       </button>
 
                       <button
                         type="button"
                         disabled={editingId === currentUser?.id}
+                        onClick={() => setForm(prev => ({ ...prev, role: 'leader' }))}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          form.role === 'leader'
+                            ? 'bg-white dark:bg-white/15 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Award className="w-3.5 h-3.5" />
+                        <span>Leader</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={editingId === currentUser?.id}
                         onClick={() => setForm(prev => ({ ...prev, role: 'admin', student_id: '' }))}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                           form.role === 'admin'
                             ? 'bg-white dark:bg-white/15 text-amber-600 dark:text-amber-400 shadow-sm'
                             : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                         }`}
                       >
-                        <Shield className="w-4 h-4" />
-                        <span>Administrator</span>
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>Admin</span>
                       </button>
                     </div>
                   </div>
@@ -1240,8 +1322,54 @@ export function UsersPage() {
 
                     </div>
                   ) : (
-                    /* Teacher / Admin Account Flow */
+                    /* Teacher / Admin / Leader Account Flow */
                     <div className="space-y-4">
+                      {form.role === 'leader' && (
+                        <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                              <Award className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950 dark:text-indigo-200">
+                                Link Enrolled Cadet
+                              </h4>
+                              <p className="text-[11px] text-indigo-800/70 dark:text-indigo-300">
+                                Select an enrolled student from the institute roster to assign as Leader
+                              </p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <select
+                              value={form.student_id}
+                              onChange={(e) => {
+                                const sid = e.target.value;
+                                const matched = enrolledStudents.find((s) => s.id === sid);
+                                if (matched) {
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    student_id: matched.id,
+                                    full_name: matched.name || prev.full_name,
+                                    username: prev.username && prev.username !== '' ? prev.username : (matched.rollNo || matched.id),
+                                  }));
+                                } else {
+                                  setForm((prev) => ({ ...prev, student_id: sid }));
+                                }
+                              }}
+                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                            >
+                              <option value="">-- Choose enrolled cadet from database --</option>
+                              {enrolledStudents.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.name} (Roll #{s.rollNo} • {s.course})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
@@ -1415,7 +1543,7 @@ export function UsersPage() {
             <div className="flex flex-wrap items-center gap-2">
               {/* Role filter */}
               <div className="flex items-center rounded-xl p-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-semibold">
-                {(['all', 'admin', 'teacher', 'student'] as const).map((r) => (
+                {(['all', 'admin', 'teacher', 'leader', 'student'] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
@@ -1444,7 +1572,7 @@ export function UsersPage() {
                         : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
-                    {s}
+                    {s === 'all' ? `All Status (${users.length})` : s}
                   </button>
                 ))}
               </div>
@@ -1548,42 +1676,22 @@ export function UsersPage() {
                         />
                       </div>
                     </th>
-                    <th className="py-3.5 px-4">User Identity</th>
-                    <th className="py-3.5 px-4">Access Role</th>
-                    <th className="py-3.5 px-4">Student User ID</th>
-                    <th className="py-3.5 px-4 text-center">Account Status</th>
-                    <th className="py-3.5 px-4 text-center">Actions</th>
+                    <th className="py-3.5 px-4">User</th>
+                    <th className="py-3.5 px-4">Role</th>
+                    <th className="py-3.5 px-4">Student ID / Link</th>
+                    <th className="py-3.5 px-4 text-center">Status</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                  {busy && users.length === 0 ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td className="py-4 px-4 text-center">
-                          <div className="w-4 h-4 bg-gray-200 dark:bg-white/10 rounded mx-auto" />
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-36 mb-1.5" />
-                          <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-24" />
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-5 bg-gray-200 dark:bg-white/10 rounded-full w-20" />
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-24" />
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <div className="h-5 bg-gray-200 dark:bg-white/10 rounded-full w-16 mx-auto" />
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <div className="h-6 bg-gray-200 dark:bg-white/10 rounded w-16 mx-auto" />
-                        </td>
-                      </tr>
-                    ))
-                  ) : filteredUsers.length === 0 ? (
+                <tbody className="divide-y divide-gray-200/60 dark:divide-white/5">
+                  {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-gray-400 font-semibold">
-                        No users found matching "{searchQuery}".
+                      <td colSpan={6} className="py-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Users className="w-8 h-8 opacity-40" />
+                          <p className="font-semibold text-sm">No accounts found</p>
+                          <p className="text-xs">Try adjusting your search query or role filter.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -1593,12 +1701,14 @@ export function UsersPage() {
                       const roleColors = {
                         admin: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
                         teacher: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+                        leader: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
                         student: 'bg-primary/10 text-primary dark:text-primary-light border-primary/20',
                       }[account.role];
 
                       const roleGradient = {
                         admin: 'from-amber-500 to-orange-600 text-white',
                         teacher: 'from-emerald-500 to-teal-600 text-white',
+                        leader: 'from-indigo-500 to-purple-600 text-white',
                         student: 'from-blue-500 to-indigo-600 text-white',
                       }[account.role];
 
@@ -1651,6 +1761,7 @@ export function UsersPage() {
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleColors}`}>
                               {account.role === 'admin' && <Shield className="w-3 h-3" />}
                               {account.role === 'teacher' && <BookOpen className="w-3 h-3" />}
+                              {account.role === 'leader' && <Award className="w-3 h-3" />}
                               {account.role === 'student' && <GraduationCap className="w-3 h-3" />}
                               <span className="capitalize">{account.role}</span>
                             </span>
@@ -1689,6 +1800,32 @@ export function UsersPage() {
                           {/* Actions */}
                           <td className="py-3.5 px-4 text-center">
                             <div className="flex items-center justify-center gap-2">
+                              {/* Quick Promote to Leader */}
+                              {account.role === 'student' && (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => handlePromoteStudentToLeader(account)}
+                                  className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-colors"
+                                  title="Appoint as Cadet Leader"
+                                >
+                                  <Award className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {/* Quick Demote from Leader */}
+                              {account.role === 'leader' && (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => handleDemoteLeaderToStudent(account)}
+                                  className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-colors"
+                                  title="Demote to Regular Student"
+                                >
+                                  <GraduationCap className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
                               <button
                                 type="button"
                                 onClick={() => handleStartEdit(account)}

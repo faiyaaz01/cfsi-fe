@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { StudentProfile } from '../types';
+import { StudentProfile, AttendanceSlot } from '../types';
 import { 
   Calendar, 
   Clock, 
@@ -20,11 +20,62 @@ import {
   ShieldCheck,
   Building2,
   Eye,
-  X
+  X,
+  Award,
+  Lock,
+  Flame,
+  Sparkles,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { CountUp } from '../components/common/CountUp';
 import { SkeletonStats, SkeletonTable } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
+
+interface SlotDutySchedule {
+  id: AttendanceSlot;
+  title: string;
+  shortLabel: string;
+  timeRange: string;
+  startMinutes: number; // minutes from midnight (IST)
+  endMinutes: number;   // cutoff minutes from midnight (IST, including 20m grace)
+  lockLabel: string;
+  description: string;
+}
+
+const SLOTS_DUTY_SCHEDULE: SlotDutySchedule[] = [
+  {
+    id: 'Slot 1',
+    title: 'Slot 1 — Morning PT & Squad Drill',
+    shortLabel: 'Slot 1 (PT)',
+    timeRange: '08:00 AM – 10:00 AM',
+    startMinutes: 8 * 60, // 08:00 = 480
+    endMinutes: 10 * 60 + 20, // 10:20 = 620
+    lockLabel: '10:20 AM',
+    description: 'Physical Training, Squad Parade, Hose Running & Morning Drills.',
+  },
+  {
+    id: 'Slot 2',
+    title: 'Slot 2 — Fire Theory & Safety Codes',
+    shortLabel: 'Slot 2 (Theory)',
+    timeRange: '10:30 AM – 01:00 PM',
+    startMinutes: 10 * 60 + 30, // 10:30 = 630
+    endMinutes: 13 * 60 + 20, // 13:20 = 800
+    lockLabel: '01:20 PM',
+    description: 'Chemistry of Combustion, NBC Defense & Industrial Safety Regulations.',
+  },
+  {
+    id: 'Slot 3',
+    title: 'Slot 3 — Practical Apparatus & Tower Drill',
+    shortLabel: 'Slot 3 (Drill)',
+    timeRange: '02:00 PM – 05:00 PM',
+    startMinutes: 14 * 60, // 14:00 = 840
+    endMinutes: 17 * 60 + 20, // 17:20 = 1040
+    lockLabel: '05:20 PM',
+    description: 'Apparatus Pumping, High-Rise Rescue, Smoke Chamber & Hydrant Drills.',
+  },
+];
 
 export function PortalPage() {
   const { user } = useAuth();
@@ -38,9 +89,123 @@ export function PortalPage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
 
+  // Student view & Cadet Leadership detection
+  const isStudentView = user?.role === 'student' || user?.role === 'leader';
+  const isLeader = user?.role === 'leader' || Boolean(user?.assigned_modules?.includes('attendance'));
+
+  // Live IST Clock ticking every second for slot duty synchronisation
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // IST Date & Time (UTC + 5:30)
+  const istTime = useMemo(() => {
+    const utc = currentTime.getTime() + currentTime.getTimezoneOffset() * 60000;
+    return new Date(utc + 3600000 * 5.5);
+  }, [currentTime]);
+
+  const todayStr = useMemo(() => {
+    const y = istTime.getFullYear();
+    const m = String(istTime.getMonth() + 1).padStart(2, '0');
+    const d = String(istTime.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, [istTime]);
+
+  const currentMinutes = istTime.getHours() * 60 + istTime.getMinutes();
+  const currentSeconds = istTime.getSeconds();
+
+  const formatCountdown = (totalSec: number) => {
+    if (totalSec <= 0) return '0m 00s';
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m ${String(secs).padStart(2, '0')}s`;
+    }
+    return `${mins}m ${String(secs).padStart(2, '0')}s`;
+  };
+
+  // Evaluate 3 slots active status & lock cutoff in real-time
+  const slotEvaluations = useMemo(() => {
+    return SLOTS_DUTY_SCHEDULE.map((s) => {
+      const isBefore = currentMinutes < s.startMinutes;
+      const isAfter = currentMinutes >= s.endMinutes;
+      const isActive = currentMinutes >= s.startMinutes && currentMinutes < s.endMinutes;
+
+      let remainingSec = 0;
+      if (isActive) {
+        remainingSec = (s.endMinutes - currentMinutes) * 60 - currentSeconds;
+      }
+
+      let timeUntilOpenSec = 0;
+      if (isBefore) {
+        timeUntilOpenSec = (s.startMinutes - currentMinutes) * 60 - currentSeconds;
+      }
+
+      const isAssigned =
+        !user?.assigned_slots ||
+        user.assigned_slots.length === 0 ||
+        user.assigned_slots.includes(s.id);
+
+      return {
+        ...s,
+        isActive,
+        isBefore,
+        isAfter,
+        remainingSec,
+        timeUntilOpenSec,
+        isAssigned,
+      };
+    });
+  }, [currentMinutes, currentSeconds, user?.assigned_slots]);
+
+  const activeSlot = useMemo(() => {
+    return slotEvaluations.find((s) => s.isActive) || null;
+  }, [slotEvaluations]);
+
+  const nextSlot = useMemo(() => {
+    return slotEvaluations.find((s) => s.isBefore) || null;
+  }, [slotEvaluations]);
+
+  // Selected Slot for Dropdown Duty Selector
+  const [selectedSlotId, setSelectedSlotId] = useState<AttendanceSlot>('Slot 1');
+  const [showScheduleDropdown, setShowScheduleDropdown] = useState<boolean>(false);
+  const [dutyDropdownOpen, setDutyDropdownOpen] = useState<boolean>(false);
+  const dutyDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Default to active slot or upcoming slot automatically
+  useEffect(() => {
+    if (activeSlot) {
+      setSelectedSlotId(activeSlot.id);
+    } else if (nextSlot) {
+      setSelectedSlotId(nextSlot.id);
+    }
+  }, [activeSlot?.id, nextSlot?.id]);
+
+  const selectedSlot = useMemo(() => {
+    return slotEvaluations.find((s) => s.id === selectedSlotId) || slotEvaluations[0];
+  }, [slotEvaluations, selectedSlotId]);
+
+  // Close banner duty dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dutyDropdownRef.current && !dutyDropdownRef.current.contains(e.target as Node)) {
+        setDutyDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const load = async () => {
     try {
-      const a = await api.getAttendance();
+      const mySid = isStudentView ? (profile?.id || user?.student_id || user?.username) : undefined;
+      const a = await api.getAttendance(mySid ? { studentId: mySid } : undefined);
       setAttendance(a);
     } catch (e: any) {
       setError(e.message || 'Failed to load attendance');
@@ -52,14 +217,14 @@ export function PortalPage() {
   // Initial load
   useEffect(() => {
     load();
-    if (user?.role === 'student') {
+    if (isStudentView) {
       api.getStudentProfile()
         .then((p) => setProfile(p))
         .catch(() => {
           // Gracefully fallback to user object
         });
     }
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, isStudentView]);
 
   const hardcodedUserId = profile?.id || user?.student_id || user?.username || '262701';
   const name = profile?.name || user?.full_name || user?.username || 'Student Name';
@@ -113,15 +278,25 @@ export function PortalPage() {
     }
   }
 
-  // Filter records by student if teacher views multiple cadets
+  // Filter records by student if teacher views multiple cadets, or ensure student view gets own records
   const filteredRecords = useMemo(() => {
+    if (isStudentView) {
+      const mySid = profile?.id || user?.student_id || user?.username;
+      if (!mySid) return attendance;
+      return attendance.filter(
+        (r) =>
+          r.studentId?.toUpperCase() === mySid.toUpperCase() ||
+          r.rollNo === rollNo ||
+          (user?.roll_no && r.rollNo === user.roll_no)
+      );
+    }
     if (selectedStudentFilter === 'All') return attendance;
     return attendance.filter(
       (r) =>
         r.studentId?.toUpperCase() === selectedStudentFilter.toUpperCase() ||
         r.rollNo === selectedStudentFilter
     );
-  }, [attendance, selectedStudentFilter]);
+  }, [attendance, isStudentView, profile?.id, user?.student_id, user?.username, rollNo, user?.roll_no, selectedStudentFilter]);
 
   // Unique student IDs for filter dropdown
   const uniqueStudentIds = useMemo(() => {
@@ -268,7 +443,7 @@ export function PortalPage() {
     <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
       
       {/* Top Header / Student Profile Banner */}
-      {user?.role === 'student' ? (
+      {isStudentView ? (
         <div className="bg-gradient-to-r from-primary via-[#2055be] to-[#12387d] rounded-3xl p-6 sm:p-8 text-white shadow-lg mb-6 relative overflow-hidden">
           <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
@@ -308,6 +483,12 @@ export function PortalPage() {
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-md">
                     Student Profile
                   </span>
+                  {isLeader && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-400/25 text-amber-300 border border-amber-400/40 shadow-xs">
+                      <Award className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                      <span>Cadet Squad Leader</span>
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
                     <CheckCircle className="w-3.5 h-3.5" />
                     <span>{profile?.verificationStatus || 'Verified'}</span>
@@ -315,6 +496,11 @@ export function PortalPage() {
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90">
                     {batch}
                   </span>
+                  {isLeader && user?.assigned_slots && user.assigned_slots.length > 0 && (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-400/20 text-indigo-200 border border-indigo-400/30">
+                      Duty: {user.assigned_slots.join(', ')}
+                    </span>
+                  )}
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
@@ -337,8 +523,116 @@ export function PortalPage() {
               </div>
             </div>
 
-            {/* Actions: View Profile Button + Refresh Data */}
-            <div className="flex items-center justify-center lg:justify-end gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/10">
+            {/* Actions: View Profile Button + Attendance Duty Dropdown + Refresh Data */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/10">
+              {/* Cadet Leader Duty Dropdown Button */}
+              {isLeader && (
+                <div className="relative" ref={dutyDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDutyDropdownOpen(!dutyDropdownOpen)}
+                    className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+                    title="Cadet Leadership: Slot Attendance Duty Menu"
+                  >
+                    <Award className="w-4 h-4 text-slate-950" />
+                    <span>Attendance Duty</span>
+                    {activeSlot && (
+                      <span className="flex h-2 w-2 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-700 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-800" />
+                      </span>
+                    )}
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${dutyDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {dutyDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-4 z-50 text-gray-900 dark:text-white space-y-3 animate-fade-in">
+                      {/* Menu Header */}
+                      <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/10">
+                        <div className="flex items-center gap-2">
+                          <Award className="w-4 h-4 text-amber-500" />
+                          <span className="text-xs font-bold font-heading uppercase tracking-wider text-gray-900 dark:text-white">
+                            Cadet Slot Duty Menu
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-gray-400">
+                          {istTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' })} IST
+                        </span>
+                      </div>
+
+                      {/* Slots List in Dropdown */}
+                      <div className="space-y-2">
+                        {slotEvaluations.map((slot) => {
+                          const isOpen = slot.isActive;
+                          const isExpired = slot.isAfter;
+
+                          return (
+                            <div
+                              key={slot.id}
+                              className={`p-2.5 rounded-xl border transition-all ${
+                                isOpen
+                                  ? 'border-emerald-500/40 bg-emerald-500/10'
+                                  : isExpired
+                                  ? 'border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02] opacity-75'
+                                  : 'border-blue-500/20 bg-blue-500/5'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-xs text-gray-900 dark:text-white">
+                                      {slot.id}
+                                    </span>
+                                    <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                      ({slot.timeRange})
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
+                                    {slot.title.split('—')[1] || slot.title}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  {isOpen ? (
+                                    <Link
+                                      to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(slot.id)}`}
+                                      onClick={() => setDutyDropdownOpen(false)}
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold inline-flex items-center gap-1 shadow-xs"
+                                    >
+                                      <span>Mark</span>
+                                      <ArrowRight className="w-3 h-3" />
+                                    </Link>
+                                  ) : isExpired ? (
+                                    <Link
+                                      to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(slot.id)}`}
+                                      onClick={() => setDutyDropdownOpen(false)}
+                                      className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 text-[10px] font-semibold inline-flex items-center gap-1"
+                                    >
+                                      <span>Muster</span>
+                                      <Lock className="w-2.5 h-2.5" />
+                                    </Link>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                                      Upcoming
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Footer notice */}
+                      <div className="pt-2 border-t border-gray-100 dark:border-white/10 text-[10px] text-gray-400 text-center font-mono">
+                        Slot lock policy: 20-min grace cutoff enforced
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={load}
@@ -405,8 +699,199 @@ export function PortalPage() {
         </div>
       )}
 
-      {/* Attendance Overview Section Title (For Students) */}
-      {user?.role === 'student' && (
+      {/* CADET LEADERSHIP: SLOT ATTENDANCE DUTY DROPDOWN MODULE */}
+      {isLeader && (
+        <section className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#161d27] p-4 sm:p-5 shadow-sm space-y-4">
+          
+          {/* Header Row: Module badge, Title, Live IST Clock */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xs">
+                <Award className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                    Cadet Leadership Module
+                  </span>
+                  {activeSlot && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>{activeSlot.shortLabel} Open Now</span>
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-base sm:text-lg font-heading font-black text-gray-900 dark:text-white mt-0.5">
+                  Slot Attendance Duty Console
+                </h3>
+              </div>
+            </div>
+
+            {/* Right: Live IST Clock */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-mono shrink-0 self-start sm:self-center shadow-xs">
+              <Clock className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+              <span className="font-bold text-gray-900 dark:text-white">
+                {istTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+              <span className="text-gray-400 text-[10px]">IST</span>
+            </div>
+          </div>
+
+          {/* DROPDOWN SELECTOR & ACTION BAR */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            {/* The Slot Dropdown Selector */}
+            <div className="relative flex-1">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 flex items-center justify-between">
+                <span>Select Duty Slot to Mark / Review:</span>
+                <span className="text-[10px] font-mono text-gray-400 lowercase font-normal">20m grace cutoff policy</span>
+              </label>
+
+              <div className="relative">
+                <select
+                  value={selectedSlotId}
+                  onChange={(e) => setSelectedSlotId(e.target.value as AttendanceSlot)}
+                  className="w-full appearance-none pl-3.5 pr-10 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-800 text-xs sm:text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer shadow-xs"
+                >
+                  {slotEvaluations.map((slot) => {
+                    const statusText = slot.isActive
+                      ? `🟢 UNLOCKED NOW (Cutoff ${slot.lockLabel} • ${formatCountdown(slot.remainingSec)} left)`
+                      : slot.isAfter
+                      ? `🔒 LOCKED (Cutoff was ${slot.lockLabel})`
+                      : `⏳ UPCOMING (Opens ${slot.timeRange.split('–')[0].trim()})`;
+                    return (
+                      <option key={slot.id} value={slot.id}>
+                        {slot.id}: {slot.title.split('—')[1] || slot.title} — {statusText}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons for Selected Slot */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1 md:pt-6 shrink-0">
+              {selectedSlot?.isActive ? (
+                <>
+                  <div className="px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5">
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                    <span>{formatCountdown(selectedSlot.remainingSec)} left</span>
+                  </div>
+
+                  <Link
+                    to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(selectedSlot.id)}`}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span>Mark {selectedSlot.shortLabel} Attendance</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              ) : selectedSlot?.isAfter ? (
+                <>
+                  <div className="px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Locked at {selectedSlot.lockLabel}</span>
+                  </div>
+
+                  <Link
+                    to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(selectedSlot.id)}`}
+                    className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>View Slot Muster</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="px-3 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Opens {selectedSlot?.timeRange.split('–')[0].trim()}</span>
+                  </div>
+
+                  <Link
+                    to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(selectedSlot?.id || 'Slot 1')}`}
+                    className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>Preview Muster</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </>
+              )}
+            </div>
+
+          </div>
+
+          {/* Selected Slot Information Bar */}
+          {selectedSlot && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-white/5 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-gray-900 dark:text-white">{selectedSlot.title}:</span>
+                <span className="truncate max-w-md">{selectedSlot.description}</span>
+              </div>
+              <div className="font-mono text-[11px] text-gray-400 flex items-center gap-3 shrink-0">
+                <span>Hours: <strong className="text-gray-700 dark:text-gray-300">{selectedSlot.timeRange}</strong></span>
+                <span>•</span>
+                <span>Cutoff: <strong className="text-amber-600 dark:text-amber-400">{selectedSlot.lockLabel}</strong></span>
+              </div>
+            </div>
+          )}
+
+          {/* Collapsible 3-Slot Schedule Table Toggle */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowScheduleDropdown(!showScheduleDropdown)}
+              className="text-xs font-semibold text-primary hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <span>{showScheduleDropdown ? 'Hide Daily Slot Schedule' : 'View Full 3-Slot Duty Schedule & Hours'}</span>
+              {showScheduleDropdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+
+            {showScheduleDropdown && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 animate-fade-in pt-1">
+                {slotEvaluations.map((s) => (
+                  <div
+                    key={s.id}
+                    className={`p-3 rounded-xl border text-xs ${
+                      s.isActive
+                        ? 'border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20'
+                        : s.isAfter
+                        ? 'border-gray-200 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]'
+                        : 'border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold mb-1">
+                      <span className="text-gray-900 dark:text-white">{s.id}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                        s.isActive ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                        s.isAfter ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
+                        'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                      }`}>
+                        {s.isActive ? 'Active' : s.isAfter ? 'Locked' : 'Upcoming'}
+                      </span>
+                    </div>
+                    <p className="font-semibold text-gray-700 dark:text-gray-300 truncate">{s.title.split('—')[1] || s.title}</p>
+                    <div className="mt-2 text-[11px] font-mono text-gray-500 dark:text-gray-400 space-y-0.5">
+                      <div>Hours: {s.timeRange}</div>
+                      <div>Cutoff: {s.lockLabel}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </section>
+      )}
+
+      {/* Attendance Overview Section Title (For Students & Leaders) */}
+      {isStudentView && (
         <div className="flex items-center justify-between pt-1">
           <div>
             <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900 dark:text-white">

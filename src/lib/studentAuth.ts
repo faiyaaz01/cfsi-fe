@@ -16,7 +16,7 @@ export const loginWithBackend = async (username: string, password: string, role?
         s.rollNo === username.trim()
     );
 
-    if (!student && data.user && data.role === 'student') {
+    if (!student && data.user && (data.role === 'student' || data.role === 'leader')) {
       student = {
         id: data.user.student_id || data.user.username,
         rollNo: data.user.roll_no || '',
@@ -67,7 +67,7 @@ export const getLoggedStudent = (): StudentVerificationRecord | null => {
   );
   if (found) return found;
 
-  if (user.role === 'student') {
+  if (user.role === 'student' || user.role === 'leader') {
     return {
       id: user.student_id || user.username,
       rollNo: user.roll_no || '',

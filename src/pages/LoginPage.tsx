@@ -5,12 +5,7 @@ import {
   GraduationCap, 
   Building2, 
   ArrowRight, 
-  ArrowLeft, 
-  ShieldCheck, 
-  Users, 
-  Clock, 
-  Calendar,
-  Lock
+  ArrowLeft
 } from 'lucide-react';
 import { FlatCard } from '../components/common/FlatCard';
 import { useAuth, homeFor } from '../context/AuthContext';
@@ -101,20 +96,9 @@ export const LoginPage: React.FC = () => {
                   Student Login
                 </h2>
                 
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
-                  For CFSI Students. Sign in with your Roll Number (e.g. 262701) and Date of Birth password to track muster attendance and profiles.
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+                  For CFSI Students. Sign in with your Roll Number and Date of Birth password to access your portal.
                 </p>
-
-                <div className="space-y-1.5 text-[11px] text-gray-600 dark:text-gray-400 mb-6">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-accent" />
-                    <span>Real-time 24h attendance logs</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-accent" />
-                    <span>Default password: Birthdate (DDMMYYYY)</span>
-                  </div>
-                </div>
               </div>
 
               <Link
@@ -150,20 +134,9 @@ export const LoginPage: React.FC = () => {
                   Institute Login
                 </h2>
                 
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
-                  For CFSI Instructors, Directors, Examination Officers, and Administrative staff. Sign in with your official institute email and credentials.
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+                  For CFSI Instructors, Examination Officers, and Administrative staff. Sign in with your official institute credentials.
                 </p>
-
-                <div className="space-y-1.5 text-[11px] text-gray-600 dark:text-gray-400 mb-6">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-primary dark:text-primary-light" />
-                    <span>Student Registry & Bulk CSV/XLS Import</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-primary dark:text-primary-light" />
-                    <span>Muster Attendance Updates & Management</span>
-                  </div>
-                </div>
               </div>
 
               <Link
@@ -176,12 +149,6 @@ export const LoginPage: React.FC = () => {
             </FlatCard>
           </motion.div>
 
-        </div>
-
-        {/* Security Notice */}
-        <div className="mt-8 text-center flex items-center justify-center gap-2 text-xs text-gray-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span>CFSI Vadodara Institutional Portals • Protected by 256-Bit SSL Encryption</span>
         </div>
 
       </div>

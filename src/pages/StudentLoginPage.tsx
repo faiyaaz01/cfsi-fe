@@ -4,19 +4,16 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
   GraduationCap, 
-  Lock, 
   ArrowRight, 
   AlertCircle, 
   ArrowLeft, 
   Calendar,
   Eye,
   EyeOff,
-  Building2,
-  CheckCircle2,
-  Sparkles,
-  Info
+  Building2
 } from 'lucide-react';
 import { loginWithBackend } from '../lib/studentAuth';
+import { clearAuth } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
 import { useAuth, homeFor } from '../context/AuthContext';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
@@ -52,27 +49,32 @@ export const StudentLoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const result = await loginWithBackend(cleanRollNo, cleanPassword, 'auto');
+      const result = await loginWithBackend(cleanRollNo, cleanPassword, 'student');
       setIsSubmitting(false);
 
       if (result.success) {
+        // Enforce: Admin and Faculty accounts cannot log in via Student Login
+        if (result.role === 'admin' || result.role === 'teacher') {
+          clearAuth();
+          setError(
+            'Access restricted: Administration and Faculty accounts cannot log in through Student Login. Please use the Institute Login portal.'
+          );
+          return;
+        }
+
         await refresh();
 
-        if (result.role === 'student') {
-          toast.success(`Welcome back, ${result.student?.name ? result.student.name : 'Student'}!`, {
-            description: 'Accessing your attendance muster and student profile.'
+        if (result.role === 'student' || result.role === 'leader') {
+          toast.success(`Welcome back, ${result.student?.name ? result.student.name : 'Cadet'}!`, {
+            description: result.role === 'leader'
+              ? 'Accessing your Cadet Leader & Attendance Duty dashboard.'
+              : 'Accessing your attendance muster and student profile.'
           });
           navigate('/student/dashboard');
-        } else if (result.role === 'admin' || result.role === 'teacher') {
-          // If staff used student login, welcome them and redirect
-          toast.success(`Institute Staff Account Detected (${result.role.toUpperCase()})`, {
-            description: 'Redirecting to your management portal.'
-          });
-          navigate(result.role === 'admin' ? '/dashboard' : '/teacher/dashboard');
         } else if (user) {
           navigate(homeFor(user));
         } else {
-          navigate('/');
+          navigate('/student/dashboard');
         }
       } else {
         setError(
@@ -154,30 +156,12 @@ export const StudentLoginPage: React.FC = () => {
                 />
               </div>
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 text-accent dark:bg-orange-500/20 text-[11px] font-extrabold uppercase tracking-wider mb-2">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Student Portal</span>
-              </div>
-
               <h1 className="text-2xl font-heading font-black text-gray-900 dark:text-white">
                 Student Login
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Enter your assigned Roll Number and Date of Birth to access your portal.
+                Enter your Roll Number and Date of Birth to access your portal.
               </p>
-            </div>
-
-            {/* Helper Instructions Box */}
-            <div className="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-0.5 text-[11px] leading-relaxed">
-                <p>
-                  <strong className="font-semibold">Student ID:</strong> Batch Year + Roll No (e.g., <code className="bg-white/80 dark:bg-black/30 px-1 py-0.5 rounded font-mono font-bold text-amber-700 dark:text-amber-300">262701</code>).
-                </p>
-                <p>
-                  <strong className="font-semibold">Password:</strong> Your Date of Birth in <code className="bg-white/80 dark:bg-black/30 px-1 py-0.5 rounded font-mono font-bold text-amber-700 dark:text-amber-300">DDMMYYYY</code> format (e.g. 23/10/2006 → <code className="bg-white/80 dark:bg-black/30 px-1 py-0.5 rounded font-mono font-bold text-amber-700 dark:text-amber-300">23102006</code>).
-                </p>
-              </div>
             </div>
 
             {/* Student Login Form */}
@@ -209,7 +193,7 @@ export const StudentLoginPage: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Password (Date of Birth: DDMMYYYY) *
+                    Password (Date of Birth) *
                   </label>
                 </div>
                 <div className="relative">
@@ -220,7 +204,7 @@ export const StudentLoginPage: React.FC = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={dobPassword}
                     onChange={(e) => { setDobPassword(e.target.value); setError(''); }}
-                    placeholder="e.g. 23102006"
+                    placeholder="DDMMYYYY (e.g. 23102006)"
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent font-mono"
                     autoComplete="current-password"
                     required
@@ -235,9 +219,6 @@ export const StudentLoginPage: React.FC = () => {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  Default password is your 8-digit birthdate without slashes or dashes.
-                </p>
               </div>
 
               {/* Inline Error Alert */}
@@ -248,7 +229,20 @@ export const StudentLoginPage: React.FC = () => {
                   className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 font-medium flex items-start gap-2"
                 >
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                  <div className="flex-1">
+                    <span>{error}</span>
+                    {(error.includes('Institute Login') || error.includes('Administration') || error.includes('Faculty') || error.includes('Admin')) && (
+                      <div className="mt-2">
+                        <Link
+                          to="/institute-login"
+                          className="inline-flex items-center gap-1 font-bold text-primary dark:text-primary-light hover:underline text-xs"
+                        >
+                          <Building2 className="w-3.5 h-3.5" />
+                          <span>Switch to Institute Login Portal →</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
 
@@ -266,28 +260,8 @@ export const StudentLoginPage: React.FC = () => {
 
             </form>
 
-            {/* Portal Highlights */}
-            <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/10 grid grid-cols-2 gap-2 text-[11px] text-gray-600 dark:text-gray-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>Real-time Attendance</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>Muster Slot Tracker</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>24-Hour Live Updates</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>Verified Student Profile</span>
-              </span>
-            </div>
-
             {/* Switch to Institute Login */}
-            <div className="mt-5 pt-3 border-t border-gray-100 dark:border-white/10 text-center text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 text-center text-xs text-gray-500 dark:text-gray-400">
               <span>Are you CFSI Faculty or Administrative Staff? </span>
               <Link to="/institute-login" className="text-primary dark:text-primary-light font-bold hover:underline">
                 Institute Login →

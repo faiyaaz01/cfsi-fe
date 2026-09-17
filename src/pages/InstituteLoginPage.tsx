@@ -3,21 +3,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
-  ShieldCheck, 
-  Lock, 
   Mail, 
   ArrowRight, 
   AlertCircle, 
   ArrowLeft, 
-  Building2,
   GraduationCap,
   Eye,
   EyeOff,
-  Shield,
-  CheckCircle2,
   KeyRound
 } from 'lucide-react';
 import { loginWithBackend } from '../lib/studentAuth';
+import { clearAuth } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
 import { useAuth, homeFor } from '../context/AuthContext';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
@@ -53,14 +49,15 @@ export const InstituteLoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const result = await loginWithBackend(cleanUsername, cleanPassword, 'auto');
+      const result = await loginWithBackend(cleanUsername, cleanPassword, 'institute');
       setIsSubmitting(false);
 
       if (result.success) {
-        // Check if a student tried to log in through the institute portal
-        if (result.role === 'student') {
+        // Enforce: only admin and teacher are permitted in Institute Login
+        if (result.role === 'student' || result.role === 'leader') {
+          clearAuth();
           setError(
-            'This account is registered as a Student. Please access your records via the Student Login portal.'
+            'Access restricted: Student and Cadet Leader accounts cannot log in through Institute Login. Please use the Student Login portal.'
           );
           return;
         }
@@ -162,24 +159,11 @@ export const InstituteLoginPage: React.FC = () => {
                 />
               </div>
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light text-[11px] font-extrabold uppercase tracking-wider mb-2">
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Institute Faculty & Administration</span>
-              </div>
-
               <h1 className="text-2xl font-heading font-black text-gray-900 dark:text-white">
                 Institute Login
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Authorized management portal for CFSI Instructors, Officers & Admin.
-              </p>
-            </div>
-
-            {/* Security Notice */}
-            <div className="mb-5 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-950 dark:text-blue-200 flex items-start gap-2.5">
-              <Shield className="w-4 h-4 text-primary dark:text-primary-light shrink-0 mt-0.5" />
-              <p className="text-[11px] leading-relaxed">
-                <strong className="font-semibold">Authorized Personnel:</strong> Access is restricted to CFSI faculty and administration. Students must use the Student Login portal.
               </p>
             </div>
 
@@ -250,7 +234,7 @@ export const InstituteLoginPage: React.FC = () => {
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <span>{error}</span>
-                    {error.includes('registered as a Student') && (
+                    {(error.includes('Student') || error.includes('student')) && (
                       <div className="mt-2">
                         <Link
                           to="/student-login"
@@ -279,28 +263,8 @@ export const InstituteLoginPage: React.FC = () => {
 
             </form>
 
-            {/* Portal Highlights */}
-            <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/10 grid grid-cols-2 gap-2 text-[11px] text-gray-600 dark:text-gray-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span>Muster Management</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span>24h Attendance Upload</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span>Bulk Student Import</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span>Enterprise Security</span>
-              </span>
-            </div>
-
             {/* Switch to Student Login */}
-            <div className="mt-5 pt-3 border-t border-gray-100 dark:border-white/10 text-center text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 text-center text-xs text-gray-500 dark:text-gray-400">
               <span>Are you a CFSI Student? </span>
               <Link to="/student-login" className="text-accent font-bold hover:underline">
                 Student Login →
@@ -309,12 +273,6 @@ export const InstituteLoginPage: React.FC = () => {
 
           </FlatCard>
         </motion.div>
-
-        {/* Security Indicator */}
-        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span>CFSI Vadodara Institutional Access • 256-Bit SSL Encrypted</span>
-        </div>
 
       </div>
     </div>

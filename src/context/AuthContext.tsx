@@ -4,7 +4,10 @@ import { api, AuthUser, clearAuth, getToken } from '../lib/api';
 
 const AuthContext = createContext<{ user: AuthUser | null; loading: boolean; refresh: () => Promise<void>; logout: () => Promise<void> }>(null!);
 export const useAuth = () => useContext(AuthContext);
-export const homeFor = (user: AuthUser) => user.role === 'admin' ? '/dashboard' : user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
+export const homeFor = (user: AuthUser) => 
+  user.role === 'admin' ? '/dashboard' : 
+  user.role === 'teacher' ? '/teacher/dashboard' : 
+  '/student/dashboard';
 export function AuthProvider({ children }: React.PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);

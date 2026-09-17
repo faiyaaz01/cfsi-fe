@@ -1,7 +1,4 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { toast } from 'sonner';
 import { 
   LayoutDashboard, 
@@ -12,13 +9,10 @@ import {
   Trash2, 
   Tag, 
   Calendar, 
-  Image as ImageIcon, 
   CheckCircle2, 
   X, 
   Sparkles, 
-  RotateCcw,
   Eye,
-  FileText,
   AlertCircle,
   Clock,
   User,
@@ -43,11 +37,12 @@ import {
   UploadCloud,
   Loader2,
   ArrowLeft,
-  Globe
+  Globe,
+  Award
 } from 'lucide-react';
-import { useNews } from '../context/NewsContext';
 import { useStudentData } from '../context/StudentDataContext';
-import { NewsPost, NewsCategory, AttendanceRecord, AttendanceStatus, AttendanceSlot, StudentVerificationRecord } from '../types';
+import { useConfirm } from '../context/ConfirmContext';
+import { AttendanceRecord, AttendanceStatus, AttendanceSlot, StudentVerificationRecord } from '../types';
 import { studentsData } from '../data/students';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
@@ -62,19 +57,6 @@ import { CountUp } from '../components/common/CountUp';
 import { SkeletonTable, SkeletonMuster } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
 
-// News Schema
-const postSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters'),
-  category: z.enum(['News', 'Event', 'Announcement', 'Institute Updates']),
-  date: z.string().min(1, 'Please select a date'),
-  excerpt: z.string().min(10, 'Short description must be at least 10 characters').max(200, 'Keep excerpt under 200 characters'),
-  content: z.string().min(20, 'Full content must be at least 20 characters'),
-  imageUrl: z.string().optional(),
-  author: z.string().optional(),
-});
-
-type PostFormValues = z.infer<typeof postSchema>;
-
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const {user, logout} = useAuth();
@@ -82,8 +64,8 @@ export const DashboardPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
 
-  // Tabs: 'students' | 'attendance' | 'news'
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'news'>(
+  // Tabs: 'students' | 'attendance'
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance'>(
     tabParam === 'attendance' ? 'attendance' : 'students'
   );
 
@@ -93,10 +75,7 @@ export const DashboardPage: React.FC = () => {
     }
   }, [tabParam]);
   
-  // News context
-  const { posts, addPost, updatePost, deletePost, resetToSeed: resetNewsToSeed } = useNews();
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
+  const confirm = useConfirm();
 
   // Student Data context (Attendance)
   const { 
@@ -171,9 +150,14 @@ export const DashboardPage: React.FC = () => {
 
   // Permanently delete a student from database (removes user login, profile, and attendance)
   const handleDeleteCadet = async (cadet: StudentVerificationRecord) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently delete Student "${cadet.name}" (${cadet.id})?\n\nThis will permanently remove their user account, student record, and attendance logs from the database.`
-    );
+    const confirmed = await confirm({
+      title: 'Delete Student Record',
+      message: `Are you sure you want to permanently delete Student "${cadet.name}" (${cadet.id})?\n\nThis will permanently remove their user account, student record, and attendance logs from the database.`,
+      confirmText: 'Delete Student',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
     if (!confirmed) return;
 
     try {
@@ -248,88 +232,7 @@ export const DashboardPage: React.FC = () => {
   const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
 
 
-  // News Form
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    reset: resetPostForm,
-    formState: { errors: postErrors, isSubmitting: isSubmittingPost }
-  } = useForm<PostFormValues>({
-    resolver: zodResolver(postSchema),
-    defaultValues: {
-      category: 'News',
-      date: new Date().toISOString().split('T')[0],
-      author: 'CFSI Administration',
-      imageUrl: '',
-      excerpt: '',
-      content: '',
-    }
-  });
-
   const handleLogout = () => { void logout(); navigate('/institute-login'); };
-
-  // News Image file select preview
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewImageUrl(objectUrl);
-      setValue('imageUrl', objectUrl);
-      toast.info(`Image loaded for session: ${file.name}`);
-    }
-  };
-
-  // Populate news form for Edit
-  const handleEditNewsClick = (post: NewsPost) => {
-    setEditingPostId(post.id);
-    setValue('title', post.title);
-    setValue('category', post.category);
-    setValue('date', post.date);
-    setValue('excerpt', post.excerpt);
-    setValue('content', post.content);
-    setValue('imageUrl', post.imageUrl || '');
-    setValue('author', post.author || 'CFSI Administration');
-    setPreviewImageUrl(post.imageUrl || '');
-    window.scrollTo({ top: 300, behavior: 'smooth' });
-    toast.info(`Editing post: "${post.title.substring(0, 30)}..."`);
-  };
-
-  const handleCancelNewsEdit = () => {
-    setEditingPostId(null);
-    setPreviewImageUrl('');
-    resetPostForm({
-      title: '',
-      category: 'News',
-      date: new Date().toISOString().split('T')[0],
-      author: 'CFSI Administration',
-      imageUrl: '',
-      excerpt: '',
-      content: '',
-    });
-  };
-
-  // Delete post
-  const handleDeletePost = (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-      deletePost(id);
-      if (editingPostId === id) handleCancelNewsEdit();
-      toast.success('Post removed successfully');
-    }
-  };
-
-  // Submit News Post
-  const onNewsSubmit = async (data: PostFormValues) => {
-    if (editingPostId) {
-      updatePost(editingPostId, data);
-      toast.success('Post Updated Successfully');
-      handleCancelNewsEdit();
-    } else {
-      addPost(data);
-      toast.success('New Article Published Live!');
-      handleCancelNewsEdit();
-    }
-  };
 
   // --- ATTENDANCE HELPERS & CONFIGURATION ---
   const slotConfigMap: Record<AttendanceSlot, { label: string; shortLabel: string; subtitle: string; time: string }> = {
@@ -660,7 +563,15 @@ export const DashboardPage: React.FC = () => {
       toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
       return;
     }
-    if (window.confirm(`Are you sure you want to clear all attendance entries for ${formattedDateLabel}?`)) {
+    const confirmed = await confirm({
+      title: 'Clear Day Attendance',
+      message: `Are you sure you want to clear all attendance entries for ${formattedDateLabel}?\n\nThis will reset today's marked muster draft and revert cadets back to unmarked pending status.`,
+      confirmText: 'Clear Attendance',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await clearDayAttendance(selectedMusterDate);
       setHasPendingChanges(false);
       toast.info(`Cleared muster records for ${selectedMusterDate}`);
@@ -670,15 +581,6 @@ export const DashboardPage: React.FC = () => {
 
 
 
-
-  // News Category Filter State
-  const [newsCategoryFilter, setNewsCategoryFilter] = useState<string>('All');
-
-  // Filtered News items
-  const displayedPosts = posts.filter((p) => {
-    if (newsCategoryFilter === 'All') return true;
-    return p.category === newsCategoryFilter;
-  });
 
   // If NOT Authenticated, redirect to institute login portal
   if (!isAuthenticated) {
@@ -700,7 +602,7 @@ export const DashboardPage: React.FC = () => {
               Admin Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Manage student records, mark daily attendance, and publish announcements.
+              Manage student records and mark daily attendance.
             </p>
           </div>
 
@@ -746,20 +648,6 @@ export const DashboardPage: React.FC = () => {
             <span>Mark Attendance</span>
           </button>
 
-          {/* News & Updates */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('news')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-              activeTab === 'news'
-                ? 'bg-primary text-white shadow-md shadow-primary/20'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>News & Updates (<CountUp value={posts.length} />)</span>
-          </button>
-
           {/* Manage Users */}
           <Link
             to="/users"
@@ -776,6 +664,15 @@ export const DashboardPage: React.FC = () => {
           >
             <Globe className="w-4 h-4 text-blue-500" />
             <span>Web Management</span>
+          </Link>
+
+          {/* Leadership & Faculty Assignment */}
+          <Link
+            to="/dashboard/leadership"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10"
+          >
+            <Award className="w-4 h-4 text-indigo-500" />
+            <span>Leadership & Faculty</span>
           </Link>
         </div>
 
@@ -1813,276 +1710,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* TABS: NEWS & UPDATES (Content Manager)                                    */}
-        {/* ========================================================================= */}
-        {activeTab === 'news' && (
-          <div className="space-y-6">
-            {/* Create / Edit Post Form Card */}
-            <FlatCard hoverEffect={false} className="p-6 sm:p-8 mb-6 border border-gray-200/80 dark:border-white/10 shadow-md">
-              <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100 dark:border-white/5">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    <Plus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-heading font-extrabold text-lg text-gray-900 dark:text-white">
-                      {editingPostId ? 'Edit Campus Post' : 'Publish Campus Announcement'}
-                    </h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Published posts appear immediately on the public website and student feeds.
-                    </p>
-                  </div>
-                </div>
 
-                {editingPostId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelNewsEdit}
-                    className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 font-semibold"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Cancel Edit</span>
-                  </button>
-                )}
-              </div>
-
-              <form onSubmit={handleSubmit(onNewsSubmit)} className="space-y-5">
-                
-                {/* Title */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    Headline Title *
-                  </label>
-                  <input
-                    type="text"
-                    {...register('title')}
-                    placeholder="e.g. Annual Heavy Vehicle Water Tender Operations Drill Completed"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  {postErrors.title && (
-                    <p className="text-xs text-red-500 mt-1">{postErrors.title.message}</p>
-                  )}
-                </div>
-
-                {/* Category & Date */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Post Category *
-                    </label>
-                    <select
-                      {...register('category')}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="News">News</option>
-                      <option value="Event">Event</option>
-                      <option value="Announcement">Announcement</option>
-                      <option value="Institute Updates">Institute Updates</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Publish Date *
-                    </label>
-                    <input
-                      type="date"
-                      {...register('date')}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                </div>
-
-                {/* Excerpt */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    Short Excerpt / Summary (Under 200 chars) *
-                  </label>
-                  <input
-                    type="text"
-                    {...register('excerpt')}
-                    placeholder="Brief summary appearing on homepage cards and feed list..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  {postErrors.excerpt && (
-                    <p className="text-xs text-red-500 mt-1">{postErrors.excerpt.message}</p>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    Full Content & Operational Details *
-                  </label>
-                  <textarea
-                    rows={4}
-                    {...register('content')}
-                    placeholder="Detailed explanation, equipment deployed, cadet roster, or key dates..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  {postErrors.content && (
-                    <p className="text-xs text-red-500 mt-1">{postErrors.content.message}</p>
-                  )}
-                </div>
-
-                {/* Optional Image & Author */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Upload Featured Image (Optional)
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageFile}
-                      className="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                    />
-                    {previewImageUrl && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <img
-                          src={previewImageUrl}
-                          alt="Preview"
-                          className="w-12 h-12 rounded-lg object-cover border border-gray-200"
-                        />
-                        <span className="text-[11px] text-gray-400">Attached image preview</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                      Author Byline
-                    </label>
-                    <input
-                      type="text"
-                      {...register('author')}
-                      placeholder="CFSI Administration"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                </div>
-
-                {/* Form Buttons */}
-                <div className="pt-2 flex items-center justify-end gap-3">
-                  {editingPostId && (
-                    <button
-                      type="button"
-                      onClick={handleCancelNewsEdit}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={isSubmittingPost}
-                    className="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-dark shadow-md transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{editingPostId ? 'Update Post' : 'Publish Announcement'}</span>
-                  </button>
-                </div>
-
-              </form>
-            </FlatCard>
-
-            {/* List of Posted Items */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-heading font-extrabold text-xl text-gray-900 dark:text-white">
-                    Published Announcements ({displayedPosts.length})
-                  </h3>
-                  <span className="text-xs text-gray-400">Manage published updates and notices</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 font-medium">Category:</span>
-                  <select
-                    value={newsCategoryFilter}
-                    onChange={(e) => setNewsCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
-                  >
-                    <option value="All">All Categories</option>
-                    <option value="News">News</option>
-                    <option value="Event">Event</option>
-                    <option value="Announcement">Announcement</option>
-                    <option value="Institute Updates">Institute Updates</option>
-                  </select>
-                </div>
-              </div>
-
-              {displayedPosts.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 bg-white dark:bg-[#161d27] rounded-2xl border border-gray-200 dark:border-white/10 text-xs font-semibold">
-                  No announcements found{newsCategoryFilter !== 'All' ? ` for "${newsCategoryFilter}"` : ''}.
-                </div>
-              ) : (
-                displayedPosts.map((post) => (
-                  <div key={post.id}>
-                    <GlassCard hoverEffect={false} className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200/80 dark:border-white/10">
-                      
-                      {/* Left Info */}
-                      <div className="flex items-start gap-4 flex-1">
-                        {post.imageUrl && (
-                          <img
-                            src={post.imageUrl}
-                            alt={post.title}
-                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-white/10"
-                          />
-                        )}
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
-                              {post.category}
-                            </span>
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>{post.date}</span>
-                            </span>
-                            {post.author && (
-                              <span className="text-xs text-gray-400">• {post.author}</span>
-                            )}
-                          </div>
-                          <h4 className="font-heading font-bold text-base text-gray-900 dark:text-white leading-snug">
-                            {post.title}
-                          </h4>
-                          <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                            {post.excerpt}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Right Actions: Edit & Delete */}
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                        <button
-                          type="button"
-                          onClick={() => handleEditNewsClick(post)}
-                          className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-colors"
-                          title="Edit this post"
-                          aria-label="Edit post"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePost(post.id, post.title)}
-                          className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                          title="Delete this post"
-                          aria-label="Delete post"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                    </GlassCard>
-                  </div>
-                ))
-              )}
-            </div>
-
-          </div>
-        )}
 
         {/* ========================================================================= */}
         {/* CADET DETAILS INSPECTION MODAL                                           */}

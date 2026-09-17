@@ -21,9 +21,13 @@ import {
   XCircle, 
   Users, 
   Check, 
-  UserCheck 
+  X,
+  UserCheck,
+  Award
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useStudentData } from '../context/StudentDataContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { AttendanceSlot, AttendanceStatus, StudentVerificationRecord } from '../types';
 import { api } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
@@ -62,6 +66,7 @@ const normalizeSlotParam = (raw?: string): AttendanceSlot => {
 export const SlotAttendancePage: React.FC = () => {
   const { date: paramDate, slot: paramSlot } = useParams<{ date?: string; slot?: string }>();
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   const activeDate = useMemo(() => {
     if (paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate)) return paramDate;
@@ -75,6 +80,7 @@ export const SlotAttendancePage: React.FC = () => {
   const {
     attendance,
     setSlotAttendance,
+    deleteAttendance,
     bulkMarkDaySlots,
     clearDayAttendance,
     uploadDayAttendance,
@@ -99,11 +105,10 @@ export const SlotAttendancePage: React.FC = () => {
   const [isLoadingCadets, setIsLoadingCadets] = useState<boolean>(false);
   const [selectedCadetDetail, setSelectedCadetDetail] = useState<StudentVerificationRecord | null>(null);
 
-  // Filters & selection
+  // Filters
   const [slotStudentSearch, setSlotStudentSearch] = useState<string>('');
   const [slotCourseFilter, setSlotCourseFilter] = useState<string>('All');
   const [slotStatusFilter, setSlotStatusFilter] = useState<'all' | 'pending' | 'present' | 'absent'>('all');
-  const [selectedCadetIds, setSelectedCadetIds] = useState<Set<string>>(new Set());
 
   // Instructor & topic settings
   const [musterInstructor, setMusterInstructor] = useState<string>('Chief Instructor Dave');
@@ -146,9 +151,8 @@ export const SlotAttendancePage: React.FC = () => {
     loadCadets();
   }, [loadCadets]);
 
-  // Reset selection when slot or date changes
+  // Reset pending state when slot or date changes
   useEffect(() => {
-    setSelectedCadetIds(new Set());
     setHasPendingChanges(false);
   }, [activeDate, activeSlot]);
 
@@ -247,47 +251,191 @@ export const SlotAttendancePage: React.FC = () => {
     return { total, present, absent, pending, rate };
   }, [activeDate, activeSlot, cadetsList, getSlotRecord]);
 
-  // Lock status for active date
+  // Current user & leadership role
+  const { user } = useAuth();
+  const isLeader = user?.role === 'leader';
+
+  // Live ticking clock for real-time slot countdown & automated lock
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const todayStr = useMemo(() => {
+    const y = currentTime.getFullYear();
+    const m = String(currentTime.getMonth() + 1).padStart(2, '0');
+    const d = String(currentTime.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, [currentTime]);
+
+  const isToday = activeDate === todayStr;
+
+  // Slot time evaluator (incorporating the 20m post-slot cutoff)
+  const getSlotTimeStatus = useCallback((slot: AttendanceSlot) => {
+    const currentMins = currentTime.getHours() * 60 + currentTime.getMinutes();
+    const currentSecs = currentTime.getSeconds();
+
+    let startMins = 480;  // 08:00 AM
+    let endMins = 620;    // 10:20 AM (8-10 + 20m grace)
+    let lockLabel = '10:20 AM';
+    let openLabel = '08:00 AM';
+
+    if (slot === 'Slot 1') {
+      startMins = 480; // 08:00 AM
+      endMins = 620;   // 10:20 AM
+      lockLabel = '10:20 AM';
+      openLabel = '08:00 AM';
+    } else if (slot === 'Slot 2') {
+      startMins = 630; // 10:30 AM
+      endMins = 800;   // 01:20 PM / 13:20 (10:30-13:00 + 20m grace)
+      lockLabel = '01:20 PM';
+      openLabel = '10:30 AM';
+    } else if (slot === 'Slot 3') {
+      startMins = 840;  // 02:00 PM / 14:00
+      endMins = 1040;   // 05:20 PM / 17:20 (14:00-17:00 + 20m grace)
+      lockLabel = '05:20 PM';
+      openLabel = '02:00 PM';
+    }
+
+    const isBefore = currentMins < startMins;
+    const isAfter = currentMins >= endMins;
+    const isOpen = !isBefore && !isAfter;
+
+    const remainingSecs = isOpen ? (endMins - currentMins) * 60 - currentSecs : 0;
+    const timeUntilOpenSecs = isBefore ? (startMins - currentMins) * 60 - currentSecs : 0;
+
+    return {
+      isOpen,
+      isBefore,
+      isAfter,
+      remainingSecs,
+      timeUntilOpenSecs,
+      lockLabel,
+      openLabel,
+    };
+  }, [currentTime]);
+
+  const activeSlotStatus = useMemo(() => {
+    return getSlotTimeStatus(activeSlot);
+  }, [getSlotTimeStatus, activeSlot]);
+
+  const formatCountdown = (totalSec: number) => {
+    if (totalSec <= 0) return '0m 00s';
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m ${String(secs).padStart(2, '0')}s`;
+    return `${mins}m ${String(secs).padStart(2, '0')}s`;
+  };
+
+  // Lock status for active date (24-hour edit limit)
   const dateLock = isDateLocked(activeDate);
-  const isLocked = dateLock.locked;
 
-  // Selection handlers
-  const handleToggleSelectStudent = (studentId: string) => {
-    setSelectedCadetIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(studentId)) {
-        next.delete(studentId);
+  // Leader-specific lock: leaders can only mark today and only during active slot time window
+  const isLeaderSlotLocked = isLeader && (!isToday || !activeSlotStatus.isOpen);
+  const isLocked = dateLock.locked || isLeaderSlotLocked;
+
+  // Single-cadet direct toggle between Present, Absent, and unmarking back to Pending
+  const handleToggleMarkStatus = async (
+    student: StudentVerificationRecord,
+    targetStatus: AttendanceStatus
+  ) => {
+    if (isLeaderSlotLocked) {
+      if (!isToday) {
+        toast.error(`Attendance locked: Leaders can only mark attendance for today (${todayStr}).`);
+      } else if (activeSlotStatus.isBefore) {
+        toast.error(`Attendance not yet open: ${slotConfigMap[activeSlot].shortLabel} unlocks at ${activeSlotStatus.openLabel}.`);
       } else {
-        next.add(studentId);
+        toast.error(`Attendance locked: ${slotConfigMap[activeSlot].shortLabel} marking window closed at ${activeSlotStatus.lockLabel}.`);
       }
-      return next;
-    });
+      return;
+    }
+
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
+      return;
+    }
+
+    const currentRec = getSlotRecord(student.id, activeDate, activeSlot);
+    const topic = activeSlot === 'Slot 1' ? slot1Topic : activeSlot === 'Slot 2' ? slot2Topic : slot3Topic;
+
+    try {
+      if (currentRec && currentRec.status === targetStatus) {
+        // Toggle off back to pending
+        await deleteAttendance(currentRec.id);
+        setHasPendingChanges(true);
+        toast.info(`Unmarked ${student.name} (${slotConfigMap[activeSlot].shortLabel} pending)`);
+        return;
+      }
+
+      await setSlotAttendance(student.id, activeDate, activeSlot, targetStatus, {
+        topicOrModule: topic,
+        course: student.course,
+        markedBy: musterInstructor,
+        rollNo: student.rollNo,
+      });
+      setHasPendingChanges(true);
+      toast.success(`${student.name} marked as ${targetStatus}`);
+    } catch (err: any) {
+      console.error('Failed to update slot attendance:', err);
+      toast.error(err?.message || 'Failed to update attendance.');
+    }
   };
 
-  const isAllStudentsSelected =
-    filteredSlotStudents.length > 0 &&
-    filteredSlotStudents.every((s) => selectedCadetIds.has(s.id));
-  const isSomeStudentsSelected =
-    filteredSlotStudents.some((s) => selectedCadetIds.has(s.id));
-
-  const handleToggleSelectAll = () => {
-    setSelectedCadetIds((prev) => {
-      const next = new Set(prev);
-      if (isAllStudentsSelected) {
-        filteredSlotStudents.forEach((s) => next.delete(s.id));
+  // Quick batch mark for remaining pending students in this slot
+  const handleMarkPendingAs = (status: AttendanceStatus) => {
+    if (isLeaderSlotLocked) {
+      if (!isToday) {
+        toast.error(`Attendance locked: Leaders can only mark attendance for today (${todayStr}).`);
+      } else if (activeSlotStatus.isBefore) {
+        toast.error(`Attendance not yet open: ${slotConfigMap[activeSlot].shortLabel} unlocks at ${activeSlotStatus.openLabel}.`);
       } else {
-        filteredSlotStudents.forEach((s) => next.add(s.id));
+        toast.error(`Attendance locked: ${slotConfigMap[activeSlot].shortLabel} marking window closed at ${activeSlotStatus.lockLabel}.`);
       }
-      return next;
-    });
-  };
+      return;
+    }
 
-  const handleClearSelection = () => {
-    setSelectedCadetIds(new Set());
+    if (isLocked) {
+      toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
+      return;
+    }
+
+    const pendingCadets = filteredSlotStudents.filter((s) => {
+      const rec = getSlotRecord(s.id, activeDate, activeSlot);
+      return !rec || !rec.status;
+    });
+
+    if (pendingCadets.length === 0) {
+      toast.info(`All students are already marked for ${slotConfigMap[activeSlot].shortLabel}.`);
+      return;
+    }
+
+    const targets = pendingCadets.map((s) => ({
+      studentId: s.id,
+      rollNo: s.rollNo,
+      course: s.course,
+    }));
+
+    const topic = activeSlot === 'Slot 1' ? slot1Topic : activeSlot === 'Slot 2' ? slot2Topic : slot3Topic;
+    bulkMarkDaySlots(activeDate, activeSlot, status, targets, musterInstructor, topic);
+    setHasPendingChanges(true);
+    toast.success(`Marked ${targets.length} pending student(s) as ${status} for ${slotConfigMap[activeSlot].shortLabel}.`);
   };
 
   // Bulk mark all filtered
   const handleBulkMarkActiveSlot = (status: AttendanceStatus) => {
+    if (isLeaderSlotLocked) {
+      if (!isToday) {
+        toast.error(`Attendance locked: Leaders can only mark attendance for today (${todayStr}).`);
+      } else if (activeSlotStatus.isBefore) {
+        toast.error(`Attendance not yet open: ${slotConfigMap[activeSlot].shortLabel} unlocks at ${activeSlotStatus.openLabel}.`);
+      } else {
+        toast.error(`Attendance locked: ${slotConfigMap[activeSlot].shortLabel} marking window closed at ${activeSlotStatus.lockLabel}.`);
+      }
+      return;
+    }
+
     if (isLocked) {
       toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
       return;
@@ -310,54 +458,38 @@ export const SlotAttendancePage: React.FC = () => {
     toast.success(`Marked ${targets.length} students ${status} for ${slotConfigMap[activeSlot].shortLabel}.`);
   };
 
-  // Mark selected students from bottom action bar
-  const handleMarkSelectedAttendance = (status: AttendanceStatus) => {
-    if (isLocked) {
-      toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
-      return;
-    }
-
-    let targetIds = Array.from(selectedCadetIds);
-    if (targetIds.length === 0) {
-      targetIds = filteredSlotStudents.map((s) => s.id);
-    }
-
-    if (targetIds.length === 0) {
-      toast.error('No students available to mark.');
-      return;
-    }
-
-    const targetStudents = cadetsList.filter((s) => targetIds.includes(s.id));
-    const targets = targetStudents.map((s) => ({
-      studentId: s.id,
-      rollNo: s.rollNo,
-      course: s.course,
-    }));
-
-    const topic = activeSlot === 'Slot 1' ? slot1Topic : activeSlot === 'Slot 2' ? slot2Topic : slot3Topic;
-    bulkMarkDaySlots(activeDate, activeSlot, status, targets, musterInstructor, topic);
-    setHasPendingChanges(true);
-    toast.success(`Marked ${targets.length} student(s) as ${status} for ${slotConfigMap[activeSlot].shortLabel}.`);
-  };
-
   // Clear active date attendance
-  const handleClearActiveDateAttendance = () => {
+  const handleClearActiveDateAttendance = async () => {
+    if (isLeader) {
+      toast.error('Cadet Leaders cannot reset or clear attendance records. Please contact an Administrator.');
+      return;
+    }
+
     if (isLocked) {
       toast.error('Attendance for this date is permanently locked.');
       return;
     }
-    const confirmed = window.confirm(
-      `Are you sure you want to clear all marked attendance records for ${formatDateLabel(activeDate)} across all slots?\n\nThis will reset today's muster draft back to unmarked pending status.`
-    );
+    const confirmed = await confirm({
+      title: 'Clear Muster Records',
+      message: `Are you sure you want to clear all marked attendance records for ${formatDateLabel(activeDate)} across all slots?\n\nThis will reset today's muster draft back to unmarked pending status.`,
+      confirmText: 'Clear Muster',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
     if (!confirmed) return;
     clearDayAttendance(activeDate);
-    setSelectedCadetIds(new Set());
     setHasPendingChanges(true);
     toast.success(`Cleared all attendance records for ${formatDateLabel(activeDate)}.`);
   };
 
   // Upload attendance to MongoDB
   const handleUploadActiveDateAttendance = async () => {
+    if (isLeaderSlotLocked) {
+      toast.error(`Attendance locked: ${slotConfigMap[activeSlot].shortLabel} marking window is closed for leaders.`);
+      return;
+    }
+
     if (isLocked) {
       toast.error('Attendance for this date is permanently locked (24-hour edit window expired).');
       return;
@@ -407,7 +539,7 @@ export const SlotAttendancePage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => navigate('/dashboard?tab=attendance')}
+              onClick={() => navigate(user?.role === 'leader' || user?.role === 'student' ? '/student/dashboard' : '/dashboard?tab=attendance')}
               className="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-800 dark:text-gray-200 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs hover:shadow"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -512,6 +644,96 @@ export const SlotAttendancePage: React.FC = () => {
           </div>
         </div>
 
+        {/* Leader Real-Time Slot Lock Policy Status Banner */}
+        {isLeader && (
+          <div className="rounded-2xl overflow-hidden shadow-sm">
+            {!isToday ? (
+              <div className="p-4 bg-red-500/10 border border-red-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-red-700 dark:text-red-300">
+                <div className="flex items-center gap-2.5">
+                  <Lock className="w-4 h-4 shrink-0 text-red-500" />
+                  <div>
+                    <p className="font-bold text-xs sm:text-sm">
+                      Past / Future Date Locked for Cadet Leaders
+                    </p>
+                    <p className="text-[11px] opacity-90">
+                      Cadet Leaders can only mark muster for Today ({todayStr}). You are viewing {activeDate}. Contact an Administrator for historical adjustments.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/attendance/${todayStr}/${encodeURIComponent(activeSlot)}`)}
+                  className="px-3 py-1.5 rounded-xl bg-red-600 text-white font-bold text-xs shrink-0 hover:bg-red-700 transition-colors cursor-pointer"
+                >
+                  Return to Today
+                </button>
+              </div>
+            ) : activeSlotStatus.isOpen ? (
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-emerald-800 dark:text-emerald-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-3 w-3 relative shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-xs sm:text-sm flex items-center gap-1.5">
+                      <span>{slotConfigMap[activeSlot].label} — Live Marking Active</span>
+                      <span className="text-[10px] px-2 py-0.2 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded font-mono">UNLOCKED</span>
+                    </p>
+                    <p className="text-[11px] opacity-90">
+                      Authorized for Leader muster marking until <strong>{activeSlotStatus.lockLabel}</strong> (includes 20m post-slot grace window). Attendance will permanently lock after this time.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto bg-emerald-500/15 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block leading-tight">
+                      Lock Cutoff In
+                    </span>
+                    <span className="font-mono font-black text-sm text-emerald-700 dark:text-emerald-300">
+                      {formatCountdown(activeSlotStatus.remainingSecs)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : activeSlotStatus.isBefore ? (
+              <div className="p-4 bg-blue-500/10 border border-blue-500/30 flex items-center justify-between gap-3 text-blue-800 dark:text-blue-200">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 shrink-0 text-blue-500" />
+                  <div>
+                    <p className="font-bold text-xs sm:text-sm">
+                      {slotConfigMap[activeSlot].label} — Slot Not Yet Open
+                    </p>
+                    <p className="text-[11px] opacity-90">
+                      Scheduled time is {slotConfigMap[activeSlot].time}. Unlocks automatically for Leaders at <strong>{activeSlotStatus.openLabel}</strong>.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-lg shrink-0">
+                  Opens in {formatCountdown(activeSlotStatus.timeUntilOpenSecs)}
+                </span>
+              </div>
+            ) : (
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200">
+                <div className="flex items-center gap-2.5">
+                  <Lock className="w-4 h-4 shrink-0 text-amber-600" />
+                  <div>
+                    <p className="font-bold text-xs sm:text-sm">
+                      {slotConfigMap[activeSlot].label} — Locked for Cadet Leaders
+                    </p>
+                    <p className="text-[11px] opacity-90">
+                      Attendance marking for this slot closed at <strong>{activeSlotStatus.lockLabel}</strong> (20-minute post-slot cutoff expired). You cannot mark or modify past slots.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-lg shrink-0">
+                  Locked at {activeSlotStatus.lockLabel}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* ROW 2: SELECT SESSION SLOT (Slot 1, Slot 2, Slot 3 Switcher Cards)        */}
         {/* ========================================================================= */}
@@ -523,6 +745,7 @@ export const SlotAttendancePage: React.FC = () => {
             {(['Slot 1', 'Slot 2', 'Slot 3'] as AttendanceSlot[]).map((slotKey) => {
               const isActive = activeSlot === slotKey;
               const cfg = slotConfigMap[slotKey];
+              const sStatus = getSlotTimeStatus(slotKey);
               const daySlotRecs = attendance.filter((a) => a.date === activeDate && (a.slot === slotKey || (!a.slot && slotKey === 'Slot 1')));
               const marked = daySlotRecs.length;
               const total = cadetsList.length;
@@ -553,8 +776,21 @@ export const SlotAttendancePage: React.FC = () => {
                   <div className={`text-[11px] mt-1 line-clamp-1 ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
                     Session: {slotKey === 'Slot 1' ? slot1Topic : slotKey === 'Slot 2' ? slot2Topic : slot3Topic}
                   </div>
-                  <div className={`text-[10px] mt-1 font-mono ${isActive ? 'text-white/70' : 'text-gray-400'}`}>
-                    {cfg.time}
+                  <div className="flex items-center justify-between mt-1.5">
+                    <div className={`text-[10px] font-mono ${isActive ? 'text-white/70' : 'text-gray-400'}`}>
+                      {cfg.time}
+                    </div>
+                    {isLeader && isToday && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                        sStatus.isOpen
+                          ? isActive ? 'bg-emerald-400/30 text-white' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                          : sStatus.isAfter
+                          ? isActive ? 'bg-red-400/30 text-white' : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                          : isActive ? 'bg-blue-400/30 text-white' : 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                      }`}>
+                        {sStatus.isOpen ? `🟢 Open (Ends ${sStatus.lockLabel})` : sStatus.isAfter ? `🔒 Locked (${sStatus.lockLabel})` : `⏳ Opens ${sStatus.openLabel}`}
+                      </span>
+                    )}
                   </div>
                 </button>
               );
@@ -769,19 +1005,10 @@ export const SlotAttendancePage: React.FC = () => {
               <thead>
                 <tr className="bg-gray-100/90 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-extrabold uppercase text-[10px] tracking-wider">
                   <th className="py-4 px-6 min-w-[300px]">Student Name</th>
-                  <th className="py-4 px-6 text-center w-48">
-                    <div className="flex items-center justify-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={isAllStudentsSelected}
-                        ref={(el) => {
-                          if (el) el.indeterminate = !isAllStudentsSelected && isSomeStudentsSelected;
-                        }}
-                        onChange={handleToggleSelectAll}
-                        className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300 dark:border-white/20 cursor-pointer accent-primary"
-                        title="Select / Deselect all students"
-                      />
-                      <span>Selection Box</span>
+                  <th className="py-4 px-6 text-center w-52">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-primary" />
+                      <span>Attendance (P / A)</span>
                     </div>
                   </th>
                 </tr>
@@ -802,13 +1029,16 @@ export const SlotAttendancePage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => setSlotStatusFilter('all')}
-                            className="mt-2 px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-dark transition-colors cursor-pointer"
+                            className="mt-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                           >
-                            View All Students ({cadetsList.length})
+                            View All Students
                           </button>
                         </div>
                       ) : (
-                        'No students found matching the current search or course filter.'
+                        <div className="flex flex-col items-center justify-center gap-2 py-4">
+                          <Users className="w-10 h-10 text-gray-400 opacity-50" />
+                          <p>No students match the current filter.</p>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -817,17 +1047,11 @@ export const SlotAttendancePage: React.FC = () => {
                     const rec = getSlotRecord(student.id, activeDate, activeSlot);
                     const isPresent = rec?.status === 'Present';
                     const isAbsent = rec?.status === 'Absent';
-                    const isSelected = selectedCadetIds.has(student.id);
 
                     return (
                       <tr
                         key={student.id}
-                        onClick={() => handleToggleSelectStudent(student.id)}
-                        className={`transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-primary/5 dark:bg-primary/10 hover:bg-primary/10'
-                            : 'hover:bg-gray-50/70 dark:hover:bg-white/5'
-                        }`}
+                        className="transition-colors hover:bg-gray-50/70 dark:hover:bg-white/5"
                       >
                         {/* Column 1: Student Name */}
                         <td className="py-4 px-6">
@@ -882,16 +1106,54 @@ export const SlotAttendancePage: React.FC = () => {
                           </div>
                         </td>
 
-                        {/* Column 2: Selection Box (at last) */}
+                        {/* Column 2: Direct P / A Marking */}
                         <td className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleToggleSelectStudent(student.id)}
-                              className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300 dark:border-white/20 cursor-pointer accent-primary transition-transform hover:scale-110"
-                              aria-label={`Select ${student.name}`}
-                            />
+                          <div className="flex items-center justify-center gap-2">
+                            {/* Present (P) Button */}
+                            <button
+                              type="button"
+                              disabled={isLocked}
+                              onClick={() => handleToggleMarkStatus(student, 'Present')}
+                              className={`h-9 min-w-[52px] px-3.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none ${
+                                isPresent
+                                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/40 scale-105'
+                                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white active:scale-95'
+                              } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-emerald-500/10 disabled:hover:text-emerald-600`}
+                              title={
+                                isLocked
+                                  ? 'Attendance is locked'
+                                  : isPresent
+                                  ? 'Currently marked Present (click to unmark)'
+                                  : `Mark ${student.name} as Present`
+                              }
+                              aria-label={`Mark ${student.name} Present`}
+                            >
+                              <Check className={`w-3.5 h-3.5 ${isPresent ? 'stroke-[3]' : ''}`} />
+                              <span>P</span>
+                            </button>
+
+                            {/* Absent (A) Button */}
+                            <button
+                              type="button"
+                              disabled={isLocked}
+                              onClick={() => handleToggleMarkStatus(student, 'Absent')}
+                              className={`h-9 min-w-[52px] px-3.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none ${
+                                isAbsent
+                                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30 ring-2 ring-red-500/40 scale-105'
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-600 hover:text-white active:scale-95'
+                              } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-red-500/10 disabled:hover:text-red-600`}
+                              title={
+                                isLocked
+                                  ? 'Attendance is locked'
+                                  : isAbsent
+                                  ? 'Currently marked Absent (click to unmark)'
+                                  : `Mark ${student.name} as Absent`
+                              }
+                              aria-label={`Mark ${student.name} Absent`}
+                            >
+                              <X className={`w-3.5 h-3.5 ${isAbsent ? 'stroke-[3]' : ''}`} />
+                              <span>A</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -903,69 +1165,86 @@ export const SlotAttendancePage: React.FC = () => {
           </div>
 
           {/* ========================================================================= */}
-          {/* ROW 7: ACTION BAR AT END OF TABLE (Mark Present Button)                   */}
+          {/* ROW 7: ACTION BAR AT END OF TABLE (Slot Progress & Pending Quick Actions) */}
           {/* ========================================================================= */}
           <div className="px-6 py-4 bg-gray-50/90 dark:bg-white/[0.03] border-t border-gray-200/80 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
-              <span>
-                {selectedCadetIds.size > 0 ? (
-                  <span className="text-primary font-black">
-                    {selectedCadetIds.size} student{selectedCadetIds.size !== 1 ? 's' : ''} selected
-                  </span>
-                ) : (
-                  <span className="text-gray-400">
-                    Total {filteredSlotStudents.length} students (select via checkboxes or Mark Present directly)
-                  </span>
-                )}
+            {/* Slot Muster Progress Badges */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+              <span className="text-gray-500 dark:text-gray-400 mr-1">
+                Muster Status:
               </span>
-              {selectedCadetIds.size > 0 ? (
-                <button
-                  type="button"
-                  onClick={handleClearSelection}
-                  className="text-[11px] text-gray-400 hover:text-red-500 underline ml-2 cursor-pointer"
-                >
-                  Clear Selection
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleToggleSelectAll}
-                  className="text-[11px] text-primary hover:underline ml-2 cursor-pointer font-semibold"
-                >
-                  Select All ({filteredSlotStudents.length})
-                </button>
-              )}
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-black flex items-center gap-1">
+                <Check className="w-3 h-3 stroke-[3]" />
+                {activeSlotStats.present} Present
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-black flex items-center gap-1">
+                <X className="w-3 h-3 stroke-[3]" />
+                {activeSlotStats.absent} Absent
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-black flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {activeSlotStats.pending} Pending
+              </span>
+              <span className="text-gray-400 dark:text-gray-500 text-[11px] ml-1">
+                ({filteredSlotStudents.length} cadets shown)
+              </span>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => handleMarkSelectedAttendance('Absent')}
-                disabled={isLocked}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                  isLocked
-                    ? 'bg-gray-100 dark:bg-white/5 text-gray-400 border-transparent cursor-not-allowed'
-                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 hover:bg-red-600 hover:text-white hover:border-red-600'
-                }`}
-                title="Mark selected students Absent"
-              >
-                <XCircle className="w-4 h-4" />
-                <span>Mark Absent {selectedCadetIds.size > 0 ? `(${selectedCadetIds.size})` : ''}</span>
-              </button>
+            {/* Quick Actions for Pending Cadets & Save */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {activeSlotStats.pending > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleMarkPendingAs('Absent')}
+                    disabled={isLocked}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                      isLocked
+                        ? 'bg-gray-100 dark:bg-white/5 text-gray-400 border-transparent cursor-not-allowed'
+                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 hover:bg-red-600 hover:text-white'
+                    }`}
+                    title={`Mark all remaining ${activeSlotStats.pending} pending cadets as Absent`}
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Mark Pending as A ({activeSlotStats.pending})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleMarkPendingAs('Present')}
+                    disabled={isLocked}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                      isLocked
+                        ? 'bg-gray-200 dark:bg-white/10 text-gray-400 cursor-not-allowed'
+                        : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'
+                    }`}
+                    title={`Mark all remaining ${activeSlotStats.pending} pending cadets as Present`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Mark Pending as P ({activeSlotStats.pending})</span>
+                  </button>
+                </>
+              )}
 
               <button
                 type="button"
-                onClick={() => handleMarkSelectedAttendance('Present')}
-                disabled={isLocked}
-                className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2 cursor-pointer ${
+                onClick={handleUploadActiveDateAttendance}
+                disabled={isLocked || isUploadingMuster}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                   isLocked
-                    ? 'bg-gray-200 dark:bg-white/10 text-gray-400 cursor-not-allowed'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg active:scale-95'
+                    ? 'bg-gray-100 dark:bg-white/5 text-gray-400 border-transparent cursor-not-allowed'
+                    : hasPendingChanges
+                    ? 'bg-primary text-white border-primary shadow-md hover:opacity-90 active:scale-95'
+                    : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10'
                 }`}
-                title="Mark selected students Present"
+                title="Save & sync day muster to database"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Mark Present {selectedCadetIds.size > 0 ? `(${selectedCadetIds.size})` : ''}</span>
+                {isUploadingMuster ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <UploadCloud className="w-3.5 h-3.5" />
+                )}
+                <span>{isUploadingMuster ? 'Syncing...' : hasPendingChanges ? 'Save Changes' : 'Synced'}</span>
               </button>
             </div>
           </div>

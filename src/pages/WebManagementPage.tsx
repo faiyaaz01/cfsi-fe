@@ -28,12 +28,14 @@ import { FlatCard } from '../components/common/FlatCard';
 import { CountUp } from '../components/common/CountUp';
 import { useNews } from '../context/NewsContext';
 import { useWebContent, DisplaySettings } from '../context/WebContentContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { Course, NewsPost, NewsCategory, TrainingPost, GalleryImage, VideoItem } from '../types';
 
 type SubTab = 'courses' | 'news' | 'drills' | 'photos' | 'videos' | 'display';
 
 export const WebManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SubTab>('courses');
+  const confirm = useConfirm();
 
   // Real-time Web Content Context (FastAPI MongoDB backend + real-time localStorage & custom event dispatch)
   const {
@@ -196,13 +198,29 @@ export const WebManagementPage: React.FC = () => {
   };
 
   const handleDeleteCourse = async (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete course "${title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Delete Course',
+      message: `Are you sure you want to delete course "${title}" from the catalog?`,
+      confirmText: 'Delete Course',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await deleteCourse(id);
     }
   };
 
   const handleClearAllCourses = async () => {
-    if (window.confirm('Clear all courses from the database? This cannot be undone.')) {
+    const confirmed = await confirm({
+      title: 'Clear All Courses',
+      message: 'Are you sure you want to clear all courses from the database? This cannot be undone and will remove all programs from the public courses page and catalog.',
+      confirmText: 'Clear All Courses',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await clearAllCourses();
     }
   };
@@ -310,14 +328,30 @@ export const WebManagementPage: React.FC = () => {
   };
 
   const handleDeleteNews = async (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete news item "${title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Delete News Bulletin',
+      message: `Are you sure you want to delete news item "${title}"?`,
+      confirmText: 'Delete News',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await deleteNewsPost(id);
       toast.success(`News item "${title}" removed.`);
     }
   };
 
   const handleClearAllNews = async () => {
-    if (window.confirm('Clear all news bulletins from the database? This cannot be undone.')) {
+    const confirmed = await confirm({
+      title: 'Clear All News',
+      message: 'Are you sure you want to clear all news bulletins and circulars from the database? This cannot be undone.',
+      confirmText: 'Clear All News',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await clearAllNews();
     }
   };
@@ -415,13 +449,29 @@ export const WebManagementPage: React.FC = () => {
   };
 
   const handleDeleteDrill = async (id: string, title: string) => {
-    if (window.confirm(`Delete ground drill "${title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Delete Tactical Drill',
+      message: `Are you sure you want to delete ground drill "${title}"?`,
+      confirmText: 'Delete Drill',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await deleteTraining(id);
     }
   };
 
   const handleClearAllDrills = async () => {
-    if (window.confirm('Clear all ground training drills from database? This cannot be undone.')) {
+    const confirmed = await confirm({
+      title: 'Clear All Drills',
+      message: 'Are you sure you want to clear all ground training drills from the database? This cannot be undone.',
+      confirmText: 'Clear All Drills',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await clearAllTrainings();
     }
   };
@@ -513,13 +563,29 @@ export const WebManagementPage: React.FC = () => {
   };
 
   const handleDeletePhoto = async (id: string, title: string) => {
-    if (window.confirm(`Delete photo "${title}" from gallery?`)) {
+    const confirmed = await confirm({
+      title: 'Delete Photo',
+      message: `Are you sure you want to delete photo "${title}" from the gallery?`,
+      confirmText: 'Delete Photo',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await deletePhoto(id);
     }
   };
 
   const handleClearAllPhotos = async () => {
-    if (window.confirm('Clear all photos from gallery? This cannot be undone.')) {
+    const confirmed = await confirm({
+      title: 'Clear All Photos',
+      message: 'Are you sure you want to clear all photos from the gallery? This cannot be undone.',
+      confirmText: 'Clear All Photos',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await clearAllPhotos();
     }
   };
@@ -622,13 +688,29 @@ export const WebManagementPage: React.FC = () => {
   };
 
   const handleDeleteVideo = async (id: string, title: string) => {
-    if (window.confirm(`Delete video "${title}"?`)) {
+    const confirmed = await confirm({
+      title: 'Delete Video',
+      message: `Are you sure you want to delete video "${title}" from the gallery?`,
+      confirmText: 'Delete Video',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await deleteVideo(id);
     }
   };
 
   const handleClearAllVideos = async () => {
-    if (window.confirm('Clear all videos from gallery? This cannot be undone.')) {
+    const confirmed = await confirm({
+      title: 'Clear All Videos',
+      message: 'Are you sure you want to clear all videos from the gallery? This cannot be undone.',
+      confirmText: 'Clear All Videos',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
       await clearAllVideos();
     }
   };
@@ -1696,7 +1778,19 @@ export const WebManagementPage: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={resetDisplaySettings}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: 'Restore Default Switches',
+                      message: 'Are you sure you want to reset all website and dashboard visibility switches back to standard defaults?',
+                      confirmText: 'Restore Defaults',
+                      cancelText: 'Cancel',
+                      type: 'warning',
+                      icon: 'warning',
+                    });
+                    if (ok) {
+                      await resetDisplaySettings();
+                    }
+                  }}
                   className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300 transition-colors"
                 >
                   <RotateCw className="w-3.5 h-3.5" />

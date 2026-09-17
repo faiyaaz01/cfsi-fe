@@ -1,6 +1,8 @@
 import { AuthProvider, AuthGuard, GuestGuard } from './context/AuthContext';
 import { UsersPage } from './pages/UsersPage';
 import { WebManagementPage } from './pages/WebManagementPage';
+import { LeadershipManagementPage } from './pages/LeadershipManagementPage';
+import { LeaderDashboardPage } from './pages/LeaderDashboardPage';
 import { PortalPage } from './pages/PortalPage';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -9,6 +11,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { NewsProvider } from './context/NewsContext';
 import { StudentDataProvider } from './context/StudentDataContext';
 import { WebContentProvider } from './context/WebContentContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
@@ -58,12 +61,14 @@ const AppContent: React.FC = () => {
             <Route element={<AuthGuard roles={['admin']} />}>
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="dashboard/web-management" element={<WebManagementPage />} />
+              <Route path="dashboard/leadership" element={<LeadershipManagementPage />} />
               <Route path="users" element={<UsersPage />} />
             </Route>
             <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
-            <Route element={<AuthGuard roles={['student']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
-            <Route element={<AuthGuard roles={['student', 'teacher', 'admin']} />}><Route path="profile" element={<ProfilePage />} /></Route>
-            <Route element={<AuthGuard roles={['admin', 'teacher']} />}>
+            <Route element={<AuthGuard roles={['leader']} />}><Route path="leader/dashboard" element={<Navigate to="/student/dashboard" replace />} /></Route>
+            <Route element={<AuthGuard roles={['student', 'leader']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
+            <Route element={<AuthGuard roles={['student', 'teacher', 'admin', 'leader']} />}><Route path="profile" element={<ProfilePage />} /></Route>
+            <Route element={<AuthGuard roles={['admin', 'teacher', 'leader']} />}>
               <Route path="student-data" element={<StudentDataPage />} />
               <Route path="attendance/:date/:slot" element={<SlotAttendancePage />} />
               <Route path="dashboard/attendance/:date/:slot" element={<SlotAttendancePage />} />
@@ -79,13 +84,15 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <WebContentProvider>
-        <NewsProvider>
-          <StudentDataProvider>
-            <AppContent />
-          </StudentDataProvider>
-        </NewsProvider>
-      </WebContentProvider>
+      <ConfirmProvider>
+        <WebContentProvider>
+          <NewsProvider>
+            <StudentDataProvider>
+              <AppContent />
+            </StudentDataProvider>
+          </NewsProvider>
+        </WebContentProvider>
+      </ConfirmProvider>
     </ThemeProvider>
   );
 }

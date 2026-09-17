@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   User, 
@@ -6,10 +6,16 @@ import {
   Clock, 
   Plus, 
   Printer, 
-  CheckCircle2 
+  CheckCircle2,
+  Award,
+  UserMinus,
+  RefreshCw
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { StudentVerificationRecord } from '../../types';
 import { useStudentData } from '../../context/StudentDataContext';
+import { useAuth } from '../../context/AuthContext';
+import { api, AuthUser } from '../../lib/api';
 import { TablePagination } from '../common/TablePagination';
 
 interface CadetDetailModalProps {
@@ -23,9 +29,94 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
   onClose,
   onNavigateToAttendance,
 }) => {
+  const { user: currentUser } = useAuth();
   const { getStudentAttendanceSummary, getAttendanceByStudent } = useStudentData();
   const [modalAttPage, setModalAttPage] = useState(1);
   const [modalAttPageSize, setModalAttPageSize] = useState(5);
+
+  const [isLeader, setIsLeader] = useState<boolean>(false);
+  const [leaderAccount, setLeaderAccount] = useState<AuthUser | null>(null);
+  const [busyLeadership, setBusyLeadership] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!cadet) return;
+    let isMounted = true;
+    api.users('GET')
+      .then((users: AuthUser[]) => {
+        if (!isMounted || !Array.isArray(users)) return;
+        const matched = users.find(
+          (u) => u.student_id === cadet.id || u.username === cadet.rollNo || u.username === cadet.id
+        );
+        if (matched) {
+          setLeaderAccount(matched);
+          setIsLeader(matched.role === 'leader');
+        } else {
+          setLeaderAccount(null);
+          setIsLeader(false);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, [cadet]);
+
+  const handleAssignLeader = async () => {
+    if (!cadet) return;
+    if (!window.confirm(`Assign Cadet Leader role to ${cadet.name}?\n\nThey will gain access to the Leader Portal and slot-wise attendance marking.`)) {
+      return;
+    }
+
+    try {
+      setBusyLeadership(true);
+      if (leaderAccount) {
+        await api.users('PATCH', leaderAccount.id, {
+          role: 'leader',
+          student_id: cadet.id,
+          full_name: cadet.name,
+          assigned_modules: ['attendance'],
+          assigned_slots: ['Slot 1', 'Slot 2', 'Slot 3'],
+        });
+      } else {
+        await api.users('POST', '', {
+          username: cadet.rollNo || cadet.id,
+          password: 'Leader@123',
+          full_name: cadet.name,
+          role: 'leader',
+          student_id: cadet.id,
+          assigned_modules: ['attendance'],
+          assigned_slots: ['Slot 1', 'Slot 2', 'Slot 3'],
+          is_active: true,
+        });
+      }
+      setIsLeader(true);
+      toast.success(`Successfully appointed ${cadet.name} as Cadet Leader!`);
+    } catch (err: any) {
+      toast.error('Failed to assign Leader role: ' + (err.message || 'Error'));
+    } finally {
+      setBusyLeadership(false);
+    }
+  };
+
+  const handleRevokeLeader = async () => {
+    if (!cadet || !leaderAccount) return;
+    if (!window.confirm(`Revoke Leader role for ${cadet.name}? Their account will return to regular Student status.`)) {
+      return;
+    }
+
+    try {
+      setBusyLeadership(true);
+      await api.users('PATCH', leaderAccount.id, {
+        role: 'student',
+        assigned_modules: [],
+        assigned_slots: [],
+      });
+      setIsLeader(false);
+      toast.success(`Revoked Leader role for ${cadet.name}. Account returned to Student.`);
+    } catch (err: any) {
+      toast.error('Failed to revoke Leader role: ' + (err.message || 'Error'));
+    } finally {
+      setBusyLeadership(false);
+    }
+  };
 
   if (!cadet) return null;
 
@@ -72,6 +163,12 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                     <ShieldCheck className="w-3 h-3" />
                     <span>{cadet.verificationStatus}</span>
                   </span>
+                  {isLeader && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                      <Award className="w-3 h-3" />
+                      <span>Cadet Leader</span>
+                    </span>
+                  )}
                 </div>
                 <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
                   {cadet.name}
@@ -82,14 +179,42 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-2xl text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
-              title="Close Modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {currentUser?.role === 'admin' && (
+                !isLeader ? (
+                  <button
+                    type="button"
+                    onClick={handleAssignLeader}
+                    disabled={busyLeadership}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                    title="Assign Leader role to this student"
+                  >
+                    {busyLeadership ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Award className="w-3.5 h-3.5" />}
+                    <span>Appoint as Leader</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleRevokeLeader}
+                    disabled={busyLeadership}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-500/10 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-gray-200 dark:border-white/10"
+                    title="Revoke Leader role from this student"
+                  >
+                    {busyLeadership ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <UserMinus className="w-3.5 h-3.5" />}
+                    <span>Revoke Leadership</span>
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 rounded-2xl text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                title="Close Modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Section 1: Student Information & Academic Details */}
