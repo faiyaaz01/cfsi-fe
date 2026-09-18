@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { CountUp } from '../components/common/CountUp';
 import { SkeletonTable } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
+import { UserAvatar } from '../components/common/UserAvatar';
 
 export const StudentDataPage: React.FC = () => {
   const [students, setStudents] = useState<StudentVerificationRecord[]>([]);
@@ -206,10 +207,10 @@ export const StudentDataPage: React.FC = () => {
                       {/* Name & Photo */}
                       <td className="py-3.5 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={student.photoUrl}
-                            alt={student.name}
-                            className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-white/10"
+                          <UserAvatar
+                            photoUrl={student.photoUrl}
+                            name={student.name}
+                            size="sm"
                           />
                           <div>
                             <div className="font-bold text-gray-900 dark:text-white">

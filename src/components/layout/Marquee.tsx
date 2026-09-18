@@ -33,7 +33,7 @@ export const Marquee: React.FC = () => {
     },
     {
       icon: Award,
-      text: "🏆 Affiliated with IFSMA — Best Fire Safety Education & Practical Ground Drills in India",
+      text: "🏆 Affiliated with AIIFTSM — Best Fire Safety Education & Practical Ground Drills in India",
       badge: 'Accreditation',
       link: undefined
     }

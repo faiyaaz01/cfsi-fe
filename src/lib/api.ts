@@ -384,6 +384,69 @@ export const api = {
       verificationStatus: doc.verificationStatus || doc.verification_status,
       issueDate: doc.issueDate || doc.issue_date,
       centerLocation: doc.centerLocation || doc.center_location || doc.centerName || doc.center_name,
+    };
+  },
+
+  /** Admin update any student profile in MongoDB */
+  async adminUpdateStudent(studentId: string, profile: Partial<StudentProfile>): Promise<StudentProfile> {
+    const body: any = {
+      name: profile.name,
+      photoUrl: profile.photoUrl,
+      birthDate: profile.birthDate,
+      gender: profile.gender,
+      motherName: profile.motherName,
+      fatherName: profile.fatherName,
+      presentAddress: profile.presentAddress,
+      studentPhone: profile.studentPhone,
+      fatherPhone: profile.fatherPhone,
+      motherPhone: profile.motherPhone,
+      category: profile.category,
+      aadharCard: profile.aadharCard,
+      email: profile.email,
+      nationality: profile.nationality,
+      state: profile.state,
+      mode: profile.mode,
+      enrollmentNo: profile.enrollmentNo,
+      centerName: profile.centerName,
+      centerLocation: profile.centerLocation,
+    };
+    const response = await fetchWithAuth(`/students/${encodeURIComponent(studentId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update student profile');
+    }
+    const doc = await response.json();
+    return {
+      id: String(doc.id || doc._id || ''),
+      rollNo: doc.rollNo || doc.roll_no,
+      enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
+      name: doc.name || doc.full_name || '',
+      photoUrl: doc.photoUrl || doc.photo_url,
+      birthDate: doc.birthDate || doc.birth_date,
+      gender: doc.gender || 'MALE',
+      motherName: doc.motherName || doc.mother_name,
+      fatherName: doc.fatherName || doc.father_name,
+      presentAddress: doc.presentAddress || doc.present_address,
+      studentPhone: doc.studentPhone || doc.student_phone || '',
+      fatherPhone: doc.fatherPhone || doc.father_phone,
+      motherPhone: doc.motherPhone || doc.mother_phone,
+      category: doc.category,
+      aadharCard: doc.aadharCard || doc.aadhar_card,
+      email: doc.email,
+      nationality: doc.nationality || 'Indian',
+      state: doc.state || 'Gujarat',
+      course: doc.course,
+      batch: doc.batch,
+      mode: doc.mode || 'REGULAR',
+      passingYear: doc.passingYear || doc.passing_year,
+      grade: doc.grade,
+      percentage: doc.percentage,
+      verificationStatus: doc.verificationStatus || doc.verification_status,
+      issueDate: doc.issueDate || doc.issue_date,
+      centerLocation: doc.centerLocation || doc.center_location || doc.centerName || doc.center_name,
       centerName: doc.centerName || doc.center_name || doc.centerLocation || doc.center_location,
     };
   },

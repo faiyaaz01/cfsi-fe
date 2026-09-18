@@ -30,7 +30,7 @@ export const CoursesPage: React.FC = () => {
         {/* Header */}
         <SectionHeading
           badge="Career Programs"
-          title="GOVERNMENT & IFSMA RECOGNIZED COURSES"
+          title="GOVERNMENT & AIIFTSM RECOGNIZED COURSES"
           subtitle="Comprehensive vocational programs crafted for students seeking immediate placement in municipal fire brigades, chemical corridors, refineries, and corporate safety divisions."
         />
 

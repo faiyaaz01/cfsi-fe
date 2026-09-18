@@ -23,6 +23,7 @@ import { useStudentData } from '../context/StudentDataContext';
 import { FlatCard } from '../components/common/FlatCard';
 import { GlassCard } from '../components/common/GlassCard';
 import { CountUp } from '../components/common/CountUp';
+import { UserAvatar } from '../components/common/UserAvatar';
 import { TablePagination } from '../components/common/TablePagination';
 
 export const StudentDashboardPage: React.FC = () => {
@@ -134,19 +135,13 @@ export const StudentDashboardPage: React.FC = () => {
               
               {/* Cadet Info */}
               <div className="flex items-center gap-4 sm:gap-5">
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gray-200 dark:bg-white/10 p-0.5 border border-primary/20 shadow-md shrink-0">
-                  {student.photoUrl ? (
-                    <img
-                      src={student.photoUrl}
-                      alt={student.name}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary">
-                      <User className="w-8 h-8" />
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 right-0 p-1 bg-emerald-500 rounded-tl-lg text-white" title="Verified Student">
+                <div className="relative shrink-0">
+                  <UserAvatar
+                    photoUrl={student.photoUrl}
+                    name={student.name}
+                    size="lg"
+                  />
+                  <div className="absolute bottom-0 right-0 p-1 bg-emerald-500 rounded-full text-white shadow-xs border-2 border-white dark:border-[#161d27]" title="Verified Student">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
                 </div>

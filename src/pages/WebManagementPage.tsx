@@ -2042,7 +2042,7 @@ export const WebManagementPage: React.FC = () => {
                       type="text"
                       value={courseForm.certificationBody}
                       onChange={(e) => setCourseForm(prev => ({ ...prev, certificationBody: e.target.value }))}
-                      placeholder="e.g. State Fire Safety Council & IFSMA"
+                      placeholder="e.g. State Fire Safety Council & AIIFTSM"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>

@@ -56,6 +56,7 @@ import { BulkStudentImportModal } from '../components/admin/BulkStudentImportMod
 import { CountUp } from '../components/common/CountUp';
 import { SkeletonTable, SkeletonMuster } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
+import { UserAvatar } from '../components/common/UserAvatar';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -877,19 +878,11 @@ export const DashboardPage: React.FC = () => {
                             {/* Student Profile */}
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-3">
-                                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/10 shrink-0 border border-gray-200 dark:border-white/10">
-                                  {cadet.photoUrl ? (
-                                    <img
-                                      src={cadet.photoUrl}
-                                      alt={cadet.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
-                                      {cadet.name.charAt(0)}
-                                    </div>
-                                  )}
-                                </div>
+                                <UserAvatar
+                                  photoUrl={cadet.photoUrl}
+                                  name={cadet.name}
+                                  size="sm"
+                                />
                                 <div>
                                   <button
                                     type="button"
@@ -1485,19 +1478,11 @@ export const DashboardPage: React.FC = () => {
                             {/* Cadet Profile */}
                             <td className="py-2.5 px-4 min-w-[220px]">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/10 shrink-0 border border-gray-200 dark:border-white/10 shadow-xs">
-                                  {student.photoUrl ? (
-                                    <img
-                                      src={student.photoUrl}
-                                      alt={student.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                      <User className="w-4 h-4" />
-                                    </div>
-                                  )}
-                                </div>
+                                <UserAvatar
+                                  photoUrl={student.photoUrl}
+                                  name={student.name}
+                                  size="sm"
+                                />
                                 <div className="min-w-0 flex-1">
                                   <div className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-tight truncate" title={student.name}>
                                     {student.name}
@@ -1721,6 +1706,12 @@ export const DashboardPage: React.FC = () => {
           onNavigateToAttendance={(_cadet) => {
             const today = new Date().toISOString().split("T")[0];
             navigate(`/dashboard/attendance/${today}/Slot 1`);
+          }}
+          onStudentUpdated={(updated) => {
+            setCadetsList((prev) =>
+              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+            );
+            setSelectedCadetDetail(updated);
           }}
         />
 

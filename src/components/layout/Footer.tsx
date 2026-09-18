@@ -87,13 +87,13 @@ export const Footer: React.FC = () => {
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              Shaping Fire Safety Professionals Across India. Government registered and IFSMA affiliated vocational institute headquartered in Vadodara, Gujarat.
+              Shaping Fire Safety Professionals Across India. Government registered and AIIFTSM affiliated vocational institute headquartered in Vadodara, Gujarat.
             </p>
 
             <div className="pt-2 flex items-center gap-3">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Affiliation:</span>
               <span className="text-xs font-semibold px-2 py-1 rounded bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
-                IFSMA Accredited
+                AIIFTSM Accredited
               </span>
             </div>
 
@@ -331,11 +331,11 @@ export const Footer: React.FC = () => {
                 >
                   <p className="text-gray-500 dark:text-gray-400 font-medium">Official Inquiries & Verification:</p>
                   <a
-                    href="mailto:info@cfsi.co.in"
+                    href="mailto:centralfirevadodara@gmail.com"
                     className="flex items-center gap-2 font-bold text-sm text-primary dark:text-primary-light hover:text-accent"
                   >
                     <Mail className="w-4 h-4 text-accent" />
-                    <span>info@cfsi.co.in</span>
+                    <span>centralfirevadodara@gmail.com</span>
                   </a>
                   <a
                     href="mailto:admissions@cfsi.co.in"

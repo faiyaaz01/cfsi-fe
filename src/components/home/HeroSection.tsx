@@ -124,7 +124,7 @@ export const HeroSection: React.FC = () => {
             <div className="flex flex-wrap items-center justify-center gap-1 xs:gap-1.5 sm:gap-2 text-[10px] xs:text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-4">
               <span className="inline-flex items-center gap-1 px-2 xs:px-2.5 py-0.5 rounded-lg bg-gray-100/90 dark:bg-white/10 border border-gray-200/50 dark:border-white/10">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>IFSMA Affiliated</span>
+                <span>AIIFTSM Affiliated</span>
               </span>
               <span className="inline-flex items-center gap-1 px-2 xs:px-2.5 py-0.5 rounded-lg bg-gray-100/90 dark:bg-white/10 border border-gray-200/50 dark:border-white/10">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />

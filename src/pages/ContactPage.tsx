@@ -135,8 +135,8 @@ export const ContactPage: React.FC = () => {
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Official Inquiries:</div>
                     <div className="mt-0.5 space-y-0.5">
-                      <a href="mailto:info@cfsi.co.in" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
-                        info@cfsi.co.in
+                      <a href="mailto:centralfirevadodara@gmail.com" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
+                        centralfirevadodara@gmail.com
                       </a>
                       <a href="mailto:admissions@cfsi.co.in" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
                         admissions@cfsi.co.in

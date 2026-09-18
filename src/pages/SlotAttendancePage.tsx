@@ -33,6 +33,7 @@ import { api } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
 import { GlassCard } from '../components/common/GlassCard';
 import { CadetDetailModal } from '../components/admin/CadetDetailModal';
+import { UserAvatar } from '../components/common/UserAvatar';
 
 const slotConfigMap: Record<AttendanceSlot, { label: string; shortLabel: string; time: string; defaultTopic: string }> = {
   'Slot 1': {
@@ -1056,19 +1057,11 @@ export const SlotAttendancePage: React.FC = () => {
                         {/* Column 1: Student Name */}
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-200 dark:bg-white/10 shrink-0 border border-primary/20 shadow-xs">
-                              {student.photoUrl ? (
-                                <img
-                                  src={student.photoUrl}
-                                  alt={student.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-primary font-bold bg-primary/10">
-                                  {student.name.charAt(0)}
-                                </div>
-                              )}
-                            </div>
+                            <UserAvatar
+                              photoUrl={student.photoUrl}
+                              name={student.name}
+                              size="sm"
+                            />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2.5">
                                 <button
@@ -1254,6 +1247,7 @@ export const SlotAttendancePage: React.FC = () => {
         <CadetDetailModal
           cadet={selectedCadetDetail}
           onClose={() => setSelectedCadetDetail(null)}
+          onStudentUpdated={(updated) => setSelectedCadetDetail(updated)}
         />
       </div>
     </div>

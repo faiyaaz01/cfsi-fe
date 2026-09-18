@@ -32,6 +32,7 @@ import {
 import { CountUp } from '../components/common/CountUp';
 import { SkeletonStats, SkeletonTable } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
+import { UserAvatar } from '../components/common/UserAvatar';
 
 interface SlotDutySchedule {
   id: AttendanceSlot;
@@ -228,7 +229,8 @@ export function PortalPage() {
 
   const hardcodedUserId = profile?.id || user?.student_id || user?.username || '262701';
   const name = profile?.name || user?.full_name || user?.username || 'Student Name';
-  const photoUrl = profile?.photoUrl || user?.photo_url || '';
+  const rawPhoto = profile?.photoUrl || user?.photo_url || '';
+  const photoUrl = rawPhoto.includes('unsplash.com') ? '' : rawPhoto;
   const rollNo = (profile as any)?.rollNo || (profile as any)?.roll_no || (user as any)?.roll_no || '';
   const course = profile?.course || user?.course || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT';
   const mode = profile?.mode || user?.mode || 'REGULAR';
@@ -451,17 +453,12 @@ export function PortalPage() {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               {/* Avatar with Preview Trigger */}
               <div className="relative group shrink-0">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white/30 overflow-hidden bg-white/10 shadow-xl flex items-center justify-center">
-                  {photoUrl ? (
-                    <img
-                      src={photoUrl}
-                      alt={name || 'Student Profile'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-white/70" />
-                  )}
-                </div>
+                <UserAvatar
+                  photoUrl={photoUrl}
+                  name={name}
+                  size="xl"
+                  className="ring-4 ring-white/30"
+                />
 
                 {/* Quick Preview Button */}
                 {photoUrl && (
@@ -1183,16 +1180,13 @@ export function PortalPage() {
               Student Photo Preview
             </h3>
 
-            <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-4">
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-20 h-20 text-gray-400" />
-              )}
+            <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-4 p-4">
+              <UserAvatar
+                photoUrl={photoUrl}
+                name={name}
+                size="xl"
+                className="!w-36 !h-36 sm:!w-44 sm:!h-44 text-5xl"
+              />
             </div>
 
             <div className="text-center space-y-1">

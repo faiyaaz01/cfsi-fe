@@ -8,8 +8,8 @@ import { Link } from 'react-router-dom';
 const features = [
   {
     icon: ShieldCheck,
-    title: 'IFSMA Accredited & Govt Recognized',
-    description: 'Our diplomas and certificates are accredited by the International Fire & Safety Management Association and accepted across national industries.'
+    title: 'AIIFTSM Accredited & Govt Recognized',
+    description: 'Our diplomas and certificates are accredited by AIIFTSM (All India Institute of Fire Technology & Safety Management) and accepted across national industries.'
   },
   {
     icon: Building2,

@@ -5,9 +5,9 @@ import { api } from '../lib/api';
 import { StudentProfile } from '../types';
 import { toast } from 'sonner';
 import { SkeletonProfile } from '../components/common/Skeleton';
+import { UserAvatar } from '../components/common/UserAvatar';
 import {
   User,
-  Lock,
   Camera,
   Eye,
   Calendar,
@@ -41,6 +41,9 @@ const CATEGORIES = ['General', 'OBC', 'SC', 'ST', 'EWS'];
 
 export const ProfilePage: React.FC = () => {
   const { user, refresh: refreshAuth } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const isLocked = !isAdmin;
+
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,7 +79,8 @@ export const ProfilePage: React.FC = () => {
       const data = await api.getStudentProfile();
       setProfile(data);
       setName(data.name || '');
-      setPhotoUrl(data.photoUrl || user?.photo_url || '');
+      const rawPhoto = data.photoUrl || user?.photo_url || '';
+      setPhotoUrl(rawPhoto.includes('unsplash.com') ? '' : rawPhoto);
       setBirthDate(data.birthDate || '');
       setGender(data.gender || 'MALE');
       setMotherName(data.motherName || '');
@@ -107,8 +111,11 @@ export const ProfilePage: React.FC = () => {
     loadProfile();
   }, [user?.id]);
 
-  // Handle Photo Upload
+  // Handle  // Photo File Upload (Client-side base64)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked) {
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -129,6 +136,9 @@ export const ProfilePage: React.FC = () => {
   // Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) {
+      return;
+    }
     setPhoneError('');
 
     // Student Phone Number is STRICTLY MANDATORY
@@ -199,17 +209,12 @@ export const ProfilePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center gap-6">
             {/* Avatar with Preview Trigger */}
             <div className="relative group shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white/30 overflow-hidden bg-white/10 shadow-xl flex items-center justify-center">
-                {photoUrl ? (
-                  <img
-                    src={photoUrl}
-                    alt={name || 'Student Profile'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-12 h-12 text-white/70" />
-                )}
-              </div>
+              <UserAvatar
+                photoUrl={photoUrl}
+                name={name}
+                size="xl"
+                className="ring-4 ring-white/30"
+              />
 
               {/* Quick Preview Button */}
               {photoUrl && (
@@ -286,7 +291,7 @@ export const ProfilePage: React.FC = () => {
               </h2>
             </div>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Check, preview, and update your photo
+              Official profile photo
             </span>
           </div>
 
@@ -311,34 +316,39 @@ export const ProfilePage: React.FC = () => {
                   <span>Check & Preview Photo</span>
                 </button>
 
-                <label className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary/20 transition-all flex items-center gap-1.5 cursor-pointer">
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Upload New Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </label>
+                {!isLocked && (
+                  <label className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary/20 transition-all flex items-center gap-1.5 cursor-pointer">
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Upload New Photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                  Or provide image URL:
-                </label>
-                <input
-                  type="url"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full text-xs rounded-lg border border-gray-300 dark:border-white/10 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
+              {!isLocked && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    Or provide image URL:
+                  </label>
+                  <input
+                    type="url"
+                    value={photoUrl}
+                    onChange={(e) => setPhotoUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full text-xs rounded-lg border border-gray-300 dark:border-white/10 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </section>
 
+        <fieldset disabled={isLocked} className={isLocked ? "space-y-8 select-text" : "space-y-8"}>
         {/* Section 2: Student Identification & Program Details */}
         <section className="bg-white dark:bg-[#161d27] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-white/5">
@@ -352,15 +362,9 @@ export const ProfilePage: React.FC = () => {
             
             {/* Student Roll No */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Student Roll No
-                </label>
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
-                  <Lock className="w-3 h-3" />
-                  <span>Locked</span>
-                </span>
-              </div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Student Roll No
+              </label>
               <div className="relative">
                 <input
                   type="text"
@@ -369,7 +373,7 @@ export const ProfilePage: React.FC = () => {
                   disabled
                   className="w-full rounded-xl border border-gray-300 dark:border-white/10 p-2.5 bg-gray-100 dark:bg-slate-800/80 text-gray-500 dark:text-gray-400 text-sm font-mono font-bold cursor-not-allowed pl-9 select-all"
                 />
-                <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                <CreditCard className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               </div>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
                 Institute assigned student roll number.
@@ -378,15 +382,9 @@ export const ProfilePage: React.FC = () => {
 
             {/* Student User ID */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Student User ID (Login Username)
-                </label>
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
-                  <Lock className="w-3 h-3" />
-                  <span>Locked</span>
-                </span>
-              </div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Student User ID (Login Username)
+              </label>
               <div className="relative">
                 <input
                   type="text"
@@ -768,32 +766,35 @@ export const ProfilePage: React.FC = () => {
 
           </div>
         </section>
+        </fieldset>
 
         {/* Action Button Bar */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
-          <button
-            type="button"
-            onClick={loadProfile}
-            disabled={saving}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-2 cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Discard Changes</span>
-          </button>
+        {!isLocked && (
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
+            <button
+              type="button"
+              onClick={loadProfile}
+              disabled={saving}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Discard Changes</span>
+            </button>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-6 py-2.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-md transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-          >
-            {saving ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            <span>{saving ? 'Saving Profile...' : 'Save Profile Details'}</span>
-          </button>
-        </div>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-md transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {saving ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              <span>{saving ? 'Saving Profile...' : 'Save Profile Details'}</span>
+            </button>
+          </div>
+        )}
 
       </form>
 
@@ -813,16 +814,13 @@ export const ProfilePage: React.FC = () => {
               Student Photo Preview
             </h3>
 
-            <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-4">
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-20 h-20 text-gray-400" />
-              )}
+            <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-4 p-4">
+              <UserAvatar
+                photoUrl={photoUrl}
+                name={name}
+                size="xl"
+                className="!w-36 !h-36 sm:!w-44 sm:!h-44 text-5xl"
+              />
             </div>
 
             <div className="text-center space-y-1">

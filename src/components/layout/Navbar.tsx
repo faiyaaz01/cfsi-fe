@@ -12,15 +12,26 @@ import {
   GraduationCap,
   Building2,
   User,
-  LogOut
+  LogOut,
+  Home,
+  Info,
+  BookOpen,
+  Newspaper,
+  PhoneCall,
+  Phone,
+  ArrowRight,
+  LayoutDashboard
 } from 'lucide-react';
 import { coursesData } from '../../data/courses';
 import cfsiLogo from '../../assets/cfsi-logo.jpg';
 import { getLoggedStudent } from '../../lib/studentAuth';
+import { UserAvatar } from '../common/UserAvatar';
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileCoursesOpen, setMobileCoursesOpen] = useState(false);
+  const [mobileGalleryOpen, setMobileGalleryOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'gallery' | 'courses' | null>(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const location = useLocation();
@@ -52,6 +63,8 @@ export const Navbar: React.FC = () => {
     setMobileMenuOpen(false);
     setActiveDropdown(null);
     setProfileDropdownOpen(false);
+    setMobileCoursesOpen(false);
+    setMobileGalleryOpen(false);
   }, [location.pathname]);
 
   // Click outside to close any open dropdown
@@ -257,13 +270,13 @@ export const Navbar: React.FC = () => {
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#161d27] hover:bg-gray-50 dark:hover:bg-white/5 transition-all shadow-xs cursor-pointer select-none"
                   aria-label="User Profile Menu"
                 >
-                  <div className="w-7 h-7 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                    {photo ? (
-                      <img src={photo} alt={displayName} className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-3.5 h-3.5 text-primary" />
-                    )}
-                  </div>
+                  <UserAvatar
+                    photoUrl={photo}
+                    name={user?.full_name || displayName}
+                    role={user?.role}
+                    size="xs"
+                    useLogo={isAdminLogged}
+                  />
                   <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate max-w-[130px]">
                     Hi, {displayName}
                   </span>
@@ -282,13 +295,13 @@ export const Navbar: React.FC = () => {
                     >
                       {/* User Header */}
                       <div className="p-3 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                          {photo ? (
-                            <img src={photo} alt={displayName} className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-5 h-5 text-primary" />
-                          )}
-                        </div>
+                        <UserAvatar
+                          photoUrl={photo}
+                          name={user?.full_name || displayName}
+                          role={user?.role}
+                          size="md"
+                          useLogo={isAdminLogged}
+                        />
                         <div className="overflow-hidden">
                           <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
                             {user?.full_name || user?.username}
@@ -322,8 +335,8 @@ export const Navbar: React.FC = () => {
                           onClick={() => setProfileDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
                         >
-                          <GraduationCap className="w-4 h-4 text-primary" />
-                          <span>My Portal / Muster</span>
+                          <LayoutDashboard className="w-4 h-4 text-primary" />
+                          <span>Dashboard</span>
                         </Link>
 
                         {isAdminLogged && (
@@ -421,150 +434,39 @@ export const Navbar: React.FC = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="xl:hidden bg-white dark:bg-[#161d27] border-b border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden"
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-4">
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-3.5 max-h-[calc(100vh-68px)] overflow-y-auto no-scrollbar">
               
-              {/* Primary Links Grid */}
-              <div className="grid grid-cols-2 gap-2 pb-3 border-b border-gray-100 dark:border-white/10">
-                <Link
-                  to="/"
-                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/about"
-                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  About Us
-                </Link>
-                <Link
-                  to="/news"
-                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  News & Events
-                </Link>
-                <Link
-                  to="/contact"
-                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  Contact Us
-                </Link>
-              </div>
-
-              {/* Gallery Section */}
-              <div>
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 px-3 py-1">
-                  Galleries
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    to="/gallery/images"
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                  >
-                    <ImageIcon className="w-4 h-4 text-primary" />
-                    <span>Photo Gallery</span>
-                  </Link>
-                  <Link
-                    to="/gallery/videos"
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                  >
-                    <Video className="w-4 h-4 text-red-500" />
-                    <span>Video Drills (14)</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Courses Section */}
-              <div>
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 px-3 py-1">
-                  Certified Courses
-                </div>
-                <div className="space-y-1">
-                  <Link
-                    to="/courses/certificate-in-fire-safety"
-                    className="block px-3.5 py-2 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                  >
-                    Certificate In Fire Safety (6 Months)
-                  </Link>
-                  <Link
-                    to="/courses/diploma-in-fire-safety"
-                    className="block px-3.5 py-2 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                  >
-                    Diploma In Fire Safety (1 Year)
-                  </Link>
-                  <Link
-                    to="/courses/sub-fire-officer"
-                    className="block px-3.5 py-2 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                  >
-                    Sub Fire Officer (SFO) (6 Months)
-                  </Link>
-                  <Link
-                    to="/courses/industrial-safety"
-                    className="block px-3.5 py-2 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                  >
-                    Industrial Safety (3 Months)
-                  </Link>
-                  <Link
-                    to="/student-data"
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/5"
-                  >
-                    <Users className="w-3.5 h-3.5 text-accent" />
-                    <span>Pass Out Student Roster</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Mobile Student Portal & Action Buttons */}
-              <div className="pt-2 border-t border-gray-100 dark:border-white/10 space-y-2">
-                {isLogged ? (
-                  <>
-                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0">
-                        {photo ? (
-                          <img src={photo} alt={displayName} className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <div className="truncate">
-                        <div className="text-xs font-bold text-gray-900 dark:text-white">Hi, {displayName}</div>
-                        <div className="text-[10px] text-gray-400">
-                          {user?.role?.toUpperCase()} {user?.student_id ? `• #${user.student_id}` : ''}
+              {/* 1. User Profile or Login Quick Bar */}
+              {isLogged ? (
+                <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200/80 dark:border-white/10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <UserAvatar
+                        photoUrl={photo}
+                        name={user?.full_name || displayName}
+                        role={user?.role}
+                        size="md"
+                        useLogo={isAdminLogged}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                          Hi, {displayName}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-primary text-white shadow-xs">
+                            {user?.role}
+                          </span>
+                          {user?.student_id && (
+                            <span className="text-[10px] text-gray-400 font-mono">
+                              #{user.student_id}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
-
-                    <Link
-                      to="/profile"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <User className="w-4 h-4 text-primary" />
-                      <span>My Profile</span>
-                    </Link>
-
-                    <Link
-                      to={portalPath}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm flex items-center justify-center gap-1.5"
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      <span>My Portal / Muster</span>
-                    </Link>
-
-                    {isAdminLogged && (
-                      <Link
-                        to="/users"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 hover:bg-amber-500/25 transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Users className="w-4 h-4" />
-                        <span>Manage Users Directory</span>
-                      </Link>
-                    )}
 
                     <button
                       type="button"
@@ -573,47 +475,245 @@ export const Navbar: React.FC = () => {
                         await logout();
                         navigate('/student-login');
                       }}
-                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                      title="Sign Out"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="w-3.5 h-3.5" />
                       <span>Sign Out</span>
                     </button>
+                  </div>
+
+                  {/* Quick User Action Shortcuts */}
+                  <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-gray-200/60 dark:border-white/5">
+                    <Link
+                      to={portalPath}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark transition-all shadow-xs"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      <span>Dashboard</span>
+                    </Link>
 
                     <Link
-                      to="/contact"
+                      to="/profile"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-gray-200 transition-colors block"
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-gray-100 border border-gray-200/80 dark:border-white/10 transition-all"
                     >
-                      Contact Us
+                      <User className="w-3.5 h-3.5 text-primary" />
+                      <span>My Profile</span>
                     </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/student-login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-accent text-white hover:bg-accent-hover transition-colors shadow-sm flex items-center justify-center gap-2"
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      <span>Student Login</span>
-                    </Link>
-                    <Link
-                      to="/institute-login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm flex items-center justify-center gap-2"
-                    >
-                      <Building2 className="w-4 h-4" />
-                      <span>Institute Login</span>
-                    </Link>
-                    <Link
-                      to="/contact"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-gray-200 transition-colors block"
-                    >
-                      Contact Us
-                    </Link>
-                  </>
-                )}
+
+                    {isAdminLogged && (
+                      <Link
+                        to="/users"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-all"
+                      >
+                        <Users className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Manage Users Directory</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200/80 dark:border-white/10">
+                  <Link
+                    to="/student-login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold bg-accent text-white hover:bg-accent-hover transition-all shadow-xs"
+                  >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>Student Login</span>
+                  </Link>
+
+                  <Link
+                    to="/institute-login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark transition-all shadow-xs"
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Institute Login</span>
+                  </Link>
+                </div>
+              )}
+
+              {/* 2. Navigation Menu Links List */}
+              <nav className="space-y-1">
+                {/* Home */}
+                <NavLink
+                  to="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  end
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
+                        : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <Home className="w-4 h-4 text-primary" />
+                  <span>Home</span>
+                </NavLink>
+
+                {/* About Us */}
+                <NavLink
+                  to="/about"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
+                        : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <Info className="w-4 h-4 text-primary" />
+                  <span>About Us</span>
+                </NavLink>
+
+                {/* Courses & Programs Accordion */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileCoursesOpen(prev => !prev)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                      location.pathname.startsWith('/courses') || mobileCoursesOpen
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
+                        : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      <span>Certified Courses</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileCoursesOpen ? 'rotate-180 text-primary' : 'text-gray-400'}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {mobileCoursesOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden pl-7 pr-2 py-1.5 space-y-1"
+                      >
+                        {coursesData.map((c) => (
+                          <Link
+                            key={c.id}
+                            to={`/courses/${c.slug}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <div className="font-bold text-gray-900 dark:text-white">{c.title}</div>
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">{c.duration} • {c.eligibility}</div>
+                          </Link>
+                        ))}
+                        <Link
+                          to="/student-data"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/5 transition-colors"
+                        >
+                          <Users className="w-3.5 h-3.5 text-accent" />
+                          <span>Pass Out Student Roster</span>
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Galleries Accordion */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileGalleryOpen(prev => !prev)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                      location.pathname.startsWith('/gallery') || mobileGalleryOpen
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
+                        : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ImageIcon className="w-4 h-4 text-primary" />
+                      <span>Photo & Video Gallery</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileGalleryOpen ? 'rotate-180 text-primary' : 'text-gray-400'}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {mobileGalleryOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden pl-7 pr-2 py-1.5 space-y-1"
+                      >
+                        <Link
+                          to="/gallery/images"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                          <span>Photo Gallery</span>
+                        </Link>
+                        <Link
+                          to="/gallery/videos"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
+                        >
+                          <Video className="w-3.5 h-3.5 text-red-500" />
+                          <span>Video Drills (14)</span>
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* News & Events */}
+                <NavLink
+                  to="/news"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
+                        : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <Newspaper className="w-4 h-4 text-primary" />
+                  <span>News & Events</span>
+                </NavLink>
+
+                {/* Contact Us */}
+                <NavLink
+                  to="/contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
+                        : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <PhoneCall className="w-4 h-4 text-primary" />
+                  <span>Contact Us</span>
+                </NavLink>
+              </nav>
+
+              {/* 3. Bottom Helpline Strip */}
+              <div className="pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 font-medium px-1">
+                <a
+                  href="tel:+917203016100"
+                  className="flex items-center gap-1.5 text-primary dark:text-primary-light font-bold hover:underline"
+                >
+                  <Phone className="w-3 h-3" />
+                  <span>+91 7203016100</span>
+                </a>
+                <span>Vadodara, Gujarat</span>
               </div>
 
             </div>

@@ -27,11 +27,11 @@ export const Topbar: React.FC = () => {
           </a>
           <span className="hidden md:inline text-white/30">|</span>
           <a
-            href="mailto:info@cfsi.co.in"
+            href="mailto:centralfirevadodara@gmail.com"
             className="hidden xs:inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium truncate"
           >
             <Mail className="w-3 h-3 text-amber-300 shrink-0" />
-            <span className="truncate">info@cfsi.co.in</span>
+            <span className="truncate">centralfirevadodara@gmail.com</span>
           </a>
         </div>
 

@@ -119,7 +119,7 @@ export const AboutPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-heading font-bold text-xs sm:text-sm text-gray-900 dark:text-white">
-                        IFSMA National Accreditation
+                        AIIFTSM National Accreditation
                       </h4>
                       <p className="text-[10px] sm:text-[11px] text-gray-700 dark:text-gray-300">
                         Government recognized vocational fire engineering training center.
