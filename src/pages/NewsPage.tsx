@@ -69,8 +69,8 @@ export const NewsPage: React.FC = () => {
   };
 
   return (
-    <div className="py-12 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <SectionHeading
@@ -80,16 +80,16 @@ export const NewsPage: React.FC = () => {
         />
 
         {/* Filter and Search Controls */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 sm:mb-10">
           
           {/* Category tabs */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2">
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
+                className={`px-3 xs:px-4 py-1.5 xs:py-2 rounded-full text-[11px] xs:text-xs font-bold transition-all duration-200 ${
                   selectedCategory === cat
                     ? 'bg-primary text-white shadow-md scale-105'
                     : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'

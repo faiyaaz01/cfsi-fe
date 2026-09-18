@@ -28,8 +28,8 @@ export const LatestNewsSection: React.FC = () => {
   };
 
   return (
-    <section className="py-16 sm:py-20 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-b border-gray-100 dark:border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-12 sm:py-20 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-b border-gray-100 dark:border-white/5 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header with Title & View All Link */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">

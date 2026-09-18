@@ -22,8 +22,8 @@ export const CoursesSection: React.FC = () => {
   if (!displaySettings.coursesSection) return null;
 
   return (
-    <section id="courses" className="py-16 sm:py-24 bg-white dark:bg-dark-bg transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="courses" className="py-12 sm:py-20 lg:py-24 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         <SectionHeading
           badge="Professional Curriculum"

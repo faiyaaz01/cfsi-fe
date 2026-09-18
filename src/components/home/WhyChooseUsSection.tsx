@@ -40,8 +40,8 @@ const features = [
 
 export const WhyChooseUsSection: React.FC = () => {
   return (
-    <section className="py-16 sm:py-24 bg-white dark:bg-dark-bg transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-12 sm:py-20 lg:py-24 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         <SectionHeading
           badge="Why Choose CFSI"
@@ -86,7 +86,7 @@ export const WhyChooseUsSection: React.FC = () => {
         </div>
 
         {/* Bottom Banner */}
-        <div className="mt-12 p-8 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div className="mt-10 sm:mt-12 p-5 xs:p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div>
             <h4 className="font-heading font-bold text-lg text-gray-900 dark:text-white">
               Have questions about eligibility or batch schedules?

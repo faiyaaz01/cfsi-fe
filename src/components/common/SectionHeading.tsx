@@ -32,12 +32,12 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
           <span>{badge}</span>
         </div>
       )}
-      <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
+      <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight break-words">
         {title}
       </h2>
-      <div className={`mt-3 h-1 w-16 bg-accent rounded-full ${align === 'center' ? 'mx-auto' : ''}`} />
+      <div className={`mt-2.5 sm:mt-3 h-1 w-12 sm:w-16 bg-accent rounded-full ${align === 'center' ? 'mx-auto' : ''}`} />
       {subtitle && (
-        <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
+        <p className="mt-3 sm:mt-4 text-xs xs:text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 font-normal leading-relaxed max-w-2xl mx-auto">
           {subtitle}
         </p>
       )}

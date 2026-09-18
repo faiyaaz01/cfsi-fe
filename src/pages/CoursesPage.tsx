@@ -24,8 +24,8 @@ export const CoursesPage: React.FC = () => {
   const activeCourseFromSlug = slug ? courses.find((c) => c.slug === slug) : null;
 
   return (
-    <div className="py-12 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <SectionHeading
@@ -35,11 +35,11 @@ export const CoursesPage: React.FC = () => {
         />
 
         {courses.length === 0 ? (
-          <div className="text-center py-20 px-6 rounded-2xl bg-gray-50/70 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto my-12">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-7 h-7" />
+          <div className="text-center py-16 sm:py-20 px-4 sm:px-6 rounded-2xl bg-gray-50/70 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto my-10 sm:my-12">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
-            <h3 className="font-heading font-black text-xl text-gray-900 dark:text-white mb-2">
+            <h3 className="font-heading font-black text-lg sm:text-xl text-gray-900 dark:text-white mb-2">
               Academic Curriculum Under Review
             </h3>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed max-w-lg mx-auto">
@@ -48,14 +48,14 @@ export const CoursesPage: React.FC = () => {
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
                 to="/contact"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/20 transition-all"
+                className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/20 transition-all"
               >
                 <span>Contact Admissions</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-all"
+                className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-all"
               >
                 <span>Return to Home</span>
               </Link>
@@ -63,7 +63,7 @@ export const CoursesPage: React.FC = () => {
           </div>
         ) : (
           /* Detailed Course Sections */
-          <div className="space-y-12 mb-16">
+          <div className="space-y-8 sm:space-y-12 mb-12 sm:mb-16">
             {courses.map((course, index) => {
               const Icon = iconMap[course.icon] || Flame;
               const isHighlight = activeCourseFromSlug?.id === course.id;
@@ -78,32 +78,32 @@ export const CoursesPage: React.FC = () => {
                   transition={{ duration: 0.5, delay: index * 0.08 }}
                 >
                   <FlatCard
-                    className={`p-6 sm:p-8 lg:p-10 border transition-all duration-300 ${
+                    className={`p-4 xs:p-6 sm:p-8 lg:p-10 border transition-all duration-300 ${
                       isHighlight
                         ? 'border-accent ring-2 ring-accent/30 shadow-2xl'
                         : 'border-gray-200/80 dark:border-white/10'
                     }`}
                   >
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
                       
                       {/* Left Details */}
                       <div className="lg:col-span-7 space-y-4">
                         <div className="flex flex-wrap items-center gap-2">
                           {course.badge && (
-                            <span className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent text-white shadow-sm">
+                            <span className="text-[10px] xs:text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent text-white shadow-sm">
                               {course.badge}
                             </span>
                           )}
-                          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                          <span className="text-[10px] xs:text-[11px] font-semibold text-gray-500 dark:text-gray-400">
                             Code: {course.id.toUpperCase()}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light">
-                            <Icon className="w-6 h-6" />
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light shrink-0">
+                            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
-                          <h2 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white">
+                          <h2 className="text-xl xs:text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white break-words">
                             {course.title}
                           </h2>
                         </div>

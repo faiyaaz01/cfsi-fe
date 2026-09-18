@@ -75,25 +75,25 @@ export const AboutPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="py-12 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb & Hero */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light mb-3">
             <Flame className="w-3.5 h-3.5 text-accent" />
             <span>About CFSI Vadodara</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-black text-gray-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-heading font-black text-gray-900 dark:text-white tracking-tight break-words">
             Pioneering Fire Safety Education in India
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto">
             Central Fire Safety Institute (CFSI) was established with a singular vision: to produce elite, disciplined, and technically competent fire safety commanders and EHS officers.
           </p>
         </div>
 
         {/* Institute Story & Director's Message (2-Column Layout) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center mb-16 sm:mb-20">
           
           {/* Left Column: Image & Badges */}
           <motion.div
@@ -107,21 +107,21 @@ export const AboutPage: React.FC = () => {
               <img
                 src={heroBatchImg}
                 alt="CFSI Vadodara Batch with Fire Tender"
-                className="w-full h-[450px] object-cover"
+                className="w-full h-[320px] xs:h-[380px] sm:h-[450px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
               
-              <div className="absolute bottom-6 left-6 right-6">
-                <GlassCard className="p-4 text-white">
+              <div className="absolute bottom-3 left-3 right-3 sm:bottom-6 sm:left-6 sm:right-6">
+                <GlassCard className="p-3 sm:p-4 text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full overflow-hidden p-0.5 bg-white shrink-0 shadow-md">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden p-0.5 bg-white shrink-0 shadow-md">
                       <img src={cfsiLogo} alt="CFSI Logo" className="w-full h-full object-cover rounded-full" />
                     </div>
                     <div>
-                      <h4 className="font-heading font-bold text-sm text-gray-900 dark:text-white">
+                      <h4 className="font-heading font-bold text-xs sm:text-sm text-gray-900 dark:text-white">
                         IFSMA National Accreditation
                       </h4>
-                      <p className="text-[11px] text-gray-700 dark:text-gray-300">
+                      <p className="text-[10px] sm:text-[11px] text-gray-700 dark:text-gray-300">
                         Government recognized vocational fire engineering training center.
                       </p>
                     </div>
@@ -131,8 +131,8 @@ export const AboutPage: React.FC = () => {
             </div>
 
             {/* Float badge */}
-            <div className="absolute -top-4 -right-4 p-3.5 rounded-2xl bg-accent text-white shadow-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
-              <Award className="w-5 h-5" />
+            <div className="absolute top-3 right-3 sm:-top-4 sm:-right-4 p-2.5 sm:p-3.5 rounded-2xl bg-accent text-white shadow-xl flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+              <Award className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>15+ Years Legacy</span>
             </div>
           </motion.div>

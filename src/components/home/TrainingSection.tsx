@@ -12,8 +12,8 @@ export const TrainingSection: React.FC = () => {
   if (!displaySettings.groundTrainingSection) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-t border-gray-200/80 dark:border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-12 sm:py-20 lg:py-24 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-t border-gray-200/80 dark:border-white/5 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         <SectionHeading
           badge="Live Practical Modules"
@@ -44,7 +44,7 @@ export const TrainingSection: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {trainings.map((item, index) => (
               <motion.div
                 key={item.id}

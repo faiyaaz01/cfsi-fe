@@ -90,8 +90,8 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between gap-4">
           
           {/* Brand Logo & Name — Clean & Attractive with Steady Colors */}
-          <Link to="/" className="flex items-center gap-3 shrink-0 select-none">
-            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-primary via-[#2b6be3] to-accent shadow-sm">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink select-none min-w-0">
+            <div className="relative w-9 h-9 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-primary via-[#2b6be3] to-accent shadow-sm shrink-0">
               <img
                 src={cfsiLogo}
                 alt="Central Fire Safety Institute Vadodara Official Logo"
@@ -99,12 +99,12 @@ export const Navbar: React.FC = () => {
               />
             </div>
 
-            <div className="flex flex-col">
-              <span className="font-heading font-black text-xl sm:text-2xl text-primary dark:text-[#4d84e2] tracking-tight leading-none mb-1">
+            <div className="flex flex-col min-w-0">
+              <span className="font-heading font-black text-lg sm:text-2xl text-primary dark:text-[#4d84e2] tracking-tight leading-none mb-0.5 sm:mb-1">
                 CFSI
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                <span className="text-[10px] sm:text-xs font-bold text-gray-800 dark:text-gray-200 truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">
                   Central Fire Safety Institute
                 </span>
                 <span className="hidden md:inline text-[11px] text-gray-400 dark:text-gray-500">• Vadodara</span>
@@ -378,23 +378,25 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <div className="flex items-center gap-1.5 xl:hidden">
+          {/* Mobile Hamburger Button & Quick Actions */}
+          <div className="flex items-center gap-1 sm:gap-1.5 xl:hidden shrink-0">
             {isLogged ? null : (
               <div className="sm:hidden flex items-center gap-1">
                 <Link
                   to="/student-login"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-white bg-accent shadow-xs"
+                  className="inline-flex items-center gap-1 px-2 xs:px-2.5 py-1 rounded-full text-[10px] xs:text-[11px] font-bold text-white bg-accent shadow-xs shrink-0"
+                  title="Student Login"
                 >
-                  <GraduationCap className="w-3 h-3" />
-                  <span>Student</span>
+                  <GraduationCap className="w-3 h-3 shrink-0" />
+                  <span className="hidden xs:inline">Student</span>
                 </Link>
                 <Link
                   to="/institute-login"
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold text-white bg-primary shadow-xs"
+                  className="inline-flex items-center gap-1 px-2 xs:px-2.5 py-1 rounded-full text-[10px] xs:text-[11px] font-bold text-white bg-primary shadow-xs shrink-0"
+                  title="Institute Login"
                 >
-                  <Building2 className="w-3 h-3" />
-                  <span>Institute</span>
+                  <Building2 className="w-3 h-3 shrink-0" />
+                  <span className="hidden xs:inline">Institute</span>
                 </Link>
               </div>
             )}
@@ -402,10 +404,10 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               type="button"
-              className="p-2 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors focus:outline-none"
+              className="p-1.5 xs:p-2 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors focus:outline-none shrink-0"
               aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6 text-accent" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 xs:w-6 xs:h-6 text-accent" /> : <Menu className="w-5 h-5 xs:w-6 xs:h-6" />}
             </button>
           </div>
 

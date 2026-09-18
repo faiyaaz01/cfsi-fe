@@ -13,7 +13,7 @@ export const StudentPortalBanner: React.FC = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#1648a8] via-primary to-[#0f3478] p-6 sm:p-8 md:p-10 text-white shadow-xl">
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#1648a8] via-primary to-[#0f3478] p-5 xs:p-6 sm:p-8 md:p-10 text-white shadow-xl">
             
             {/* Background geometric accents */}
             <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none blur-2xl" />
@@ -28,7 +28,7 @@ export const StudentPortalBanner: React.FC = () => {
                   <span>Student Academic Portal</span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-white">
+                <h3 className="text-xl xs:text-2xl sm:text-3xl font-heading font-black tracking-tight text-white break-words">
                   Check Live Drill Attendance & Training Records
                 </h3>
 

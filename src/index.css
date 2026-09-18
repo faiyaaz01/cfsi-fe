@@ -23,8 +23,13 @@
     --border: rgba(255, 255, 255, 0.08);
   }
 
+  html, body, #root {
+    @apply w-full max-w-full overflow-x-hidden;
+    position: relative;
+  }
+
   body {
-    @apply bg-white dark:bg-dark-bg text-[#1a1a1a] dark:text-dark-text font-sans antialiased overflow-x-hidden;
+    @apply bg-white dark:bg-dark-bg text-[#1a1a1a] dark:text-dark-text font-sans antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {

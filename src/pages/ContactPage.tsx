@@ -61,8 +61,8 @@ export const ContactPage: React.FC = () => {
   };
 
   return (
-    <div className="py-12 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <SectionHeading
@@ -72,7 +72,7 @@ export const ContactPage: React.FC = () => {
         />
 
         {/* Split Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-12 sm:mb-16">
           
           {/* Left: Contact Info Card with Official CFSI Logo */}
           <motion.div
@@ -82,7 +82,7 @@ export const ContactPage: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="lg:col-span-5"
           >
-            <GlassCard hoverEffect={false} className="p-6 sm:p-8 space-y-6">
+            <GlassCard hoverEffect={false} className="p-4 xs:p-6 sm:p-8 space-y-5 sm:space-y-6">
               
               <div className="flex items-center gap-3.5">
                 <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-primary to-accent shadow-md shrink-0">
@@ -193,11 +193,11 @@ export const ContactPage: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="lg:col-span-7"
           >
-            <FlatCard className="p-6 sm:p-10 border border-gray-200/80 dark:border-white/10 shadow-lg">
+            <FlatCard className="p-4 xs:p-6 sm:p-10 border border-gray-200/80 dark:border-white/10 shadow-lg">
               
               <div className="mb-6">
                 <span className="text-xs font-bold uppercase tracking-wider text-accent">Admissions & Inquiry Desk</span>
-                <h2 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white mt-1">
+                <h2 className="text-xl xs:text-2xl sm:text-3xl font-heading font-black text-gray-900 dark:text-white mt-1 break-words">
                   Send Us a Message
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">

@@ -96,8 +96,8 @@ export const StudentDataPage: React.FC = () => {
   };
 
   return (
-    <div className="py-12 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <SectionHeading
@@ -107,7 +107,7 @@ export const StudentDataPage: React.FC = () => {
         />
 
         {/* Filters and Controls Card */}
-        <FlatCard className="p-6 mb-8 border border-gray-200/80 dark:border-white/10 shadow-sm">
+        <FlatCard className="p-4 xs:p-6 mb-8 border border-gray-200/80 dark:border-white/10 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
             
             {/* Search Input */}

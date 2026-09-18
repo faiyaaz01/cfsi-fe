@@ -5,33 +5,33 @@ import { ThemeToggle } from '../common/ThemeToggle';
 export const Topbar: React.FC = () => {
 
   return (
-    <div className="bg-[#1e5fd9] dark:bg-[#12181f] text-white text-xs py-1.5 px-4 sm:px-6 lg:px-8 border-b border-white/10 dark:border-white/5 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-1.5 gap-x-4">
+    <div className="bg-[#1e5fd9] dark:bg-[#12181f] text-white text-xs py-1.5 px-3 sm:px-6 lg:px-8 border-b border-white/10 dark:border-white/5 transition-colors duration-300 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-y-1 gap-x-3">
         
         {/* Left: Contact Info */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] sm:text-xs">
+        <div className="flex items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs min-w-0">
           <a
             href="tel:+917203016100"
-            className="inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium"
+            className="inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium shrink-0"
           >
-            <Phone className="w-3 h-3 text-amber-300" />
+            <Phone className="w-3 h-3 text-amber-300 shrink-0" />
             <span>+91 7203016100</span>
           </a>
-          <span className="hidden sm:inline text-white/30">|</span>
+          <span className="hidden xs:inline text-white/30">|</span>
           <a
             href="tel:+919974983819"
-            className="hidden md:inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium"
+            className="hidden md:inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium shrink-0"
           >
-            <Phone className="w-3 h-3 text-amber-300" />
+            <Phone className="w-3 h-3 text-amber-300 shrink-0" />
             <span>+91 9974983819</span>
           </a>
           <span className="hidden md:inline text-white/30">|</span>
           <a
             href="mailto:info@cfsi.co.in"
-            className="inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium"
+            className="hidden xs:inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium truncate"
           >
-            <Mail className="w-3 h-3 text-amber-300" />
-            <span>info@cfsi.co.in</span>
+            <Mail className="w-3 h-3 text-amber-300 shrink-0" />
+            <span className="truncate">info@cfsi.co.in</span>
           </a>
         </div>
 

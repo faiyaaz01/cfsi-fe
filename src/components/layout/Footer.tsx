@@ -30,11 +30,11 @@ export const Footer: React.FC = () => {
   const showCtaBanner = !isDashboardRoute && !user;
 
   return (
-    <footer className="bg-gray-100 dark:bg-[#12181f] text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-white/10 transition-colors duration-300">
+    <footer className="bg-gray-100 dark:bg-[#12181f] text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-white/10 transition-colors duration-300 w-full max-w-full overflow-hidden">
       
       {/* Top CTA Banner (Hidden on dashboards after login) */}
       {showCtaBanner && (
-        <div className="bg-gradient-to-r from-primary via-[#1e5fd9] to-[#1648a8] text-white py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-r from-primary via-[#1e5fd9] to-[#1648a8] text-white py-6 sm:py-8 px-3 xs:px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left space-y-1">
               <h3 className="text-xl sm:text-2xl font-heading font-bold text-white">
@@ -63,7 +63,7 @@ export const Footer: React.FC = () => {
       )}
 
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
           
           {/* Col 1: Institute Info with Official Logo */}
@@ -374,9 +374,9 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left">
           <p>© {new Date().getFullYear()} Central Fire Safety Institute (CFSI) — Vadodara, Gujarat. All rights reserved.</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
             <Link to="/about" className="hover:underline">Privacy Policy</Link>
             <span>•</span>
             <Link to="/about" className="hover:underline">Terms of Admission</Link>

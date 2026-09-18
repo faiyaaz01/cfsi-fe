@@ -44,8 +44,8 @@ export const Marquee: React.FC = () => {
     : standardItems;
 
   return (
-    <div className="bg-[#ff7a29] text-white py-2 px-3 overflow-hidden select-none relative shadow-sm z-20 border-b border-orange-600/20">
-      <div className="max-w-7xl mx-auto flex items-center">
+    <div className="bg-[#ff7a29] text-white py-2 px-3 overflow-hidden select-none relative shadow-sm z-20 border-b border-orange-600/20 w-full max-w-full">
+      <div className="max-w-7xl mx-auto flex items-center w-full min-w-0">
         {/* Fixed Badge on Desktop */}
         <div className="hidden sm:inline-flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider text-white shrink-0 mr-4 shadow-sm border border-white/10">
           <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping" />
@@ -53,10 +53,9 @@ export const Marquee: React.FC = () => {
         </div>
 
         {/* Marquee Ticker */}
-        <div className="relative flex overflow-x-hidden w-full">
+        <div className="relative flex overflow-x-hidden w-full min-w-0">
           <div
             className="flex shrink-0 items-center gap-10 text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap animate-marquee will-change-transform"
-            style={{ transform: 'translate3d(0, 0, 0)' }}
           >
             {marqueeItems.concat(marqueeItems).map((item, idx) => (
               <div key={idx} className="flex items-center gap-3">
@@ -75,7 +74,6 @@ export const Marquee: React.FC = () => {
           <div
             aria-hidden="true"
             className="flex shrink-0 items-center gap-10 text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap animate-marquee will-change-transform"
-            style={{ transform: 'translate3d(0, 0, 0)' }}
           >
             {marqueeItems.concat(marqueeItems).map((item, idx) => (
               <div key={`dup-${idx}`} className="flex items-center gap-3">
