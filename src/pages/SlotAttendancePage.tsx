@@ -23,7 +23,8 @@ import {
   Check, 
   X,
   UserCheck,
-  Award
+  Award,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useStudentData } from '../context/StudentDataContext';
@@ -86,6 +87,8 @@ export const SlotAttendancePage: React.FC = () => {
     clearDayAttendance,
     uploadDayAttendance,
     isDateLocked,
+    hasDateDraft,
+    discardDateDraft,
   } = useStudentData();
 
   const getSlotRecord = useCallback(
@@ -337,6 +340,25 @@ export const SlotAttendancePage: React.FC = () => {
   const isLeaderSlotLocked = isLeader && (!isToday || !activeSlotStatus.isOpen);
   const isLocked = dateLock.locked || isLeaderSlotLocked;
 
+  // Local storage draft active check
+  const isDraftActive = hasDateDraft(activeDate) || hasPendingChanges;
+
+  const handleDiscardDraft = async () => {
+    const confirmed = await confirm({
+      title: 'Discard Local Draft?',
+      message: `Are you sure you want to discard unsaved draft attendance for ${formatDateLabel(activeDate)}?\n\nThis will remove local draft marks and revert back to server records.`,
+      confirmText: 'Discard Draft',
+      cancelText: 'Keep Editing',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
+      await discardDateDraft(activeDate);
+      setHasPendingChanges(false);
+      toast.info(`Draft for ${formatDateLabel(activeDate)} discarded.`);
+    }
+  };
+
   // Single-cadet direct toggle between Present, Absent, and unmarking back to Pending
   const handleToggleMarkStatus = async (
     student: StudentVerificationRecord,
@@ -366,7 +388,7 @@ export const SlotAttendancePage: React.FC = () => {
         // Toggle off back to pending
         await deleteAttendance(currentRec.id);
         setHasPendingChanges(true);
-        toast.info(`Unmarked ${student.name} (${slotConfigMap[activeSlot].shortLabel} pending)`);
+        toast.info(`Unmarked ${student.name} (Draft)`, { duration: 1500 });
         return;
       }
 
@@ -377,7 +399,7 @@ export const SlotAttendancePage: React.FC = () => {
         rollNo: student.rollNo,
       });
       setHasPendingChanges(true);
-      toast.success(`${student.name} marked as ${targetStatus}`);
+      toast.success(`${student.name} marked ${targetStatus} (Draft)`, { duration: 1500 });
     } catch (err: any) {
       console.error('Failed to update slot attendance:', err);
       toast.error(err?.message || 'Failed to update attendance.');
@@ -517,10 +539,10 @@ export const SlotAttendancePage: React.FC = () => {
         }))
       );
       setHasPendingChanges(false);
-      toast.success(`Daily muster for ${formatDateLabel(activeDate)} saved & live-synced to database.`);
+      toast.success(`Daily muster for ${formatDateLabel(activeDate)} uploaded to database.`);
     } catch (err: any) {
-      console.error('Failed to sync muster:', err);
-      toast.error(err.message || 'Failed to sync muster to database.');
+      console.error('Failed to upload muster:', err);
+      toast.error(err.message || 'Failed to upload muster to database.');
     } finally {
       setIsUploadingMuster(false);
     }
@@ -556,27 +578,32 @@ export const SlotAttendancePage: React.FC = () => {
                 <Lock className="w-3.5 h-3.5" />
                 <span>Locked (24h Ended)</span>
               </span>
+            ) : isDraftActive ? (
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                title="Unsaved changes stored in local storage. Click Submit Attendance to sync to database."
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>Draft in Local Storage</span>
+              </span>
             ) : dateLock.uploadedAt ? (
               <span
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
                 title={`Uploaded on ${new Date(dateLock.uploadedAt).toLocaleString()} • Editable until ${new Date(dateLock.canEditUntil!).toLocaleString()}`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Live Synced</span>
+                <span>Uploaded</span>
                 <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                   • {dateLock.remainingHours ?? 24}h left to edit
                 </span>
               </span>
             ) : (
               <span
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
-                title="Draft mode: Click Save & Sync to push changes to database"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                title="Ready to mark attendance"
               >
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                <span>Draft Mode</span>
-                {hasPendingChanges && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                )}
+                <AlertCircle className="w-3.5 h-3.5 text-blue-500" />
+                <span>Ready to Mark</span>
               </span>
             )}
           </div>
@@ -613,6 +640,19 @@ export const SlotAttendancePage: React.FC = () => {
               </button>
             </div>
 
+            {isDraftActive && !isLocked && (
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                disabled={isUploadingMuster}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-rose-50 dark:bg-white/10 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Discard unsaved local draft and revert to server records"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Discard Draft</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleUploadActiveDateAttendance}
@@ -620,15 +660,13 @@ export const SlotAttendancePage: React.FC = () => {
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
                 isLocked
                   ? 'bg-gray-200 dark:bg-white/10 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : hasPendingChanges || !dateLock.uploadedAt
-                  ? 'bg-primary text-white hover:bg-primary-dark ring-2 ring-primary/40 shadow-md'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'bg-primary text-white hover:bg-primary-dark ring-2 ring-primary/40 shadow-md'
               }`}
             >
               {isUploadingMuster ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Saving...</span>
+                  <span>Uploading Attendance...</span>
                 </>
               ) : isLocked ? (
                 <>
@@ -638,7 +676,7 @@ export const SlotAttendancePage: React.FC = () => {
               ) : (
                 <>
                   <UploadCloud className="w-3.5 h-3.5" />
-                  <span>Save & Sync</span>
+                  <span>Upload Attendance</span>
                 </>
               )}
             </button>
@@ -1219,6 +1257,19 @@ export const SlotAttendancePage: React.FC = () => {
                 </>
               )}
 
+              {isDraftActive && !isLocked && (
+                <button
+                  type="button"
+                  onClick={handleDiscardDraft}
+                  disabled={isUploadingMuster}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-rose-50 dark:bg-white/10 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+                  title="Discard local draft"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Discard Draft</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleUploadActiveDateAttendance}
@@ -1226,18 +1277,16 @@ export const SlotAttendancePage: React.FC = () => {
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                   isLocked
                     ? 'bg-gray-100 dark:bg-white/5 text-gray-400 border-transparent cursor-not-allowed'
-                    : hasPendingChanges
-                    ? 'bg-primary text-white border-primary shadow-md hover:opacity-90 active:scale-95'
-                    : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10'
+                    : 'bg-primary text-white border-primary shadow-md hover:opacity-90 active:scale-95'
                 }`}
-                title="Save & sync day muster to database"
+                title="Upload attendance to database"
               >
                 {isUploadingMuster ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <UploadCloud className="w-3.5 h-3.5" />
                 )}
-                <span>{isUploadingMuster ? 'Syncing...' : hasPendingChanges ? 'Save Changes' : 'Synced'}</span>
+                <span>{isUploadingMuster ? 'Uploading Attendance...' : 'Upload Attendance'}</span>
               </button>
             </div>
           </div>

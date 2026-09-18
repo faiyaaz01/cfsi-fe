@@ -38,7 +38,8 @@ import {
   Loader2,
   ArrowLeft,
   Globe,
-  Award
+  Award,
+  RotateCcw
 } from 'lucide-react';
 import { useStudentData } from '../context/StudentDataContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -90,7 +91,9 @@ export const DashboardPage: React.FC = () => {
     clearDayAttendance,
     getAttendanceByStudent,
     getStudentAttendanceSummary,
-    isDateLocked
+    isDateLocked,
+    hasDateDraft,
+    discardDateDraft,
   } = useStudentData();
 
   // --- CADET / STUDENT DIRECTORY STATE ---
@@ -262,6 +265,23 @@ export const DashboardPage: React.FC = () => {
     [isDateLocked, selectedMusterDate, attendance]
   );
   const isLocked = lockStatus.locked;
+  const isMusterDraftActive = hasDateDraft(selectedMusterDate) || hasPendingChanges;
+
+  const handleDiscardMusterDraft = async () => {
+    const confirmed = await confirm({
+      title: 'Discard Local Draft?',
+      message: `Are you sure you want to discard unsaved draft muster for ${formattedDateLabel}?\n\nThis will remove local draft marks and revert to the server's committed records.`,
+      confirmText: 'Discard Draft',
+      cancelText: 'Keep Editing',
+      type: 'danger',
+      icon: 'trash',
+    });
+    if (confirmed) {
+      await discardDateDraft(selectedMusterDate);
+      setHasPendingChanges(false);
+      toast.info(`Draft muster for ${formattedDateLabel} discarded.`);
+    }
+  };
 
   // Today's date string in local time (YYYY-MM-DD)
   const todayDateStr = useMemo(() => {
@@ -544,7 +564,7 @@ export const DashboardPage: React.FC = () => {
       );
       setHasPendingChanges(false);
       toast.success(
-        `Muster successfully uploaded! Live-synced to student portal. Editable for the next 24 hours.`
+        `Muster successfully uploaded to database! Editable for the next 24 hours.`
       );
     } catch (err: any) {
       const msg = err.response?.data?.detail || err.message || 'Failed to upload attendance.';
@@ -621,7 +641,7 @@ export const DashboardPage: React.FC = () => {
         {/* View Tabs */}
         <div className="flex items-center gap-2 mb-8 border-b border-gray-200 dark:border-white/10 pb-3 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           
-          {/* Students Directory */}
+          {/* Students List */}
           <button
             type="button"
             onClick={() => setActiveTab('students')}
@@ -632,7 +652,7 @@ export const DashboardPage: React.FC = () => {
             }`}
           >
             <GraduationCap className="w-4 h-4" />
-            <span>Students Directory (<CountUp value={cadetsList.length} />)</span>
+            <span>Students List (<CountUp value={cadetsList.length} />)</span>
           </button>
 
           {/* Mark Attendance */}
@@ -691,7 +711,7 @@ export const DashboardPage: React.FC = () => {
                     <span>Student Management</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Student Directory
+                    Students List
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Inspect student profiles, track attendance, and import class rosters.
@@ -863,7 +883,7 @@ export const DashboardPage: React.FC = () => {
                         <td colSpan={6} className="py-12 text-center text-gray-400 text-xs font-semibold">
                           {cadetSearch
                             ? `No students found matching "${cadetSearch}".`
-                            : 'No students registered in the directory yet. Click "Import Students (Excel/CSV)" above to import students from your spreadsheet.'}
+                            : 'No students registered in the list yet. Click "Import Students (Excel/CSV)" above to import students from your spreadsheet.'}
                         </td>
                       </tr>
                     ) : (
@@ -1057,22 +1077,20 @@ export const DashboardPage: React.FC = () => {
                         <Lock className="w-3.5 h-3.5" />
                         Locked
                       </span>
+                    ) : isMusterDraftActive ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center gap-1.5 border border-amber-300 dark:border-amber-800/40">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span>Draft in Local Storage</span>
+                      </span>
                     ) : lockStatus.uploadedAt ? (
                       <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Synced ({lockStatus.remainingHours ?? 24}h left)
+                        Uploaded ({lockStatus.remainingHours ?? 24}h left)
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 flex items-center gap-1">
                         <AlertCircle className="w-3.5 h-3.5" />
-                        Draft
-                      </span>
-                    )}
-
-                    {hasPendingChanges && !isLocked && !isFutureDate && (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                        Unsaved
+                        Ready to Mark
                       </span>
                     )}
                   </div>
@@ -1127,6 +1145,19 @@ export const DashboardPage: React.FC = () => {
                     </button>
                   </div>
 
+                  {isMusterDraftActive && !isLocked && !isFutureDate && (
+                    <button
+                      type="button"
+                      onClick={handleDiscardMusterDraft}
+                      disabled={isUploadingMuster}
+                      className="px-3 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-rose-50 dark:bg-white/10 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+                      title="Discard unsaved local draft and revert to server records"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Discard Draft</span>
+                    </button>
+                  )}
+
                   {/* Primary Upload Button */}
                   <button
                     type="button"
@@ -1135,22 +1166,20 @@ export const DashboardPage: React.FC = () => {
                     className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ${
                       isLocked || isFutureDate
                         ? 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                        : hasPendingChanges || !lockStatus.uploadedAt
-                        ? 'bg-primary text-white hover:bg-primary-dark shadow-md ring-2 ring-primary/30'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-primary text-white hover:bg-primary-dark shadow-md ring-2 ring-primary/30'
                     }`}
                     title={
                       isFutureDate
                         ? 'Attendance opens when the day starts'
                         : isLocked
                         ? 'Attendance is locked (24h expired)'
-                        : 'Upload marked attendance to MongoDB'
+                        : 'Upload attendance to database'
                     }
                   >
                     {isUploadingMuster ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Uploading...</span>
+                        <span>Uploading Attendance...</span>
                       </>
                     ) : isFutureDate ? (
                       <>
@@ -1165,7 +1194,7 @@ export const DashboardPage: React.FC = () => {
                     ) : (
                       <>
                         <UploadCloud className="w-3.5 h-3.5" />
-                        <span>{lockStatus.uploadedAt ? 'Update & Sync' : 'Upload Attendance'}</span>
+                        <span>Upload Attendance</span>
                       </>
                     )}
                   </button>

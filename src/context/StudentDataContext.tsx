@@ -48,18 +48,60 @@ interface StudentDataContextType {
   getAttendanceByDate: (date: string) => AttendanceRecord[];
   getStudentAttendanceSummary: (studentId: string) => AttendanceSummary;
   isDateLocked: (date: string) => { locked: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number };
+  hasDateDraft: (date: string) => boolean;
+  discardDateDraft: (date: string) => Promise<void>;
   resetToSeed: () => Promise<void>;
   refreshAttendance: () => Promise<void>;
 }
 
 const StudentDataContext = createContext<StudentDataContextType | undefined>(undefined);
 
+const DRAFT_PREFIX = 'cfsi_att_draft_';
+
+interface LocalAttendanceDraft {
+  date: string;
+  records: AttendanceRecord[];
+  deletedServerIds: string[];
+  updatedAt: string;
+}
+
+const getDraftKey = (date: string) => `${DRAFT_PREFIX}${date}`;
+
+const loadDraftForDate = (date: string): LocalAttendanceDraft | null => {
+  try {
+    const raw = localStorage.getItem(getDraftKey(date));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveDraftForDate = (date: string, records: AttendanceRecord[], deletedServerIds: string[] = []) => {
+  try {
+    const draft: LocalAttendanceDraft = {
+      date,
+      records,
+      deletedServerIds,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(getDraftKey(date), JSON.stringify(draft));
+  } catch (e) {
+    console.error('Failed to save attendance draft to localStorage:', e);
+  }
+};
+
+const clearDraftForDate = (date: string) => {
+  try {
+    localStorage.removeItem(getDraftKey(date));
+  } catch {}
+};
+
 export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Pure MongoDB Database State - No localStorage persistence
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [draftVersion, setDraftVersion] = useState<number>(0);
 
-  // Fetch attendance records from backend MongoDB
+  // Fetch attendance records from backend MongoDB and merge local drafts
   const fetchAttendance = useCallback(async () => {
     const token = getToken();
     if (!token) {
@@ -69,9 +111,31 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       setLoading(true);
       const remoteAtt = await api.getAttendance();
-      if (Array.isArray(remoteAtt)) {
-        setAttendance(remoteAtt);
+      const serverRecords = Array.isArray(remoteAtt) ? remoteAtt : [];
+
+      // Scan localStorage for any active drafts and merge them on top of server records
+      const draftKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(DRAFT_PREFIX)) {
+          draftKeys.push(key);
+        }
       }
+
+      let merged = [...serverRecords];
+      draftKeys.forEach((key) => {
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) return;
+          const draft: LocalAttendanceDraft = JSON.parse(raw);
+          if (draft && draft.date && Array.isArray(draft.records)) {
+            merged = merged.filter((r) => r.date !== draft.date);
+            merged.push(...draft.records);
+          }
+        } catch {}
+      });
+
+      setAttendance(merged);
     } catch (err) {
       console.error('Failed to load attendance from MongoDB:', err);
     } finally {
@@ -182,17 +246,28 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const deleteAttendance = async (id: string) => {
-    setAttendance((prev) => prev.filter((item) => item.id !== id));
+    setAttendance((prev) => {
+      const target = prev.find((item) => item.id === id);
+      const next = prev.filter((item) => item.id !== id);
 
-    try {
-      await api.deleteAttendance(id);
-    } catch (err) {
-      console.error('Failed to delete attendance record from MongoDB:', err);
-      void fetchAttendance();
-    }
+      if (target) {
+        const targetDate = target.date;
+        const currentDraft = loadDraftForDate(targetDate);
+        const deletedServerIds = currentDraft?.deletedServerIds ? [...currentDraft.deletedServerIds] : [];
+        if (!id.startsWith('att-draft-') && !deletedServerIds.includes(id)) {
+          deletedServerIds.push(id);
+        }
+        const dayRecords = next.filter((r) => r.date === targetDate);
+        saveDraftForDate(targetDate, dayRecords, deletedServerIds);
+      }
+
+      return next;
+    });
+
+    setDraftVersion((v) => v + 1);
   };
 
-  // Set or update a single cadet's attendance for a specific slot in MongoDB
+  // Set or update a single cadet's attendance for a specific slot in local draft & state (0ms latency, zero API calls)
   const setSlotAttendance = async (
     studentId: string,
     date: string,
@@ -200,21 +275,9 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     status: AttendanceStatus,
     details?: { topicOrModule?: string; remarks?: string; course?: string; markedBy?: string; rollNo?: string }
   ) => {
-    const payload = {
-      studentId: studentId.trim(),
-      rollNo: details?.rollNo,
-      date,
-      slot,
-      course: details?.course || 'Fire Safety Program',
-      status,
-      topicOrModule: details?.topicOrModule,
-      remarks: details?.remarks,
-      markedBy: details?.markedBy || 'Chief Instructor Dave',
-    };
+    const normId = studentId.trim().toUpperCase();
 
-    // Optimistically update React state
     setAttendance((prev) => {
-      const normId = studentId.trim().toUpperCase();
       const existingIdx = prev.findIndex(
         (rec) =>
           (rec.studentId.toUpperCase() === normId || (details?.rollNo && rec.rollNo === details.rollNo)) &&
@@ -222,10 +285,11 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           (rec.slot === slot || (!rec.slot && slot === 'Slot 1'))
       );
 
+      let next: AttendanceRecord[];
       if (existingIdx >= 0) {
-        const updated = [...prev];
-        updated[existingIdx] = {
-          ...updated[existingIdx],
+        next = [...prev];
+        next[existingIdx] = {
+          ...next[existingIdx],
           status,
           slot,
           studentId: normId,
@@ -235,10 +299,9 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           ...(details?.markedBy !== undefined ? { markedBy: details.markedBy } : {}),
           ...(details?.course ? { course: details.course } : {}),
         };
-        return updated;
       } else {
         const newRec: AttendanceRecord = {
-          id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          id: `att-draft-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           studentId: normId,
           rollNo: details?.rollNo,
           date,
@@ -250,30 +313,27 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           markedBy: details?.markedBy || 'Chief Instructor Dave',
           createdAt: new Date().toISOString(),
         };
-        return [newRec, ...prev];
+        next = [newRec, ...prev];
       }
+
+      // Persist to localStorage draft for crash-proof, offline-resilient operation
+      const dayRecords = next.filter((r) => r.date === date);
+      const currentDraft = loadDraftForDate(date);
+      // If student had a previously deleted server ID for this slot, remove it from deletedServerIds
+      const deletedServerIds = (currentDraft?.deletedServerIds || []).filter((delId) => {
+        const matchingDel = prev.find((r) => r.id === delId);
+        if (!matchingDel) return true;
+        return !(matchingDel.studentId.toUpperCase() === normId && matchingDel.slot === slot);
+      });
+      saveDraftForDate(date, dayRecords, deletedServerIds);
+
+      return next;
     });
 
-    // Persist directly to MongoDB
-    try {
-      const saved = await api.saveAttendanceSingle(payload);
-      if (saved && saved.id) {
-        setAttendance((prev) => {
-          const normId = studentId.trim().toUpperCase();
-          return prev.map((rec) => {
-            if (rec.studentId.toUpperCase() === normId && rec.date === date && rec.slot === slot) {
-              return saved;
-            }
-            return rec;
-          });
-        });
-      }
-    } catch (err) {
-      console.error('Failed to sync slot attendance to MongoDB:', err);
-    }
+    setDraftVersion((v) => v + 1);
   };
 
-  // Bulk mark all or specific slots for given students on a date in MongoDB
+  // Bulk mark all or specific slots for given students on a date into local draft & state (zero API calls)
   const bulkMarkDaySlots = async (
     date: string,
     slot: AttendanceSlot | 'All',
@@ -285,23 +345,6 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const slotsToMark: AttendanceSlot[] =
       slot === 'All' ? ['Slot 1', 'Slot 2', 'Slot 3'] : [slot];
 
-    const recordsToSync: any[] = [];
-    students.forEach((st) => {
-      slotsToMark.forEach((s) => {
-        recordsToSync.push({
-          studentId: st.studentId,
-          rollNo: st.rollNo,
-          date,
-          slot: s,
-          course: st.course,
-          status,
-          topicOrModule: topic || undefined,
-          markedBy: instructor || 'Chief Instructor Dave',
-        });
-      });
-    });
-
-    // Optimistic UI update
     setAttendance((prev) => {
       let current = [...prev];
 
@@ -326,7 +369,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           } else {
             current = [
               {
-                id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                id: `att-draft-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
                 studentId: st.studentId,
                 rollNo: st.rollNo,
                 date,
@@ -343,39 +386,18 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
       }
 
+      // Persist to localStorage draft
+      const dayRecords = current.filter((r) => r.date === date);
+      const currentDraft = loadDraftForDate(date);
+      saveDraftForDate(date, dayRecords, currentDraft?.deletedServerIds || []);
+
       return current;
     });
 
-    // Persist directly to MongoDB
-    if (recordsToSync.length > 0) {
-      try {
-        const saved = await api.saveAttendanceBulk(recordsToSync);
-        if (Array.isArray(saved) && saved.length > 0) {
-          setAttendance((prev) => {
-            const copy = [...prev];
-            saved.forEach((sv) => {
-              const idx = copy.findIndex(
-                (r) =>
-                  r.studentId.toUpperCase() === sv.studentId.toUpperCase() &&
-                  r.date === sv.date &&
-                  r.slot === sv.slot
-              );
-              if (idx >= 0) {
-                copy[idx] = sv;
-              } else {
-                copy.unshift(sv);
-              }
-            });
-            return copy;
-          });
-        }
-      } catch (err) {
-        console.error('Failed to bulk save attendance to MongoDB:', err);
-      }
-    }
+    setDraftVersion((v) => v + 1);
   };
 
-  // Upload and commit whole day muster to MongoDB with 24-hour timestamp
+  // Upload and commit whole day muster to MongoDB in 1 single bulk API request
   const uploadDayAttendance = async (
     date: string,
     records: Array<{
@@ -389,20 +411,57 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       markedBy?: string;
     }>
   ): Promise<AttendanceRecord[]> => {
+    // 1. Process any deleted records on the server first
+    const currentDraft = loadDraftForDate(date);
+    if (currentDraft && currentDraft.deletedServerIds && currentDraft.deletedServerIds.length > 0) {
+      await Promise.allSettled(
+        currentDraft.deletedServerIds.map((id) => api.deleteAttendance(id))
+      );
+    }
+
+    // 2. Fire single bulk upsert API call to MongoDB
     const recordsToSync = records.map((r) => ({
       ...r,
       date,
       uploadedAt: new Date().toISOString(),
     }));
 
-    const saved = await api.saveAttendanceBulk(recordsToSync);
+    let saved: AttendanceRecord[] = [];
+    if (recordsToSync.length > 0) {
+      saved = await api.saveAttendanceBulk(recordsToSync);
+    }
+
+    // 3. Clear the draft in localStorage for this date
+    clearDraftForDate(date);
+    setDraftVersion((v) => v + 1);
+
+    // 4. Update React state with saved records from server
     if (Array.isArray(saved) && saved.length > 0) {
       setAttendance((prev) => {
         const copy = [...prev.filter((r) => r.date !== date)];
         return [...saved, ...copy];
       });
+    } else if (recordsToSync.length === 0) {
+      setAttendance((prev) => prev.filter((r) => r.date !== date));
     }
+
     return saved;
+  };
+
+  // Check whether an unsubmitted draft exists in localStorage for a date
+  const hasDateDraft = useCallback(
+    (date: string): boolean => {
+      const draft = loadDraftForDate(date);
+      return draft !== null;
+    },
+    [draftVersion] // re-evaluates whenever draftVersion changes
+  );
+
+  // Discard local draft for a date and revert back to server records
+  const discardDateDraft = async (date: string) => {
+    clearDraftForDate(date);
+    setDraftVersion((v) => v + 1);
+    await fetchAttendance();
   };
 
   // Check whether attendance records for a specific date are locked (> 24h since upload)
@@ -458,6 +517,8 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Clear all attendance records on a given date from MongoDB
   const clearDayAttendance = async (date: string) => {
+    clearDraftForDate(date);
+    setDraftVersion((v) => v + 1);
     setAttendance((prev) => prev.filter((r) => r.date !== date));
 
     try {
@@ -522,6 +583,8 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         getAttendanceByDate,
         getStudentAttendanceSummary,
         isDateLocked,
+        hasDateDraft,
+        discardDateDraft,
         resetToSeed,
         refreshAttendance,
       }}
