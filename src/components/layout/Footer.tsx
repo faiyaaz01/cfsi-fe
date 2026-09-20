@@ -62,7 +62,7 @@ export const Footer: React.FC = () => {
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
           
           {/* Col 1: Institute Info with Official Logo */}
           <div className="space-y-4">
@@ -170,6 +170,12 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/courses" className="hover:text-accent transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3.5 h-3.5 text-accent" />
+                  <span>Courses & Programs</span>
+                </Link>
+              </li>
+              <li>
                 <Link to="/gallery/images" className="hover:text-accent transition-colors flex items-center gap-1.5">
                   <ChevronRight className="w-3.5 h-3.5 text-accent" />
                   <span>Photo Gallery</span>
@@ -202,49 +208,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Programs Offered */}
-          <div>
-            <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-accent" />
-              <span>Training Programs</span>
-            </h4>
-            <ul className="space-y-3 text-sm">
-              <li className="p-2.5 rounded-lg bg-white dark:bg-[#161d27] border border-gray-200/60 dark:border-white/5">
-                <Link to="/courses/certificate-in-fire-safety" className="group block">
-                  <div className="font-bold text-gray-900 dark:text-white group-hover:text-accent transition-colors text-xs sm:text-sm">
-                    Certificate In Fire Safety
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">Duration: 6 Months • 10th Pass</div>
-                </Link>
-              </li>
-              <li className="p-2.5 rounded-lg bg-white dark:bg-[#161d27] border border-gray-200/60 dark:border-white/5">
-                <Link to="/courses/diploma-in-fire-safety" className="group block">
-                  <div className="font-bold text-gray-900 dark:text-white group-hover:text-accent transition-colors text-xs sm:text-sm">
-                    Diploma In Fire Safety
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">Duration: 1 Year • 12th Pass</div>
-                </Link>
-              </li>
-              <li className="p-2.5 rounded-lg bg-white dark:bg-[#161d27] border border-gray-200/60 dark:border-white/5">
-                <Link to="/courses/sub-fire-officer" className="group block">
-                  <div className="font-bold text-gray-900 dark:text-white group-hover:text-accent transition-colors text-xs sm:text-sm">
-                    Sub Fire Officer (SFO)
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">Duration: 6 Months • Physical Fitness</div>
-                </Link>
-              </li>
-              <li className="p-2.5 rounded-lg bg-white dark:bg-[#161d27] border border-gray-200/60 dark:border-white/5">
-                <Link to="/courses/industrial-safety" className="group block">
-                  <div className="font-bold text-gray-900 dark:text-white group-hover:text-accent transition-colors text-xs sm:text-sm">
-                    Industrial Safety
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">Duration: 3 Months • Any Graduate</div>
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 4: Get In Touch */}
+          {/* Col 3: Get In Touch */}
           <div>
             <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-accent" />
