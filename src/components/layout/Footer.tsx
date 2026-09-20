@@ -184,7 +184,7 @@ export const Footer: React.FC = () => {
               <li>
                 <Link to="/gallery/videos" className="hover:text-accent transition-colors flex items-center gap-1.5">
                   <ChevronRight className="w-3.5 h-3.5 text-accent" />
-                  <span>Video Gallery (14 Drills)</span>
+                  <span>Video Gallery</span>
                 </Link>
               </li>
               <li>

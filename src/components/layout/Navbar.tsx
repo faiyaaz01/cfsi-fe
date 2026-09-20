@@ -664,7 +664,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
                         >
                           <Video className="w-3.5 h-3.5 text-red-500" />
-                          <span>Video Drills (14)</span>
+                          <span>Video Drills</span>
                         </Link>
                       </motion.div>
                     )}
