@@ -120,8 +120,8 @@ export const ContactPage: React.FC = () => {
                       <a href="tel:+917203016100" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
                         +91 7203016100
                       </a>
-                      <a href="tel:+919974983819" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
-                        +91 9974983819
+                      <a href="tel:+917203016101" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
+                        +91 7203016101
                       </a>
                     </div>
                   </div>

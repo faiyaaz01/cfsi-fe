@@ -19,11 +19,11 @@ export const Topbar: React.FC = () => {
           </a>
           <span className="hidden xs:inline text-white/30">|</span>
           <a
-            href="tel:+919974983819"
+            href="tel:+917203016101"
             className="hidden md:inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors font-medium shrink-0"
           >
             <Phone className="w-3 h-3 text-amber-300 shrink-0" />
-            <span>+91 9974983819</span>
+            <span>+91 7203016101</span>
           </a>
           <span className="hidden md:inline text-white/30">|</span>
           <a

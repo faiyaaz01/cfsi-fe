@@ -310,11 +310,11 @@ export const Footer: React.FC = () => {
                     <span>+91 7203016100</span>
                   </a>
                   <a
-                    href="tel:+919974983819"
+                    href="tel:+917203016101"
                     className="flex items-center gap-2 font-bold text-sm text-gray-800 dark:text-gray-200 hover:text-accent"
                   >
                     <Phone className="w-4 h-4 text-accent" />
-                    <span>+91 9974983819</span>
+                    <span>+91 7203016101</span>
                   </a>
                   <div className="flex items-center gap-1.5 text-gray-400 pt-1">
                     <Clock className="w-3 h-3" />
