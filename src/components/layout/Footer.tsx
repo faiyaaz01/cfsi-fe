@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -12,11 +12,9 @@ import {
   GraduationCap,
   Building2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import cfsiLogo from '../../assets/cfsi-logo.jpg';
 
 export const Footer: React.FC = () => {
-  const [activeContactTab, setActiveContactTab] = useState<'phone' | 'email' | 'address'>('phone');
   const { user } = useAuth();
   const location = useLocation();
 
@@ -246,127 +244,86 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 4: Get In Touch (Tabbed Widget) */}
+          {/* Col 4: Get In Touch */}
           <div>
             <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-accent" />
               <span>Get In Touch</span>
             </h4>
 
-            {/* Tab buttons */}
-            <div className="flex rounded-lg bg-gray-200 dark:bg-white/10 p-1 mb-3 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setActiveContactTab('phone')}
-                className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
-                  activeContactTab === 'phone'
-                    ? 'bg-white dark:bg-[#161d27] text-primary dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
-                }`}
-              >
-                <Phone className="w-3 h-3" />
-                <span>Phone</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveContactTab('email')}
-                className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
-                  activeContactTab === 'email'
-                    ? 'bg-white dark:bg-[#161d27] text-primary dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
-                }`}
-              >
-                <Mail className="w-3 h-3" />
-                <span>Email</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveContactTab('address')}
-                className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
-                  activeContactTab === 'address'
-                    ? 'bg-white dark:bg-[#161d27] text-primary dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
-                }`}
-              >
-                <MapPin className="w-3 h-3" />
-                <span>Address</span>
-              </button>
-            </div>
-
-            {/* Tab content panel */}
-            <div className="p-3.5 rounded-xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/5 min-h-[140px] flex flex-col justify-center text-xs space-y-2">
-              {activeContactTab === 'phone' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-2"
-                >
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">Admissions & General Hotline:</p>
-                  <a
-                    href="tel:+917203016100"
-                    className="flex items-center gap-2 font-bold text-sm text-primary dark:text-primary-light hover:text-accent"
-                  >
-                    <Phone className="w-4 h-4 text-accent" />
-                    <span>+91 7203016100</span>
-                  </a>
-                  <a
-                    href="tel:+917203016101"
-                    className="flex items-center gap-2 font-bold text-sm text-gray-800 dark:text-gray-200 hover:text-accent"
-                  >
-                    <Phone className="w-4 h-4 text-accent" />
-                    <span>+91 7203016101</span>
-                  </a>
-                  <div className="flex items-center gap-1.5 text-gray-400 pt-1">
+            {/* All Contact Details In One Clean View */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/5 space-y-4 text-xs shadow-xs">
+              {/* Phone Numbers */}
+              <div className="flex items-start gap-2.5">
+                <div className="p-2 rounded-lg bg-accent/10 text-accent dark:bg-accent/20 shrink-0 mt-0.5">
+                  <Phone className="w-3.5 h-3.5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Admissions & General Hotline:</p>
+                  <div className="space-y-0.5">
+                    <a
+                      href="tel:+917203016100"
+                      className="block font-bold text-sm text-primary dark:text-primary-light hover:text-accent transition-colors"
+                    >
+                      +91 7203016100
+                    </a>
+                    <a
+                      href="tel:+917203016101"
+                      className="block font-bold text-sm text-gray-800 dark:text-gray-200 hover:text-accent transition-colors"
+                    >
+                      +91 7203016101
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-400 pt-0.5 text-[11px]">
                     <Clock className="w-3 h-3" />
                     <span>Mon - Sat: 9:00 AM - 6:00 PM</span>
                   </div>
-                </motion.div>
-              )}
+                </div>
+              </div>
 
-              {activeContactTab === 'email' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-2"
-                >
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">Official Inquiries & Verification:</p>
-                  <a
-                    href="mailto:centralfirevadodara@gmail.com"
-                    className="flex items-center gap-2 font-bold text-sm text-primary dark:text-primary-light hover:text-accent"
-                  >
-                    <Mail className="w-4 h-4 text-accent" />
-                    <span>centralfirevadodara@gmail.com</span>
-                  </a>
-                  <a
-                    href="mailto:admissions@cfsi.co.in"
-                    className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 hover:text-accent"
-                  >
-                    <Mail className="w-4 h-4 text-accent" />
-                    <span>admissions@cfsi.co.in</span>
-                  </a>
-                  <p className="text-[11px] text-gray-400 pt-1">We respond within 24 business hours.</p>
-                </motion.div>
-              )}
+              {/* Email */}
+              <div className="flex items-start gap-2.5 pt-3.5 border-t border-gray-100 dark:border-white/5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light shrink-0 mt-0.5">
+                  <Mail className="w-3.5 h-3.5" />
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Official Email:</p>
+                  <div className="space-y-0.5">
+                    <a
+                      href="mailto:centralfirevadodara@gmail.com"
+                      className="block font-bold text-gray-800 dark:text-gray-200 hover:text-accent transition-colors truncate"
+                    >
+                      centralfirevadodara@gmail.com
+                    </a>
+                    <a
+                      href="mailto:admissions@cfsi.co.in"
+                      className="block font-medium text-gray-600 dark:text-gray-400 hover:text-accent transition-colors truncate"
+                    >
+                      admissions@cfsi.co.in
+                    </a>
+                  </div>
+                </div>
+              </div>
 
-              {activeContactTab === 'address' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-2"
-                >
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">Vadodara Main Training Campus:</p>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200 leading-relaxed">
-                    Central Fire Safety Institute (CFSI), Near GIDC Industrial Zone, Waghodia Road, Vadodara, Gujarat - 390019, India.
+              {/* Address */}
+              <div className="flex items-start gap-2.5 pt-3.5 border-t border-gray-100 dark:border-white/5">
+                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Campus Address:</p>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium text-[11px]">
+                    Central Fire Safety Institute (CFSI), Near GIDC Industrial Zone, Waghodia Road, Vadodara, Gujarat - 390019
                   </p>
                   <Link
                     to="/contact"
-                    className="inline-flex items-center gap-1 text-primary dark:text-primary-light font-bold hover:underline"
+                    className="inline-flex items-center gap-1 text-primary dark:text-primary-light font-bold hover:underline pt-0.5 text-xs"
                   >
                     <span>View Map & Directions</span>
                     <ExternalLink className="w-3 h-3" />
                   </Link>
-                </motion.div>
-              )}
+                </div>
+              </div>
             </div>
 
           </div>
