@@ -120,6 +120,7 @@ export const DashboardPage: React.FC = () => {
   const [cadetSearch, setCadetSearch] = useState('');
   const [cadetCourseFilter, setCadetCourseFilter] = useState('All');
   const [selectedCadetDetail, setSelectedCadetDetail] = useState<StudentVerificationRecord | null>(null);
+  const [cadetModalEditMode, setCadetModalEditMode] = useState<boolean>(false);
   const [bulkImportModalOpen, setBulkImportModalOpen] = useState<boolean>(false);
   const [cadetsList, setCadetsList] = useState<StudentVerificationRecord[]>([]);
   const [isLoadingCadets, setIsLoadingCadets] = useState<boolean>(false);
@@ -843,7 +844,7 @@ export const DashboardPage: React.FC = () => {
                     All Registered Students
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Click "Inspect" on any student to view their complete profile, contact details, address, and drill history.
+                    Inspect complete student profile details or edit student information.
                   </p>
                 </div>
               </div>
@@ -1001,36 +1002,27 @@ export const DashboardPage: React.FC = () => {
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedCadetDetail(cadet)}
-                                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
-                                  title="Inspect full student profile"
+                                  onClick={() => {
+                                    setCadetModalEditMode(false);
+                                    setSelectedCadetDetail(cadet);
+                                  }}
+                                  className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all duration-200 cursor-pointer shadow-xs hover:scale-105"
+                                  title="Inspect student profile"
+                                  aria-label="Inspect student profile"
                                 >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  <span>Inspect</span>
+                                  <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setMusterSearch(cadet.name);
-                                    setActiveTab('attendance');
+                                    setCadetModalEditMode(true);
+                                    setSelectedCadetDetail(cadet);
                                   }}
-                                  className="p-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer"
-                                  title="Mark attendance for this student"
+                                  className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition-all duration-200 cursor-pointer shadow-xs hover:scale-105"
+                                  title="Edit student profile"
+                                  aria-label="Edit student profile"
                                 >
-                                  <Clock className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteCadet(cadet)}
-                                  disabled={deletingCadetId === cadet.id}
-                                  className="p-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                                  title="Permanently delete student & all attendance records"
-                                >
-                                  {deletingCadetId === cadet.id ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  )}
+                                  <Edit3 className="w-4 h-4" />
                                 </button>
                               </div>
                             </td>
@@ -1749,7 +1741,33 @@ export const DashboardPage: React.FC = () => {
         {/* TAB: MANAGE USERS                                                        */}
         {/* ========================================================================= */}
         {activeTab === 'users' && (
-          <UsersPage isEmbedded />
+          <UsersPage
+            isEmbedded
+            onNavigateToStudent={async (studentId) => {
+              handleSelectTab('students');
+              setCadetSearch(studentId);
+              let list = cadetsList;
+              if (!list || list.length === 0) {
+                try {
+                  const data = await api.getStudents();
+                  list = (data || []).filter(isActualStudent);
+                  setCadetsList(list);
+                } catch {
+                  // ignore
+                }
+              }
+              const matched = (list || []).find(
+                (c) =>
+                  c.id === studentId ||
+                  c.rollNo === studentId ||
+                  (c.name && c.name.toLowerCase() === studentId.toLowerCase())
+              );
+              if (matched) {
+                setSelectedCadetDetail(matched);
+                setCadetModalEditMode(true);
+              }
+            }}
+          />
         )}
 
         {/* ========================================================================= */}
@@ -1766,7 +1784,11 @@ export const DashboardPage: React.FC = () => {
         {/* ========================================================================= */}
         <CadetDetailModal
           cadet={selectedCadetDetail}
-          onClose={() => setSelectedCadetDetail(null)}
+          initialEditMode={cadetModalEditMode}
+          onClose={() => {
+            setSelectedCadetDetail(null);
+            setCadetModalEditMode(false);
+          }}
           onNavigateToAttendance={(_cadet) => {
             const today = new Date().toISOString().split("T")[0];
             navigate(`/dashboard/attendance/${today}/Slot 1`);

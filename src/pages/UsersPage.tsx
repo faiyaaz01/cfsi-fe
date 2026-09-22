@@ -103,7 +103,12 @@ const emptyForm: UserFormData = {
   state: 'GUJARAT',
 };
 
-export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
+interface UsersPageProps {
+  isEmbedded?: boolean;
+  onNavigateToStudent?: (studentId: string) => void;
+}
+
+export function UsersPage({ isEmbedded = false, onNavigateToStudent }: UsersPageProps = {}) {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [enrolledStudents, setEnrolledStudents] = useState<StudentVerificationRecord[]>([]);
@@ -365,35 +370,6 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
           throw new Error('Student Name is required.');
         }
 
-        // Prepare student item with all 18 fields
-        const studentItem = {
-          student_id: studentIdVal,
-          roll_no: form.enrollment_no.slice(-2) || '01',
-          enrollment_no: form.enrollment_no.trim() || studentIdVal,
-          session_year: form.session_year.trim(),
-          name: form.full_name.trim(),
-          father_name: form.father_name.trim(),
-          mother_name: form.mother_name.trim(),
-          present_address: form.present_address.trim(),
-          student_phone: form.student_phone.trim(),
-          father_phone: form.father_phone.trim(),
-          birth_date: form.birth_date.trim() || '01-01-2006',
-          gender: form.gender.trim() || 'MALE',
-          category: form.category.trim() || 'General',
-          aadhar_card: form.aadhar_card.trim(),
-          center_name: form.center_name.trim() || 'CENTRAL FIRE AND SAFETY INSTITUTE',
-          course: form.course.trim() || 'DIPLOMA IN FIRE AND SAFETY MANAGEMENT',
-          mode: form.mode.trim() || 'REGULAR',
-          email: form.email.trim() || `${studentIdVal.toLowerCase()}@cfsi.edu.in`,
-          nationality: form.nationality.trim() || 'INDIAN',
-          state: form.state.trim() || 'GUJARAT',
-          password: form.password.trim() || undefined,
-          is_active: form.is_active,
-        };
-
-        // Sync with MongoDB students and users collections via bulkImport
-        await api.bulkImportStudents([studentItem], form.session_year.trim() || 'Batch 2026-2027');
-
         if (editingId) {
           const userPatch: any = {
             full_name: form.full_name.trim(),
@@ -403,9 +379,28 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
             userPatch.password = form.password.trim();
           }
           await api.users('PATCH', editingId, userPatch);
-        }
 
-        toast.success(`Student user "${form.full_name}" saved successfully.`);
+          // If full_name changed, also keep name in student record synced
+          try {
+            await api.adminUpdateStudent(studentIdVal, { name: form.full_name.trim() });
+          } catch {}
+
+          toast.success(`Student user "${form.full_name}" updated successfully.`);
+        } else {
+          if (!form.password.trim()) {
+            throw new Error('Initial password is required for new student accounts.');
+          }
+          const newAccountPayload: any = {
+            username: studentIdVal,
+            full_name: form.full_name.trim(),
+            role: 'student',
+            student_id: studentIdVal,
+            password: form.password.trim(),
+            is_active: form.is_active,
+          };
+          await api.users('POST', undefined, newAccountPayload);
+          toast.success(`Student user account "${form.full_name}" created successfully.`);
+        }
       } else {
         const usernameVal = form.username.trim();
         if (!usernameVal) {
@@ -899,350 +894,71 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
                     </div>
                   </div>
 
-                  {/* Student Account Flow (All 18 Fields) */}
+                  {/* Student Account Flow — Focused Strictly on Login, Password & Status */}
                   {form.role === 'student' ? (
                     <div className="space-y-5">
-                      {/* Section 1: Academic & Enrollment Information */}
-                      <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-4">
-                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200/60 dark:border-white/5">
-                          <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                            <GraduationCap className="w-4 h-4" />
+                      {/* Section 1: Linked Student Information Card */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-800/30 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                              <GraduationCap className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span>{form.full_name || 'Student Account'}</span>
+                                {editingId && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                    Enrolled Cadet
+                                  </span>
+                                )}
+                              </h3>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                                Student ID: <span className="font-semibold text-primary">{form.student_id || form.username || 'Not assigned'}</span>
+                                {form.course && ` • ${form.course}`}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
-                              1. Academic & Enrollment Details
-                            </h3>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                              Official enrollment number, academic session, course, mode, and institute center
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-                          {/* Field 1: Enrollment No. */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Enrollment No. *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={form.enrollment_no}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setForm(prev => ({
-                                  ...prev,
-                                  enrollment_no: val,
-                                  student_id: prev.student_id ? prev.student_id : val,
-                                  username: prev.username ? prev.username : val,
-                                }));
+                          {editingId && onNavigateToStudent && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsFormOpen(false);
+                                onNavigateToStudent(form.student_id || form.username);
                               }}
-                              placeholder="e.g. 2600DFS26101"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 2: Session/Year */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Session / Year *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={form.session_year}
-                              onChange={(e) => setForm({ ...form, session_year: e.target.value })}
-                              placeholder="e.g. 01-Jul or 2026-2027"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 15: Mode (Reg/Corresponding ) */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Mode (Reg / Corresponding) *
-                            </label>
-                            <select
-                              value={form.mode}
-                              onChange={(e) => setForm({ ...form, mode: e.target.value })}
-                              className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
+                              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark transition-all flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0"
+                              title="Edit full personal and academic profile in Students List"
                             >
-                              <option value="REGULAR">REGULAR</option>
-                              <option value="CORRESPONDING">CORRESPONDING</option>
-                            </select>
-                          </div>
+                              <User className="w-3.5 h-3.5" />
+                              <span>Edit Bio in Students List</span>
+                            </button>
+                          )}
+                        </div>
 
-                          {/* Field 14: Course Name */}
-                          <div className="sm:col-span-2">
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Course Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={form.course}
-                              onChange={(e) => setForm({ ...form, course: e.target.value })}
-                              placeholder="e.g. DIPLOMA IN FIRE AND SAFETY MANAGEMENT"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            />
-                          </div>
-
-                          {/* Field 13: Center Name */}
-                          <div className="sm:col-span-1 lg:col-span-1">
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Center Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={form.center_name}
-                              onChange={(e) => setForm({ ...form, center_name: e.target.value })}
-                              placeholder="e.g. CENTRAL FIRE AND SAFETY INSTITUTE"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            />
-                          </div>
+                        <div className="p-2.5 rounded-xl bg-white/80 dark:bg-white/5 text-[11px] text-gray-600 dark:text-gray-300 border border-blue-100 dark:border-white/5 flex items-center justify-between gap-2">
+                          <span>
+                            Personal details (father, mother, phone numbers, address, Aadhaar) are managed in the <strong>Students List</strong>. Manage Users handles portal login security.
+                          </span>
                         </div>
                       </div>
 
-                      {/* Section 2: Personal & Family Identity */}
-                      <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-4">
-                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200/60 dark:border-white/5">
-                          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
-                              2. Personal & Family Identity
-                            </h3>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                              Student name, parentage, date of birth, identity card, and demographics
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-                          {/* Field 3: Student Name */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Student Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              maxLength={200}
-                              value={form.full_name}
-                              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                              placeholder="e.g. Rahul Vijay Patel"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            />
-                          </div>
-
-                          {/* Field 4: Father Name */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Father Name
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={200}
-                              value={form.father_name}
-                              onChange={(e) => setForm({ ...form, father_name: e.target.value })}
-                              placeholder="e.g. Vijay Patel"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            />
-                          </div>
-
-                          {/* Field 5: Mother Name */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Mother Name
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={200}
-                              value={form.mother_name}
-                              onChange={(e) => setForm({ ...form, mother_name: e.target.value })}
-                              placeholder="e.g. Geeta Patel"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            />
-                          </div>
-
-                          {/* Field 9: Date of Birth */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Date of Birth (DD-MM-YYYY) *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={form.birth_date}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                const digits = val.replace(/\D/g, '');
-                                setForm(prev => ({
-                                  ...prev,
-                                  birth_date: val,
-                                  password: (!prev.password || prev.password.length === 8) && digits.length >= 8 ? digits.slice(0, 8) : prev.password
-                                }));
-                              }}
-                              placeholder="e.g. 18-01-2007"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 10: Gender */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Gender *
-                            </label>
-                            <select
-                              value={form.gender}
-                              onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                              className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            >
-                              <option value="MALE">MALE</option>
-                              <option value="FEMALE">FEMALE</option>
-                              <option value="OTHER">OTHER</option>
-                            </select>
-                          </div>
-
-                          {/* Field 11: Category */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Category
-                            </label>
-                            <input
-                              type="text"
-                              value={form.category}
-                              onChange={(e) => setForm({ ...form, category: e.target.value })}
-                              placeholder="e.g. General / OBC / SC / ST"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 12: Aadhar Card */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Aadhar Card
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={20}
-                              value={form.aadhar_card}
-                              onChange={(e) => setForm({ ...form, aadhar_card: e.target.value })}
-                              placeholder="e.g. 1234 5678 9012"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 17: Nationality */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Nationality
-                            </label>
-                            <input
-                              type="text"
-                              value={form.nationality}
-                              onChange={(e) => setForm({ ...form, nationality: e.target.value })}
-                              placeholder="e.g. INDIAN"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 18: State */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              State
-                            </label>
-                            <input
-                              type="text"
-                              value={form.state}
-                              onChange={(e) => setForm({ ...form, state: e.target.value })}
-                              placeholder="e.g. GUJARAT"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-                        </div>
+                      {/* Section 2: Student Name */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                          Student Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={form.full_name}
+                          onChange={(e) => setForm(prev => ({ ...prev, full_name: e.target.value }))}
+                          placeholder="e.g. TALAR DHAVALKUMAR BHARATBHAI"
+                          className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                        />
                       </div>
 
-                      {/* Section 3: Contact & Address Information */}
-                      <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-4">
-                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200/60 dark:border-white/5">
-                          <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                            <Phone className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
-                              3. Contact & Address Details
-                            </h3>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                              Cadet phone, parents emergency contact, email address, and residential address
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-                          {/* Field 7: Student Contact Details */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Student Contact Details (Phone)
-                            </label>
-                            <input
-                              type="tel"
-                              maxLength={15}
-                              value={form.student_phone}
-                              onChange={(e) => setForm({ ...form, student_phone: e.target.value })}
-                              placeholder="e.g. 9876543210"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 8: Parents Contact Details */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Parents Contact Details (Phone)
-                            </label>
-                            <input
-                              type="tel"
-                              maxLength={15}
-                              value={form.father_phone}
-                              onChange={(e) => setForm({ ...form, father_phone: e.target.value })}
-                              placeholder="e.g. 9876543211"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 16: Email ID */}
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Email ID
-                            </label>
-                            <input
-                              type="email"
-                              value={form.email}
-                              onChange={(e) => setForm({ ...form, email: e.target.value })}
-                              placeholder="e.g. student@cfsi.edu.in"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-
-                          {/* Field 6: Present Address */}
-                          <div className="sm:col-span-2 lg:col-span-3">
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                              Present Address
-                            </label>
-                            <input
-                              type="text"
-                              value={form.present_address}
-                              onChange={(e) => setForm({ ...form, present_address: e.target.value })}
-                              placeholder="e.g. At & Po. Limda, Ta. Waghodia, Dist. Vadodara, Gujarat - 391760"
-                              className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-medium"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Section 4: Login & Authentication Credentials */}
+                      {/* Section 3: Portal Login Credentials */}
                       <div className="p-4 sm:p-5 rounded-2xl bg-primary/[0.03] border border-primary/20 space-y-4">
                         <div className="flex items-center gap-2 pb-2 border-b border-primary/10">
                           <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
@@ -1250,10 +966,10 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
                           </div>
                           <div>
                             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
-                              4. Portal Login Credentials
+                              Portal Login & Password
                             </h3>
                             <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                              Cadet user credentials for student dashboard and attendance login
+                              Credentials used by the student to sign in to the CFSI student portal
                             </p>
                           </div>
                         </div>
@@ -1275,7 +991,7 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
                                 value={form.student_id || form.username}
                                 onChange={(e) => {
                                   const val = e.target.value.trim();
-                                  setForm({ ...form, student_id: val, username: val });
+                                  setForm(prev => ({ ...prev, student_id: val, username: val }));
                                 }}
                                 placeholder="e.g. 262701"
                                 autoComplete="off"
@@ -1292,10 +1008,10 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
                           <div>
                             <div className="flex items-center justify-between mb-1">
                               <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                {editingId ? 'Password (optional)' : 'Password *'}
+                                {editingId ? 'New Password (optional)' : 'Password *'}
                               </label>
                               <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                {editingId ? 'Leave blank to keep current' : 'Default is DOB (DDMMYYYY)'}
+                                {editingId ? 'Leave blank to keep unchanged' : 'Min 8 characters'}
                               </span>
                             </div>
                             <div className="relative">
@@ -1308,15 +1024,15 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
                                 minLength={8}
                                 maxLength={72}
                                 value={form.password}
-                                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                placeholder={editingId ? '••••••••  (unchanged)' : 'DDMMYYYY or custom (min 8 chars)'}
+                                onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
+                                placeholder={editingId ? '••••••••  (unchanged)' : 'Enter initial password'}
                                 autoComplete="new-password"
                                 className="w-full pl-10 pr-10 py-2 rounded-xl text-xs sm:text-sm border border-gray-300 dark:border-white/10 bg-white dark:bg-[#12181f] text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary font-mono"
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="p-1 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                className="p-1 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
                                 title={showPassword ? 'Hide password' : 'Show password'}
                               >
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1325,7 +1041,6 @@ export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {})
                           </div>
                         </div>
                       </div>
-
                     </div>
                   ) : (
                     /* Teacher / Admin / Leader Account Flow */
