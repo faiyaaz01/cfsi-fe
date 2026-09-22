@@ -12,9 +12,7 @@ import {
   UserMinus,
   RefreshCw,
   Edit3,
-  Save,
-  Camera,
-  Trash2
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StudentVerificationRecord } from '../../types';
@@ -62,30 +60,11 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
     mode: 'REGULAR',
     centerName: '',
     presentAddress: '',
-    photoUrl: '',
   });
 
   const [isLeader, setIsLeader] = useState<boolean>(false);
   const [leaderAccount, setLeaderAccount] = useState<AuthUser | null>(null);
   const [busyLeadership, setBusyLeadership] = useState<boolean>(false);
-
-  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 3 * 1024 * 1024) {
-      toast.error('Image size must be under 3MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setEditForm((prev) => ({ ...prev, photoUrl: result }));
-      toast.success('Photo selected! Click "Save Changes" to upload.');
-    };
-    reader.readAsDataURL(file);
-  };
 
   const startEditing = (target?: StudentVerificationRecord | null | unknown) => {
     const c = (target && typeof target === 'object' && 'id' in target)
@@ -107,7 +86,6 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
       mode: c.mode || 'REGULAR',
       centerName: c.centerName || c.centerLocation || '',
       presentAddress: c.presentAddress || '',
-      photoUrl: c.photoUrl || '',
     });
     setIsEditing(true);
   };
@@ -197,13 +175,13 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         mode: editForm.mode,
         centerName: editForm.centerName.trim(),
         presentAddress: editForm.presentAddress.trim(),
-        photoUrl: editForm.photoUrl,
+        photoUrl: currentCadet.photoUrl || '',
       });
 
       const merged: StudentVerificationRecord = {
         ...currentCadet,
         ...updatedProfile,
-        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : editForm.photoUrl,
+        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : currentCadet.photoUrl,
         id: currentCadet.id,
         rollNo: currentCadet.rollNo,
         course: currentCadet.course,
@@ -432,57 +410,6 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
 
             {isEditing ? (
               <div className="bg-primary/5 dark:bg-white/5 border border-primary/20 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
-                {/* Upload Photo Section */}
-                <div className="p-4 sm:p-4.5 rounded-2xl bg-white/70 dark:bg-white/5 border border-gray-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center gap-4">
-                  <div className="relative group shrink-0">
-                    <UserAvatar
-                      photoUrl={editForm.photoUrl}
-                      name={editForm.name || currentCadet.name}
-                      size="lg"
-                      className="border-2 border-primary/20 shadow-sm"
-                    />
-                    {editForm.photoUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setEditForm(prev => ({ ...prev, photoUrl: '' }))}
-                        className="absolute -top-1 -right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-md transition-all cursor-pointer"
-                        title="Remove photo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex-1 text-center sm:text-left space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                      <label className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-2 cursor-pointer shadow-xs">
-                        <Camera className="w-4 h-4" />
-                        <span>{editForm.photoUrl ? 'Change Photo' : 'Upload Student Photo'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoFileChange}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {editForm.photoUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setEditForm(prev => ({ ...prev, photoUrl: '' }))}
-                          className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove Photo</span>
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
-                      Upload student photo (JPG, PNG or WEBP, max 3MB). Changes will save when clicking "Save Changes".
-                    </p>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs sm:text-[12.5px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
