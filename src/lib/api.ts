@@ -36,6 +36,29 @@ export function getAttendanceStreamUrl(): string {
   return `${API_BASE_URL}/attendance/stream`;
 }
 
+/**
+ * Normalizes image URLs:
+ * - Automatically transforms Google Drive view links to direct image stream URLs (lh3.googleusercontent.com/d/ID)
+ * - Preserves local uploaded paths (/api/uploads/...) and standard web URLs
+ */
+export function normalizeImageUrl(url?: string | null): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  // Google Drive: https://drive.google.com/file/d/FILE_ID/view... or ?id=FILE_ID
+  const driveFileMatch = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
+  }
+  const driveIdMatch = trimmed.match(/drive\.google\.com\/(?:open|uc)\?id=([a-zA-Z0-9_-]+)/);
+  if (driveIdMatch && driveIdMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+  }
+
+  return trimmed;
+}
+
 export type UserRole = 'admin' | 'teacher' | 'student' | 'leader';
 
 export interface AuthUser {
@@ -780,5 +803,23 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to delete news');
     }
+  },
+
+  /** Upload an image file directly to the institute's private local disk storage */
+  async uploadImage(file: File): Promise<{ url: string; filename: string; size: number; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetchWithAuth('/web/upload-image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload image to server');
+    }
+
+    return response.json();
   },
 };
