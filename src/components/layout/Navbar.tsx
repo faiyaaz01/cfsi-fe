@@ -341,7 +341,7 @@ export const Navbar: React.FC = () => {
 
                         {isAdminLogged && (
                           <Link
-                            to="/users"
+                            to="/dashboard?tab=users"
                             onClick={() => setProfileDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 transition-colors"
                           >
@@ -505,7 +505,7 @@ export const Navbar: React.FC = () => {
 
                     {isAdminLogged && (
                       <Link
-                        to="/users"
+                        to="/dashboard?tab=users"
                         onClick={() => setMobileMenuOpen(false)}
                         className="col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-all"
                       >

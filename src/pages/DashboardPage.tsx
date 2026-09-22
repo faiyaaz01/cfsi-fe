@@ -58,6 +58,8 @@ import { CountUp } from '../components/common/CountUp';
 import { SkeletonTable, SkeletonMuster } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
 import { UserAvatar } from '../components/common/UserAvatar';
+import { UsersPage } from './UsersPage';
+import { WebManagementPage } from './WebManagementPage';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -66,16 +68,34 @@ export const DashboardPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
 
-  // Tabs: 'students' | 'attendance'
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance'>(
-    tabParam === 'attendance' ? 'attendance' : 'students'
-  );
+  // Tabs: 'students' | 'attendance' | 'users' | 'web'
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'users' | 'web'>(() => {
+    if (tabParam === 'attendance') return 'attendance';
+    if (tabParam === 'users') return 'users';
+    if (tabParam === 'web') return 'web';
+    return 'students';
+  });
 
   useEffect(() => {
     if (tabParam === 'attendance') {
       setActiveTab('attendance');
+    } else if (tabParam === 'users') {
+      setActiveTab('users');
+    } else if (tabParam === 'web') {
+      setActiveTab('web');
+    }
+    // Clean URL query so the browser address bar stays strictly /dashboard
+    if (window.location.search) {
+      window.history.replaceState({}, '', '/dashboard');
     }
   }, [tabParam]);
+
+  const handleSelectTab = (tab: 'students' | 'attendance' | 'users' | 'web') => {
+    setActiveTab(tab);
+    if (window.location.pathname !== '/dashboard' || window.location.search) {
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  };
   
   const confirm = useConfirm();
 
@@ -644,8 +664,8 @@ export const DashboardPage: React.FC = () => {
           {/* Students List */}
           <button
             type="button"
-            onClick={() => setActiveTab('students')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${
+            onClick={() => handleSelectTab('students')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               activeTab === 'students'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -658,8 +678,8 @@ export const DashboardPage: React.FC = () => {
           {/* Mark Attendance */}
           <button
             type="button"
-            onClick={() => setActiveTab('attendance')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${
+            onClick={() => handleSelectTab('attendance')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               activeTab === 'attendance'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -670,31 +690,32 @@ export const DashboardPage: React.FC = () => {
           </button>
 
           {/* Manage Users */}
-          <Link
-            to="/users"
-            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10 shrink-0"
+          <button
+            type="button"
+            onClick={() => handleSelectTab('users')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
+              activeTab === 'users'
+                ? 'bg-primary text-white shadow-md shadow-primary/20'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
+            }`}
           >
             <Users className="w-4 h-4" />
             <span>Manage Users</span>
-          </Link>
+          </button>
 
           {/* Web Management */}
-          <Link
-            to="/dashboard/web-management"
-            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10 shrink-0"
+          <button
+            type="button"
+            onClick={() => handleSelectTab('web')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
+              activeTab === 'web'
+                ? 'bg-primary text-white shadow-md shadow-primary/20'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
+            }`}
           >
             <Globe className="w-4 h-4 text-blue-500" />
             <span>Web Management</span>
-          </Link>
-
-          {/* Leadership & Faculty Assignment */}
-          <Link
-            to="/dashboard/leadership"
-            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10 shrink-0"
-          >
-            <Award className="w-4 h-4 text-indigo-500" />
-            <span>Leadership & Faculty</span>
-          </Link>
+          </button>
         </div>
 
         {/* ========================================================================= */}
@@ -1722,6 +1743,20 @@ export const DashboardPage: React.FC = () => {
             </div>
 
           </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: MANAGE USERS                                                        */}
+        {/* ========================================================================= */}
+        {activeTab === 'users' && (
+          <UsersPage isEmbedded />
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: WEB MANAGEMENT                                                      */}
+        {/* ========================================================================= */}
+        {activeTab === 'web' && (
+          <WebManagementPage isEmbedded />
         )}
 
 

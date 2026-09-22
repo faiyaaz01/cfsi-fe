@@ -103,7 +103,7 @@ const emptyForm: UserFormData = {
   state: 'GUJARAT',
 };
 
-export function UsersPage() {
+export function UsersPage({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [enrolledStudents, setEnrolledStudents] = useState<StudentVerificationRecord[]>([]);
@@ -624,19 +624,25 @@ export function UsersPage() {
   };
 
   return (
-    <div className="py-10 sm:py-14 bg-gray-50 dark:bg-dark-bg min-h-screen transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className={isEmbedded ? "w-full" : "py-10 sm:py-14 bg-gray-50 dark:bg-dark-bg min-h-screen transition-colors duration-300"}>
+      <div className={isEmbedded ? "w-full space-y-6" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8"}>
         
         {/* Navigation Breadcrumb & Back */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors mb-2"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Admin Dashboard</span>
-            </Link>
+            {!isEmbedded && (
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors mb-2"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Admin Dashboard</span>
+              </Link>
+            )}
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
+              <Users className="w-4 h-4" />
+              <span>User & Account Management</span>
+            </div>
             <h1 className="text-xl sm:text-2xl font-heading font-black tracking-tight text-gray-900 dark:text-white">
               User Management
             </h1>

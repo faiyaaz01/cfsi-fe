@@ -1,7 +1,4 @@
 import { AuthProvider, AuthGuard, GuestGuard } from './context/AuthContext';
-import { UsersPage } from './pages/UsersPage';
-import { WebManagementPage } from './pages/WebManagementPage';
-import { LeadershipManagementPage } from './pages/LeadershipManagementPage';
 import { LeaderDashboardPage } from './pages/LeaderDashboardPage';
 import { PortalPage } from './pages/PortalPage';
 import React from 'react';
@@ -60,9 +57,9 @@ const AppContent: React.FC = () => {
             </Route>
             <Route element={<AuthGuard roles={['admin']} />}>
               <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="dashboard/web-management" element={<WebManagementPage />} />
-              <Route path="dashboard/leadership" element={<LeadershipManagementPage />} />
-              <Route path="users" element={<UsersPage />} />
+              <Route path="dashboard/web-management" element={<Navigate to="/dashboard?tab=web" replace />} />
+              <Route path="dashboard/leadership" element={<Navigate to="/dashboard?tab=users" replace />} />
+              <Route path="users" element={<Navigate to="/dashboard?tab=users" replace />} />
             </Route>
             <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
             <Route element={<AuthGuard roles={['leader']} />}><Route path="leader/dashboard" element={<Navigate to="/student/dashboard" replace />} /></Route>

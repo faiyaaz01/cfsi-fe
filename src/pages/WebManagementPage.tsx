@@ -33,7 +33,11 @@ import { Course, NewsPost, NewsCategory, TrainingPost, GalleryImage, VideoItem }
 
 type SubTab = 'courses' | 'news' | 'drills' | 'photos' | 'videos' | 'display';
 
-export const WebManagementPage: React.FC = () => {
+interface WebManagementPageProps {
+  isEmbedded?: boolean;
+}
+
+export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded = false }) => {
   const [activeTab, setActiveTab] = useState<SubTab>('courses');
   const confirm = useConfirm();
 
@@ -777,18 +781,20 @@ export const WebManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-dark-bg text-gray-900 dark:text-white transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className={isEmbedded ? "w-full" : "min-h-screen bg-gray-50/50 dark:bg-dark-bg text-gray-900 dark:text-white transition-colors duration-300"}>
+      <div className={isEmbedded ? "w-full space-y-6" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"}>
         {/* Top Header Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors mb-2"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Admin Dashboard</span>
-            </Link>
+            {!isEmbedded && (
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors mb-2"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Admin Dashboard</span>
+              </Link>
+            )}
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
                 <Globe className="w-6 h-6" />
