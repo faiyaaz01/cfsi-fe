@@ -68,26 +68,23 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
   const [isLeader, setIsLeader] = useState<boolean>(false);
   const [leaderAccount, setLeaderAccount] = useState<AuthUser | null>(null);
   const [busyLeadership, setBusyLeadership] = useState<boolean>(false);
-  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
 
   const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Only image files (JPG, PNG, WEBP) are supported');
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Image size must be under 3MB');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be under 5MB');
-      return;
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setPendingPhotoFile(file);
-    setEditForm((prev) => ({ ...prev, photoUrl: previewUrl }));
-    toast.info('Photo selected! Click "Save Changes" below to upload to server.');
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setEditForm((prev) => ({ ...prev, photoUrl: result }));
+      toast.success('Photo selected! Click "Save Changes" to upload.');
+    };
+    reader.readAsDataURL(file);
   };
 
   const startEditing = (target?: StudentVerificationRecord | null | unknown) => {
@@ -95,7 +92,6 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
       ? (target as StudentVerificationRecord)
       : currentCadet;
     if (!c) return;
-    setPendingPhotoFile(null);
     setEditForm({
       name: c.name || '',
       fatherName: c.fatherName || '',
@@ -186,21 +182,6 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
 
     try {
       setIsSaving(true);
-      let finalPhotoUrl = editForm.photoUrl;
-
-      if (pendingPhotoFile) {
-        toast.loading('Uploading student photo to server disk...', { id: 'cadet-photo-upload' });
-        try {
-          const uploadRes = await api.uploadImage(pendingPhotoFile);
-          finalPhotoUrl = uploadRes.url;
-          toast.success('Photo uploaded to server disk!', { id: 'cadet-photo-upload' });
-        } catch (uploadErr: any) {
-          toast.error(uploadErr.message || 'Failed to upload image', { id: 'cadet-photo-upload' });
-          setIsSaving(false);
-          return;
-        }
-      }
-
       const updatedProfile = await api.adminUpdateStudent(currentCadet.id, {
         name: editForm.name.trim(),
         fatherName: editForm.fatherName.trim(),
@@ -216,13 +197,13 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         mode: editForm.mode,
         centerName: editForm.centerName.trim(),
         presentAddress: editForm.presentAddress.trim(),
-        photoUrl: finalPhotoUrl,
+        photoUrl: editForm.photoUrl,
       });
 
       const merged: StudentVerificationRecord = {
         ...currentCadet,
         ...updatedProfile,
-        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : finalPhotoUrl,
+        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : editForm.photoUrl,
         id: currentCadet.id,
         rollNo: currentCadet.rollNo,
         course: currentCadet.course,
@@ -230,7 +211,6 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         verificationStatus: currentCadet.verificationStatus,
       };
 
-      setPendingPhotoFile(null);
       setDisplayCadet(merged);
       setIsEditing(false);
       onStudentUpdated?.(merged);
@@ -464,10 +444,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                     {editForm.photoUrl && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setPendingPhotoFile(null);
-                          setEditForm(prev => ({ ...prev, photoUrl: '' }));
-                        }}
+                        onClick={() => setEditForm(prev => ({ ...prev, photoUrl: '' }))}
                         className="absolute -top-1 -right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-md transition-all cursor-pointer"
                         title="Remove photo"
                       >
@@ -492,10 +469,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                       {editForm.photoUrl && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setPendingPhotoFile(null);
-                            setEditForm(prev => ({ ...prev, photoUrl: '' }));
-                          }}
+                          onClick={() => setEditForm(prev => ({ ...prev, photoUrl: '' }))}
                           className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -504,7 +478,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                       )}
                     </div>
                     <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
-                      Upload student photo (JPG, PNG or WEBP, max 5MB). Photo is stored privately on institute server disk when clicking "Save Changes".
+                      Upload student photo (JPG, PNG or WEBP, max 3MB). Changes will save when clicking "Save Changes".
                     </p>
                   </div>
                 </div>

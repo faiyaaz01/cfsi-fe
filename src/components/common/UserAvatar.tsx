@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { User } from 'lucide-react';
 import cfsiLogo from '../../assets/cfsi-logo.jpg';
-import { normalizeImageUrl } from '../../lib/api';
 
 interface UserAvatarProps {
   photoUrl?: string | null;
@@ -38,25 +37,24 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
 
-  const cleanPhotoUrl = normalizeImageUrl(photoUrl);
-
   // Filter out demo photos (e.g. unsplash or placeholder urls)
-  const isDemoOrInvalid = !cleanPhotoUrl || 
-    cleanPhotoUrl.includes('placeholder') || 
-    cleanPhotoUrl.includes('demo') ||
+  const isDemoOrInvalid = !photoUrl || 
+    photoUrl.includes('unsplash.com') || 
+    photoUrl.includes('placeholder') || 
+    photoUrl.includes('demo') ||
     imageError;
 
   const initial = name.trim() ? name.trim().charAt(0).toUpperCase() : '';
-  const shouldShowLogo = useLogo || role === 'admin' || (!cleanPhotoUrl && !initial);
+  const shouldShowLogo = useLogo || role === 'admin' || (!photoUrl && !initial);
 
   const containerSizeClass = sizeClasses[size] || sizeClasses.md;
   const iconSizeClass = iconSizes[size] || iconSizes.md;
 
-  if (!isDemoOrInvalid && cleanPhotoUrl) {
+  if (!isDemoOrInvalid && photoUrl) {
     return (
       <div className={`relative rounded-full overflow-hidden shrink-0 border border-gray-200 dark:border-white/10 ${containerSizeClass} ${className}`}>
         <img
-          src={cleanPhotoUrl}
+          src={photoUrl}
           alt={name || 'User Profile'}
           className="w-full h-full object-cover"
           onError={() => setImageError(true)}

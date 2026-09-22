@@ -26,7 +26,6 @@ import {
 import { toast } from 'sonner';
 import { FlatCard } from '../components/common/FlatCard';
 import { CountUp } from '../components/common/CountUp';
-import { ImageUploadInput } from '../components/common/ImageUploadInput';
 import { useNews } from '../context/NewsContext';
 import { useWebContent, DisplaySettings } from '../context/WebContentContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -2202,13 +2201,18 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   </div>
                 </div>
 
-                <ImageUploadInput
-                  label="News Thumbnail / Cover Image (Optional)"
-                  value={newsForm.imageUrl}
-                  onChange={(url) => setNewsForm(prev => ({ ...prev, imageUrl: url }))}
-                  placeholder="https://... or Google Drive image link"
-                  helperText="Upload image directly from device (stored on private server disk) or paste image link."
-                />
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                    Image Thumbnail URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={newsForm.imageUrl}
+                    onChange={(e) => setNewsForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
@@ -2342,13 +2346,18 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   </div>
                 </div>
 
-                <ImageUploadInput
-                  label="Drill Banner / Cover Photo"
-                  value={drillForm.image}
-                  onChange={(url) => setDrillForm(prev => ({ ...prev, image: url }))}
-                  placeholder="https://... or Google Drive image link"
-                  helperText="Upload drill photo from computer (stored on private server disk) or paste link."
-                />
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={drillForm.image}
+                    onChange={(e) => setDrillForm(prev => ({ ...prev, image: e.target.value }))}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
@@ -2483,14 +2492,19 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   </div>
                 </div>
 
-                <ImageUploadInput
-                  label="Gallery Photo"
-                  required
-                  value={photoForm.imageUrl}
-                  onChange={(url) => setPhotoForm(prev => ({ ...prev, imageUrl: url }))}
-                  placeholder="https://... or Google Drive image link"
-                  helperText="Upload photo from your computer (stored on private server disk) or paste image URL."
-                />
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                    Image URL *
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={photoForm.imageUrl}
+                    onChange={(e) => setPhotoForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
