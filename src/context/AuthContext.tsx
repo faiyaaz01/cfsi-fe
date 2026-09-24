@@ -50,13 +50,7 @@ export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
   const {user, loading} = useAuth();
   const location = useLocation();
   if (loading) {
-    return (
-      <BrandLoader
-        size="page"
-        message="Verifying Institute Credentials..."
-        submessage="Connecting to CFSI secure registry"
-      />
-    );
+    return <BrandLoader size="page" message="Loading..." />;
   }
   if (!user) {
     const target = location.pathname.startsWith('/student') ? '/student-login' : '/institute-login';
@@ -68,13 +62,7 @@ export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
 export function GuestGuard() {
   const {user, loading} = useAuth();
   if (loading) {
-    return (
-      <BrandLoader
-        size="page"
-        message="Checking Session Status..."
-        submessage="Central Fire Safety Institute Gateway"
-      />
-    );
+    return <BrandLoader size="page" message="Loading..." />;
   }
   return user ? <Navigate to={homeFor(user)} replace /> : <Outlet />;
 }
