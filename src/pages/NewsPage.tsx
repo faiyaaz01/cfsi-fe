@@ -17,10 +17,11 @@ import { useNews } from '../context/NewsContext';
 import { NewsPost, NewsCategory } from '../types';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
+import { SkeletonNews } from '../components/common/Skeleton';
 import { toast } from 'sonner';
 
 export const NewsPage: React.FC = () => {
-  const { posts } = useNews();
+  const { posts, isLoading } = useNews();
   const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -209,7 +210,9 @@ export const NewsPage: React.FC = () => {
           </AnimatePresence>
         </motion.div>
 
-        {posts.length === 0 ? (
+        {isLoading && posts.length === 0 ? (
+          <SkeletonNews count={6} />
+        ) : posts.length === 0 ? (
           <div className="text-center py-20 px-6 rounded-2xl bg-gray-50/70 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto my-12">
             <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-4">
               <Newspaper className="w-7 h-7" />

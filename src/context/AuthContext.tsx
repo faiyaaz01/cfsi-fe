@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { Navigate, Outlet, useLocation, Link } from 'react-router-dom';
 import { api, AuthUser, clearAuth, getToken } from '../lib/api';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 const AuthContext = createContext<{ user: AuthUser | null; loading: boolean; refresh: () => Promise<void>; logout: () => Promise<void> }>(null!);
 export const useAuth = () => useContext(AuthContext);
@@ -48,7 +49,15 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
 export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
   const {user, loading} = useAuth();
   const location = useLocation();
-  if (loading) return <p className="p-12 text-center" role="status">Checking your session…</p>;
+  if (loading) {
+    return (
+      <BrandLoader
+        size="page"
+        message="Verifying Institute Credentials..."
+        submessage="Connecting to CFSI secure registry"
+      />
+    );
+  }
   if (!user) {
     const target = location.pathname.startsWith('/student') ? '/student-login' : '/institute-login';
     return <Navigate to={target} state={{from: location.pathname}} replace />;
@@ -58,6 +67,14 @@ export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
 }
 export function GuestGuard() {
   const {user, loading} = useAuth();
-  if (loading) return <p className="p-12 text-center">Checking your session…</p>;
+  if (loading) {
+    return (
+      <BrandLoader
+        size="page"
+        message="Checking Session Status..."
+        submessage="Central Fire Safety Institute Gateway"
+      />
+    );
+  }
   return user ? <Navigate to={homeFor(user)} replace /> : <Outlet />;
 }

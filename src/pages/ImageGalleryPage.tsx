@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Image as ImageIcon, X, ChevronLeft, ChevronRight, Calendar, ZoomIn } from 'lucide-react';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
+import { SkeletonGallery } from '../components/common/Skeleton';
 import { useWebContent } from '../context/WebContentContext';
 
 type CategoryFilter = 'All' | 'Training' | 'Events' | 'Equipment';
@@ -12,7 +13,7 @@ const categories: CategoryFilter[] = ['All', 'Training', 'Events', 'Equipment'];
 export const ImageGalleryPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
-  const { photos } = useWebContent();
+  const { photos, isLoading } = useWebContent();
 
   const filteredImages = activeCategory === 'All'
     ? photos
@@ -83,7 +84,9 @@ export const ImageGalleryPage: React.FC = () => {
               ))}
             </div>
 
-            {filteredImages.length === 0 ? (
+            {isLoading && photos.length === 0 ? (
+              <SkeletonGallery count={6} className="py-6" />
+            ) : filteredImages.length === 0 ? (
               <div className="text-center py-12 text-sm text-gray-500">
                 No images available under category &quot;{activeCategory}&quot;.
               </div>

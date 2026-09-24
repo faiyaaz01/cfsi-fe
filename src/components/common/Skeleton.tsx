@@ -233,3 +233,118 @@ export const SkeletonMuster: React.FC = () => {
     </div>
   );
 };
+
+/**
+ * News & Circulars grid skeleton loader matching NewsPage.tsx.
+ */
+export const SkeletonNews: React.FC<{ count?: number; className?: string }> = ({
+  count = 6,
+  className = '',
+}) => {
+  return (
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 ${className}`}>
+      {Array.from({ length: count }).map((_, idx) => (
+        <div
+          key={idx}
+          className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-4"
+        >
+          {/* Top row: badge + date */}
+          <div className="flex items-center justify-between">
+            <Skeleton className="w-24 h-6 rounded-full" />
+            <Skeleton className="w-20 h-4 rounded" />
+          </div>
+          {/* Title */}
+          <div className="space-y-2">
+            <Skeleton className="w-full h-6 rounded-lg" />
+            <Skeleton className="w-4/5 h-6 rounded-lg" />
+          </div>
+          {/* Excerpt */}
+          <div className="space-y-1.5 pt-1">
+            <Skeleton className="w-full h-3.5 rounded" />
+            <Skeleton className="w-full h-3.5 rounded" />
+            <Skeleton className="w-2/3 h-3.5 rounded" />
+          </div>
+          {/* Bottom read more action */}
+          <div className="pt-3 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+            <Skeleton className="w-24 h-4 rounded" />
+            <Skeleton className="w-6 h-6 rounded-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/**
+ * Course programs grid skeleton loader matching CoursesPage.tsx.
+ */
+export const SkeletonCourse: React.FC<{ count?: number; className?: string }> = ({
+  count = 4,
+  className = '',
+}) => {
+  return (
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 ${className}`}>
+      {Array.from({ length: count }).map((_, idx) => (
+        <div
+          key={idx}
+          className="p-6 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-5"
+        >
+          {/* Header: Icon + Badge */}
+          <div className="flex items-center justify-between">
+            <Skeleton className="w-12 h-12 rounded-xl" />
+            <Skeleton className="w-24 h-6 rounded-full" />
+          </div>
+          {/* Course Title & Code */}
+          <div className="space-y-2">
+            <Skeleton className="w-20 h-3.5 rounded" />
+            <Skeleton className="w-full h-6 rounded-lg" />
+            <Skeleton className="w-3/4 h-6 rounded-lg" />
+          </div>
+          {/* Details Pills: Duration, Eligibility */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Skeleton className="h-8 rounded-xl" />
+            <Skeleton className="h-8 rounded-xl" />
+          </div>
+          {/* Features list */}
+          <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-white/5">
+            <Skeleton className="w-5/6 h-3.5 rounded" />
+            <Skeleton className="w-4/5 h-3.5 rounded" />
+            <Skeleton className="w-2/3 h-3.5 rounded" />
+          </div>
+          {/* CTA Button */}
+          <div className="pt-2">
+            <Skeleton className="w-full h-11 rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/**
+ * Gallery photo & video grid skeleton loader matching ImageGalleryPage & VideoGalleryPage.
+ */
+export const SkeletonGallery: React.FC<{ count?: number; className?: string }> = ({
+  count = 8,
+  className = '',
+}) => {
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 ${className}`}>
+      {Array.from({ length: count }).map((_, idx) => (
+        <div
+          key={idx}
+          className="rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm overflow-hidden space-y-3"
+        >
+          {/* Image Placeholder */}
+          <Skeleton className="w-full aspect-[4/3] rounded-none" />
+          {/* Caption */}
+          <div className="p-4 space-y-2">
+            <Skeleton className="w-3/4 h-4 rounded-lg" />
+            <Skeleton className="w-1/2 h-3 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+

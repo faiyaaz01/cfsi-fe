@@ -4,12 +4,13 @@ import { Play, X, Clock, Video, Tag } from 'lucide-react';
 import { VideoItem } from '../types';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
+import { SkeletonGallery } from '../components/common/Skeleton';
 import { useWebContent } from '../context/WebContentContext';
 
 export const VideoGalleryPage: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const { videos } = useWebContent();
+  const { videos, isLoading } = useWebContent();
 
   const categories = ['All', 'Practical Drill', 'Search & Rescue', 'Fire Demo', 'Campus Life'];
 
@@ -28,7 +29,9 @@ export const VideoGalleryPage: React.FC = () => {
           subtitle="Watch official ground drill recordings, foam tender fire extinguishing operations, high-angle rescue, and SCBA smoke chamber exercises."
         />
 
-        {videos.length === 0 ? (
+        {isLoading && videos.length === 0 ? (
+          <SkeletonGallery count={6} className="my-8" />
+        ) : videos.length === 0 ? (
           <div className="text-center py-20 px-6 rounded-2xl bg-gray-50/70 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto my-12">
             <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-4">
               <Video className="w-7 h-7" />

@@ -5,6 +5,7 @@ import { Course } from '../types';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { CourseModal } from '../components/home/CourseModal';
+import { SkeletonCourse } from '../components/common/Skeleton';
 import { Link, useParams } from 'react-router-dom';
 import { useWebContent } from '../context/WebContentContext';
 
@@ -18,7 +19,7 @@ const iconMap: Record<string, React.ElementType> = {
 export const CoursesPage: React.FC = () => {
   const { slug } = useParams<{ slug?: string }>();
   const [selectedCourseModal, setSelectedCourseModal] = useState<Course | null>(null);
-  const { courses } = useWebContent();
+  const { courses, isLoading } = useWebContent();
 
   // If a slug is specified in URL, highlight or pre-open that course
   const activeCourseFromSlug = slug ? courses.find((c) => c.slug === slug) : null;
@@ -34,7 +35,9 @@ export const CoursesPage: React.FC = () => {
           subtitle="Comprehensive vocational programs crafted for students seeking immediate placement in municipal fire brigades, chemical corridors, refineries, and corporate safety divisions."
         />
 
-        {courses.length === 0 ? (
+        {isLoading && courses.length === 0 ? (
+          <SkeletonCourse count={3} className="my-8" />
+        ) : courses.length === 0 ? (
           <div className="text-center py-16 sm:py-20 px-4 sm:px-6 rounded-2xl bg-gray-50/70 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto my-10 sm:my-12">
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />

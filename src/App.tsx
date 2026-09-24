@@ -25,6 +25,8 @@ import { InstituteLoginPage } from './pages/InstituteLoginPage';
 import { StudentDashboardPage } from './pages/StudentDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SlotAttendancePage } from './pages/SlotAttendancePage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { PageLoader } from './components/common/PageLoader';
 
 const AppContent: React.FC = () => {
   const { theme } = useTheme();
@@ -37,43 +39,46 @@ const AppContent: React.FC = () => {
         richColors 
         closeButton 
       />
-      <Router><AuthProvider>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="about" element={<AboutPage />} />
-            <Route path="mission" element={<Navigate to="/about#mission" replace />} />
-            <Route path="gallery/images" element={<ImageGalleryPage />} />
-            <Route path="gallery/videos" element={<VideoGalleryPage />} />
-            <Route path="courses" element={<CoursesPage />} />
-            <Route path="courses/:slug" element={<CoursesPage />} />
-            <Route path="news" element={<NewsPage />} />
-            <Route path="contact" element={<ContactPage />} />
-            {/* Separate Login Portals (Student & Institute) */}
-            <Route element={<GuestGuard />}>
-              <Route path="student-login" element={<StudentLoginPage />} />
-              <Route path="institute-login" element={<InstituteLoginPage />} />
-              <Route path="login" element={<LoginPage />} />
+      <Router>
+        <PageLoader />
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="mission" element={<Navigate to="/about#mission" replace />} />
+              <Route path="gallery/images" element={<ImageGalleryPage />} />
+              <Route path="gallery/videos" element={<VideoGalleryPage />} />
+              <Route path="courses" element={<CoursesPage />} />
+              <Route path="courses/:slug" element={<CoursesPage />} />
+              <Route path="news" element={<NewsPage />} />
+              <Route path="contact" element={<ContactPage />} />
+              {/* Separate Login Portals (Student & Institute) */}
+              <Route element={<GuestGuard />}>
+                <Route path="student-login" element={<StudentLoginPage />} />
+                <Route path="institute-login" element={<InstituteLoginPage />} />
+                <Route path="login" element={<LoginPage />} />
+              </Route>
+              <Route element={<AuthGuard roles={['admin']} />}>
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="dashboard/web-management" element={<Navigate to="/dashboard?tab=web" replace />} />
+                <Route path="dashboard/leadership" element={<Navigate to="/dashboard?tab=users" replace />} />
+                <Route path="users" element={<Navigate to="/dashboard?tab=users" replace />} />
+              </Route>
+              <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
+              <Route element={<AuthGuard roles={['leader']} />}><Route path="leader/dashboard" element={<Navigate to="/student/dashboard" replace />} /></Route>
+              <Route element={<AuthGuard roles={['student', 'leader']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
+              <Route element={<AuthGuard roles={['student', 'teacher', 'admin', 'leader']} />}><Route path="profile" element={<ProfilePage />} /></Route>
+              <Route element={<AuthGuard roles={['admin', 'teacher', 'leader']} />}>
+                <Route path="student-data" element={<StudentDataPage />} />
+                <Route path="attendance/:date/:slot" element={<SlotAttendancePage />} />
+                <Route path="dashboard/attendance/:date/:slot" element={<SlotAttendancePage />} />
+              </Route>
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
-            <Route element={<AuthGuard roles={['admin']} />}>
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="dashboard/web-management" element={<Navigate to="/dashboard?tab=web" replace />} />
-              <Route path="dashboard/leadership" element={<Navigate to="/dashboard?tab=users" replace />} />
-              <Route path="users" element={<Navigate to="/dashboard?tab=users" replace />} />
-            </Route>
-            <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
-            <Route element={<AuthGuard roles={['leader']} />}><Route path="leader/dashboard" element={<Navigate to="/student/dashboard" replace />} /></Route>
-            <Route element={<AuthGuard roles={['student', 'leader']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
-            <Route element={<AuthGuard roles={['student', 'teacher', 'admin', 'leader']} />}><Route path="profile" element={<ProfilePage />} /></Route>
-            <Route element={<AuthGuard roles={['admin', 'teacher', 'leader']} />}>
-              <Route path="student-data" element={<StudentDataPage />} />
-              <Route path="attendance/:date/:slot" element={<SlotAttendancePage />} />
-              <Route path="dashboard/attendance/:date/:slot" element={<SlotAttendancePage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </AuthProvider></Router>
+          </Routes>
+        </AuthProvider>
+      </Router>
     </>
   );
 };
