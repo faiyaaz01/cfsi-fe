@@ -6,9 +6,17 @@ import { AttendanceRecord, StudentProfile, StudentVerificationRecord, Course, Tr
  */
 
 const rawApiEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-const API_BASE_URL = rawApiEnv
+export const API_BASE_URL = rawApiEnv
   ? (rawApiEnv.endsWith('/api') ? rawApiEnv.replace(/\/$/, '') : `${rawApiEnv.replace(/\/$/, '')}/api`)
   : '/api';
+
+export const APP_ENV = (import.meta.env.VITE_APP_ENV as string | undefined)?.trim() || (import.meta.env.DEV ? 'development' : 'production');
+
+if (import.meta.env.DEV) {
+  // eslint-disable-next-line no-console
+  console.info(`[CFSI Client] Mode: ${import.meta.env.MODE} | Environment: ${APP_ENV} | Base URL: ${API_BASE_URL}`);
+}
+
 const TOKEN_STORAGE_KEY = 'cfsi_jwt_token';
 const USER_STORAGE_KEY = 'cfsi_auth_user';
 
