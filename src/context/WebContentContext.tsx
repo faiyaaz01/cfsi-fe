@@ -8,6 +8,7 @@ export const STORAGE_TRAINING = 'cfsi_training_data';
 export const STORAGE_GALLERY = 'cfsi_gallery_images_data';
 export const STORAGE_VIDEOS = 'cfsi_videos_data';
 export const STORAGE_DISPLAY_SETTINGS = 'cfsi_display_settings';
+export const STORAGE_HOMEPAGE_CONFIG = 'cfsi_homepage_config';
 
 export interface DisplaySettings {
   heroNoticeBanner: boolean;
@@ -25,6 +26,125 @@ export interface DisplaySettings {
   bulkStudentUpload: boolean;
   maintenanceModeBanner: boolean;
 }
+
+export interface StatItemConfig {
+  value: number;
+  suffix: string;
+  label: string;
+  sublabel: string;
+}
+
+export interface HomePageConfig {
+  // 1. Top Emergency Notice Bar
+  showNoticeBanner: boolean;
+  noticeBannerText: string;
+  noticeBannerBadge: string;
+  noticeBannerLink: string;
+  noticeBannerBtnText: string;
+
+  // 2. Hero Section
+  showHero: boolean;
+  heroHeadline: string;
+  heroSubheadline: string;
+  heroTagline: string;
+  heroPrimaryBtnText: string;
+  heroPrimaryBtnLink: string;
+  heroSecondaryBtnText: string;
+  heroSecondaryBtnLink: string;
+
+  // 3. Breaking News Ticker & Section
+  showNewsSection: boolean;
+  showNewsTicker: boolean;
+  newsSectionTitle: string;
+  newsSectionSubtitle: string;
+  featuredNewsIds: string[]; // Specific IDs of news to show on home! Empty = take top 3
+
+  // 4. Featured Courses
+  showCoursesSection: boolean;
+  coursesSectionTitle: string;
+  coursesSectionSubtitle: string;
+  featuredCourseIds: string[]; // Specific IDs of courses to show on home! Empty = show all
+
+  // 5. Student Portal Quick Banner
+  showPortalBanner: boolean;
+  portalBannerTitle: string;
+  portalBannerSubtitle: string;
+  portalBannerBadge: string;
+
+  // 6. Stats Counter Bar
+  showStatsSection: boolean;
+  stats: StatItemConfig[];
+
+  // 7. Ground Training & Drills
+  showTrainingSection: boolean;
+  trainingSectionTitle: string;
+  trainingSectionSubtitle: string;
+  featuredDrillIds: string[]; // Specific IDs of drills to show on home! Empty = show all
+
+  // 8. Why Choose Us (Core Pillars)
+  showWhyChooseUs: boolean;
+  whyChooseUsTitle: string;
+  whyChooseUsSubtitle: string;
+
+  // 9. Recruiters & Placement Partners
+  showRecruitersStrip: boolean;
+
+  // 10. Testimonials / Cadet Reviews
+  showTestimonials: boolean;
+}
+
+export const defaultHomePageConfig: HomePageConfig = {
+  showNoticeBanner: true,
+  noticeBannerText: 'Admissions Open 2026 - Central Fire Safety Institute Vadodara',
+  noticeBannerBadge: 'Notice',
+  noticeBannerLink: '/about#verification',
+  noticeBannerBtnText: 'Verify Student',
+
+  showHero: true,
+  heroHeadline: 'Central Fire Safety Institute',
+  heroSubheadline: 'An ISO 9001:2015 Certified Institute • Approved by AIIFTSM',
+  heroTagline: "From small trainings to big achievements — shaping future fire commanders.",
+  heroPrimaryBtnText: 'Explore Courses',
+  heroPrimaryBtnLink: '#courses',
+  heroSecondaryBtnText: 'Student Portal',
+  heroSecondaryBtnLink: '/student-login',
+
+  showNewsSection: true,
+  showNewsTicker: true,
+  newsSectionTitle: 'Latest News & Events',
+  newsSectionSubtitle: 'Stay informed with real-time updates from our Vadodara campus, drills, and admissions.',
+  featuredNewsIds: [],
+
+  showCoursesSection: true,
+  coursesSectionTitle: 'OUR COURSES',
+  coursesSectionSubtitle: 'Government-recognized fire engineering and industrial safety certifications designed for high-demand municipal and corporate careers.',
+  featuredCourseIds: [],
+
+  showPortalBanner: true,
+  portalBannerTitle: 'Check Live Drill Attendance & Training Records',
+  portalBannerSubtitle: 'Students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.',
+  portalBannerBadge: 'Student Academic Portal',
+
+  showStatsSection: true,
+  stats: [
+    { value: 500, suffix: '+', label: 'Students Trained', sublabel: 'Serving across India' },
+    { value: 4, suffix: '', label: 'Govt. Affiliated Courses', sublabel: 'Certificate to Diploma' },
+    { value: 15, suffix: '+', label: 'Years Experience', sublabel: 'In Fire Safety Training' },
+    { value: 10, suffix: '+', label: 'Cities Across India', sublabel: 'Alumni Placement Network' }
+  ],
+
+  showTrainingSection: true,
+  trainingSectionTitle: 'HANDS-ON GROUND TRAINING',
+  trainingSectionSubtitle: 'Tactical simulations engineered to build muscle memory, fearless situational awareness, and split-second emergency decision making.',
+  featuredDrillIds: [],
+
+  showWhyChooseUs: true,
+  whyChooseUsTitle: 'EMPOWERING FUTURE SAFETY LEADERS',
+  whyChooseUsSubtitle: 'Discover what makes Central Fire Safety Institute the premier destination for fire engineering and disaster management in Gujarat.',
+
+  showRecruitersStrip: true,
+  showTestimonials: true,
+};
 
 export const defaultDisplaySettings: DisplaySettings = {
   heroNoticeBanner: true,
@@ -89,6 +209,11 @@ interface WebContentContextType {
   toggleDisplaySetting: (key: keyof DisplaySettings, label: string) => Promise<void>;
   resetDisplaySettings: () => Promise<void>;
   refreshAllContent: () => Promise<void>;
+
+  // Dedicated Homepage Configuration
+  homePageConfig: HomePageConfig;
+  updateHomePageConfig: (updated: Partial<HomePageConfig>) => Promise<void>;
+  resetHomePageConfig: () => Promise<void>;
 }
 
 const WebContentContext = createContext<WebContentContextType | undefined>(undefined);
@@ -156,6 +281,16 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return defaultDisplaySettings;
   });
 
+  const [homePageConfig, setHomePageConfig] = useState<HomePageConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_HOMEPAGE_CONFIG);
+      if (saved) return { ...defaultHomePageConfig, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error(e);
+    }
+    return defaultHomePageConfig;
+  });
+
   const [isLoading, setIsLoading] = useState(false);
 
   // Broadcast helper
@@ -194,16 +329,23 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch {}
   }, [displaySettings]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_HOMEPAGE_CONFIG, JSON.stringify(homePageConfig));
+    } catch {}
+  }, [homePageConfig]);
+
   // Load from backend in real time
   const refreshAllContent = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [backendCourses, backendDrills, backendPhotos, backendVideos, backendSettings] = await Promise.allSettled([
+      const [backendCourses, backendDrills, backendPhotos, backendVideos, backendSettings, backendHomeConfig] = await Promise.allSettled([
         api.getCourses(),
         api.getDrills(),
         api.getPhotos(),
         api.getVideos(),
-        api.getDisplaySettings()
+        api.getDisplaySettings(),
+        api.getHomePageConfig()
       ]);
 
       if (backendCourses.status === 'fulfilled' && Array.isArray(backendCourses.value)) {
@@ -225,6 +367,9 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (backendSettings.status === 'fulfilled' && backendSettings.value) {
         setDisplaySettings(prev => ({ ...prev, ...backendSettings.value }));
       }
+      if (backendHomeConfig.status === 'fulfilled' && backendHomeConfig.value) {
+        setHomePageConfig(prev => ({ ...prev, ...backendHomeConfig.value }));
+      }
     } catch (e) {
       console.warn('Real-time backend sync notice:', e);
     } finally {
@@ -235,38 +380,39 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     refreshAllContent();
 
-    // Listen to real-time events across components/tabs
-    const handleSync = (e: any) => {
-      const eventType = e?.detail?.type;
+    // Listen to real-time storage events from other tabs
+    const handleSync = (e: StorageEvent) => {
       try {
-        if (eventType === 'courses' || !eventType) {
+        if (e.key === STORAGE_COURSES || !e.key) {
           const c = localStorage.getItem(STORAGE_COURSES);
           if (c) setCourses(filterOutDemoItems(JSON.parse(c)));
         }
-        if (eventType === 'drills' || !eventType) {
+        if (e.key === STORAGE_TRAINING || !e.key) {
           const d = localStorage.getItem(STORAGE_TRAINING);
           if (d) setTrainings(filterOutDemoItems(JSON.parse(d)));
         }
-        if (eventType === 'photos' || !eventType) {
+        if (e.key === STORAGE_GALLERY || !e.key) {
           const p = localStorage.getItem(STORAGE_GALLERY);
           if (p) setPhotos(filterOutDemoItems(JSON.parse(p)));
         }
-        if (eventType === 'videos' || !eventType) {
+        if (e.key === STORAGE_VIDEOS || !e.key) {
           const v = localStorage.getItem(STORAGE_VIDEOS);
           if (v) setVideos(filterOutDemoItems(JSON.parse(v)));
         }
-        if (eventType === 'display' || !eventType) {
+        if (e.key === STORAGE_DISPLAY_SETTINGS || !e.key) {
           const s = localStorage.getItem(STORAGE_DISPLAY_SETTINGS);
           if (s) setDisplaySettings(prev => ({ ...prev, ...JSON.parse(s) }));
+        }
+        if (e.key === STORAGE_HOMEPAGE_CONFIG || !e.key) {
+          const h = localStorage.getItem(STORAGE_HOMEPAGE_CONFIG);
+          if (h) setHomePageConfig(prev => ({ ...prev, ...JSON.parse(h) }));
         }
       } catch {}
     };
 
-    window.addEventListener('cfsi_web_content_updated', handleSync);
     window.addEventListener('storage', handleSync);
 
     return () => {
-      window.removeEventListener('cfsi_web_content_updated', handleSync);
       window.removeEventListener('storage', handleSync);
     };
   }, [refreshAllContent]);
@@ -449,8 +595,23 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const toggleDisplaySetting = async (key: keyof DisplaySettings, label: string) => {
     const nextVal = !displaySettings[key];
     const updated = { ...displaySettings, [key]: nextVal };
+
+    // Immediately persist to localStorage
+    try {
+      localStorage.setItem(STORAGE_DISPLAY_SETTINGS, JSON.stringify(updated));
+    } catch {}
+
+    // Synchronize notice banner with homepage config if changed
+    if (key === 'heroNoticeBanner') {
+      const updatedHomeConfig = { ...homePageConfig, showNoticeBanner: nextVal };
+      setHomePageConfig(updatedHomeConfig);
+      try {
+        localStorage.setItem(STORAGE_HOMEPAGE_CONFIG, JSON.stringify(updatedHomeConfig));
+      } catch {}
+      void api.updateHomePageConfig(updatedHomeConfig).catch(() => {});
+    }
+
     setDisplaySettings(updated);
-    broadcastSync('display');
     toast.success(`${label} is now ${nextVal ? 'LIVE / VISIBLE' : 'DISABLED / HIDDEN'}`);
     try {
       await api.updateDisplaySettings(updated);
@@ -461,10 +622,55 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const resetDisplaySettings = async () => {
     setDisplaySettings(defaultDisplaySettings);
-    broadcastSync('display');
+    try {
+      localStorage.setItem(STORAGE_DISPLAY_SETTINGS, JSON.stringify(defaultDisplaySettings));
+    } catch {}
     toast.success('Display settings reset to system defaults');
     try {
       await api.updateDisplaySettings(defaultDisplaySettings);
+    } catch (e) {
+      console.warn('Backend sync failed, saved in local real-time store:', e);
+    }
+  };
+
+  // ==========================================
+  // HOMEPAGE CONFIGURATION ACTIONS
+  // ==========================================
+  const updateHomePageConfig = async (updated: Partial<HomePageConfig>) => {
+    const nextVal = { ...homePageConfig, ...updated };
+
+    // Immediately persist to localStorage
+    try {
+      localStorage.setItem(STORAGE_HOMEPAGE_CONFIG, JSON.stringify(nextVal));
+    } catch {}
+
+    // Synchronize notice banner with displaySettings if changed
+    if (updated.showNoticeBanner !== undefined && displaySettings.heroNoticeBanner !== updated.showNoticeBanner) {
+      const updatedSettings = { ...displaySettings, heroNoticeBanner: updated.showNoticeBanner };
+      setDisplaySettings(updatedSettings);
+      try {
+        localStorage.setItem(STORAGE_DISPLAY_SETTINGS, JSON.stringify(updatedSettings));
+      } catch {}
+      void api.updateDisplaySettings(updatedSettings).catch(() => {});
+    }
+
+    setHomePageConfig(nextVal);
+    toast.success('Homepage settings saved successfully!');
+    try {
+      await api.updateHomePageConfig(nextVal);
+    } catch (e) {
+      console.warn('Backend sync failed, saved in local real-time store:', e);
+    }
+  };
+
+  const resetHomePageConfig = async () => {
+    setHomePageConfig(defaultHomePageConfig);
+    try {
+      localStorage.setItem(STORAGE_HOMEPAGE_CONFIG, JSON.stringify(defaultHomePageConfig));
+    } catch {}
+    toast.success('Homepage configuration reset to defaults');
+    try {
+      await api.updateHomePageConfig(defaultHomePageConfig);
     } catch (e) {
       console.warn('Backend sync failed, saved in local real-time store:', e);
     }
@@ -478,6 +684,7 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         photos,
         videos,
         displaySettings,
+        homePageConfig,
         isLoading,
         addCourse,
         updateCourse,
@@ -497,6 +704,8 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         clearAllVideos,
         toggleDisplaySetting,
         resetDisplaySettings,
+        updateHomePageConfig,
+        resetHomePageConfig,
         refreshAllContent,
       }}
     >

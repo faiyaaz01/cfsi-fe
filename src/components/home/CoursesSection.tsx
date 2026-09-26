@@ -17,9 +17,17 @@ const iconMap: Record<string, React.ElementType> = {
 
 export const CoursesSection: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const { courses, displaySettings } = useWebContent();
+  const { courses, displaySettings, homePageConfig } = useWebContent();
 
-  if (!displaySettings.coursesSection) return null;
+  const isEnabled = (homePageConfig?.showCoursesSection ?? true) && displaySettings.coursesSection;
+  if (!isEnabled) return null;
+
+  const sectionTitle = homePageConfig?.coursesSectionTitle || 'OUR COURSES';
+  const sectionSubtitle = homePageConfig?.coursesSectionSubtitle || 'Government-recognized fire engineering and industrial safety certifications designed for high-demand municipal and corporate careers.';
+  const featuredIds = homePageConfig?.featuredCourseIds || [];
+  const displayedCourses = featuredIds.length > 0
+    ? courses.filter((c) => featuredIds.includes(c.id))
+    : courses;
 
   return (
     <section id="courses" className="py-12 sm:py-20 lg:py-24 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
@@ -27,11 +35,11 @@ export const CoursesSection: React.FC = () => {
         
         <SectionHeading
           badge="Professional Curriculum"
-          title="OUR COURSES"
-          subtitle="Government-recognized fire engineering and industrial safety certifications designed for high-demand municipal and corporate careers."
+          title={sectionTitle}
+          subtitle={sectionSubtitle}
         />
 
-        {courses.length === 0 ? (
+        {displayedCourses.length === 0 ? (
           <div className="text-center py-16 px-6 rounded-2xl bg-gray-50/70 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-6 h-6" />
@@ -53,7 +61,7 @@ export const CoursesSection: React.FC = () => {
         ) : (
           /* Cards Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {courses.map((course, index) => {
+            {displayedCourses.map((course, index) => {
               const IconComponent = iconMap[course.icon] || Flame;
 
               return (

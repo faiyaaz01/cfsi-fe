@@ -9,17 +9,25 @@ import { WhyChooseUsSection } from '../components/home/WhyChooseUsSection';
 import { useWebContent } from '../context/WebContentContext';
 
 export const HomePage: React.FC = () => {
-  const { displaySettings } = useWebContent();
+  const { displaySettings, homePageConfig } = useWebContent();
+
+  const showHero = homePageConfig?.showHero ?? true;
+  const showNews = homePageConfig?.showNewsSection ?? true;
+  const showCourses = homePageConfig?.showCoursesSection ?? true;
+  const showPortal = (homePageConfig?.showPortalBanner ?? true) && (displaySettings?.studentPortalLogin ?? true);
+  const showStats = homePageConfig?.showStatsSection ?? true;
+  const showTraining = homePageConfig?.showTrainingSection ?? true;
+  const showWhy = homePageConfig?.showWhyChooseUs ?? true;
 
   return (
     <div className="space-y-0">
-      <HeroSection />
-      {displaySettings.newsTickerMarquee && <LatestNewsSection />}
-      {displaySettings.coursesSection && <CoursesSection />}
-      {displaySettings.studentPortalLogin && <StudentPortalBanner />}
-      {displaySettings.placementStatsBar && <StatsSection />}
-      {displaySettings.groundTrainingSection && <TrainingSection />}
-      <WhyChooseUsSection />
+      {showHero && <HeroSection />}
+      {showNews && <LatestNewsSection />}
+      {showCourses && <CoursesSection />}
+      {showPortal && <StudentPortalBanner />}
+      {showStats && <StatsSection />}
+      {showTraining && <TrainingSection />}
+      {showWhy && <WhyChooseUsSection />}
     </div>
   );
 };

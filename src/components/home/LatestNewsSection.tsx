@@ -3,14 +3,23 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
 import { useNews } from '../../context/NewsContext';
+import { useWebContent } from '../../context/WebContentContext';
 import { SectionHeading } from '../common/SectionHeading';
 import { FlatCard } from '../common/FlatCard';
 
 export const LatestNewsSection: React.FC = () => {
   const { posts } = useNews();
-  
-  // Show 3 latest posts
-  const latestPosts = posts.slice(0, 3);
+  const { homePageConfig, displaySettings } = useWebContent();
+
+  const isEnabled = (homePageConfig?.showNewsSection ?? true) && displaySettings.newsTickerMarquee;
+  if (!isEnabled) return null;
+
+  const sectionTitle = homePageConfig?.newsSectionTitle || 'Latest News & Events';
+  const sectionSubtitle = homePageConfig?.newsSectionSubtitle || 'Stay informed with real-time updates from our Vadodara campus, drills, and admissions.';
+  const featuredIds = homePageConfig?.featuredNewsIds || [];
+  const latestPosts = featuredIds.length > 0
+    ? posts.filter((p) => featuredIds.includes(p.id))
+    : posts.slice(0, 3);
 
   if (latestPosts.length === 0) return null;
 
@@ -35,8 +44,8 @@ export const LatestNewsSection: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <SectionHeading
             badge="Institute Bulletin"
-            title="Latest News & Events"
-            subtitle="Stay informed with real-time updates from our Vadodara campus, drills, and admissions."
+            title={sectionTitle}
+            subtitle={sectionSubtitle}
             align="left"
             className="mb-0"
           />

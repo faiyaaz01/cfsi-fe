@@ -750,6 +750,24 @@ export const api = {
     return response.json();
   },
 
+  async getHomePageConfig(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/web/homepage-config`);
+    if (!response.ok) throw new Error('Failed to fetch homepage configuration');
+    return response.json();
+  },
+
+  async updateHomePageConfig(config: any): Promise<any> {
+    const response = await fetchWithAuth('/web/homepage-config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update homepage configuration');
+    }
+    return response.json();
+  },
+
   async getNews(): Promise<NewsPost[]> {
     const response = await fetch(`${API_BASE_URL}/news`);
     if (!response.ok) throw new Error('Failed to fetch news from database');

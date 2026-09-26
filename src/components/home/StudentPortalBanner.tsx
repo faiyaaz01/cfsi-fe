@@ -2,8 +2,18 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { GraduationCap, ArrowRight, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
+import { useWebContent } from '../../context/WebContentContext';
 
 export const StudentPortalBanner: React.FC = () => {
+  const { homePageConfig, displaySettings } = useWebContent();
+
+  const isEnabled = (homePageConfig?.showPortalBanner ?? true) && displaySettings.studentPortalLogin;
+  if (!isEnabled) return null;
+
+  const badge = homePageConfig?.portalBannerBadge || 'Student Academic Portal';
+  const title = homePageConfig?.portalBannerTitle || 'Check Live Drill Attendance & Training Records';
+  const description = homePageConfig?.portalBannerSubtitle || 'Students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.';
+
   return (
     <section className="py-8 bg-white dark:bg-dark-bg transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,15 +35,15 @@ export const StudentPortalBanner: React.FC = () => {
               <div className="max-w-2xl space-y-2.5">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-amber-300 text-xs font-bold uppercase tracking-wider">
                   <GraduationCap className="w-3.5 h-3.5" />
-                  <span>Student Academic Portal</span>
+                  <span>{badge}</span>
                 </div>
 
                 <h3 className="text-xl xs:text-2xl sm:text-3xl font-heading font-black tracking-tight text-white break-words">
-                  Check Live Drill Attendance & Training Records
+                  {title}
                 </h3>
 
                 <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
-                  Students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.
+                  {description}
                 </p>
 
                 {/* Feature checklist */}

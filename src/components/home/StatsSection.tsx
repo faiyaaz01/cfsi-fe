@@ -3,39 +3,30 @@ import { motion, useInView } from 'framer-motion';
 import { GraduationCap, BookOpen, Award, MapPin } from 'lucide-react';
 import { GlassCard } from '../common/GlassCard';
 import { CountUp } from '../common/CountUp';
+import { useWebContent } from '../../context/WebContentContext';
 
-interface StatItem {
-  icon: React.ElementType;
-  value: number;
-  suffix: string;
-  label: string;
-  sublabel: string;
-}
+const statIcons = [GraduationCap, BookOpen, Award, MapPin];
 
-const stats: StatItem[] = [
+const defaultStats = [
   {
-    icon: GraduationCap,
     value: 500,
     suffix: '+',
     label: 'Students Trained',
     sublabel: 'Serving across India'
   },
   {
-    icon: BookOpen,
     value: 4,
     suffix: '',
     label: 'Govt. Affiliated Courses',
     sublabel: 'Certificate to Diploma'
   },
   {
-    icon: Award,
     value: 15,
     suffix: '+',
     label: 'Years Experience',
     sublabel: 'In Fire Safety Training'
   },
   {
-    icon: MapPin,
     value: 10,
     suffix: '+',
     label: 'Cities Across India',
@@ -44,6 +35,15 @@ const stats: StatItem[] = [
 ];
 
 export const StatsSection: React.FC = () => {
+  const { homePageConfig, displaySettings } = useWebContent();
+
+  const isEnabled = (homePageConfig?.showStatsSection ?? true) && displaySettings.placementStatsBar;
+  if (!isEnabled) return null;
+
+  const currentStats = (homePageConfig?.stats && homePageConfig.stats.length > 0)
+    ? homePageConfig.stats
+    : defaultStats;
+
   return (
     <section className="py-16 sm:py-20 bg-gradient-to-b from-primary/5 via-primary/[0.02] to-transparent dark:from-[#161d27]/60 dark:to-dark-bg transition-colors duration-300 relative overflow-hidden">
       
@@ -53,8 +53,8 @@ export const StatsSection: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-6 lg:gap-8">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
+          {currentStats.map((stat, index) => {
+            const Icon = statIcons[index % statIcons.length];
             return (
               <motion.div
                 key={index}

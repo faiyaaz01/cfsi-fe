@@ -7,9 +7,17 @@ import { FlatCard } from '../common/FlatCard';
 import { useWebContent } from '../../context/WebContentContext';
 
 export const TrainingSection: React.FC = () => {
-  const { trainings, videos, displaySettings } = useWebContent();
+  const { trainings, videos, displaySettings, homePageConfig } = useWebContent();
 
-  if (!displaySettings.groundTrainingSection) return null;
+  const isEnabled = (homePageConfig?.showTrainingSection ?? true) && displaySettings.groundTrainingSection;
+  if (!isEnabled) return null;
+
+  const sectionTitle = homePageConfig?.trainingSectionTitle || 'HANDS-ON GROUND TRAINING';
+  const sectionSubtitle = homePageConfig?.trainingSectionSubtitle || 'Tactical simulations engineered to build muscle memory, fearless situational awareness, and split-second emergency decision making.';
+  const featuredIds = homePageConfig?.featuredDrillIds || [];
+  const displayedDrills = featuredIds.length > 0
+    ? trainings.filter((t) => featuredIds.includes(t.id))
+    : trainings;
 
   return (
     <section className="py-12 sm:py-20 lg:py-24 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-t border-gray-200/80 dark:border-white/5 w-full max-w-full overflow-hidden">
@@ -17,11 +25,11 @@ export const TrainingSection: React.FC = () => {
         
         <SectionHeading
           badge="Live Practical Modules"
-          title="HANDS-ON GROUND TRAINING"
-          subtitle="Tactical simulations engineered to build muscle memory, fearless situational awareness, and split-second emergency decision making."
+          title={sectionTitle}
+          subtitle={sectionSubtitle}
         />
 
-        {trainings.length === 0 ? (
+        {displayedDrills.length === 0 ? (
           <div className="text-center py-16 px-6 rounded-2xl bg-white dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 max-w-2xl mx-auto">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-4">
               <Flame className="w-6 h-6" />
@@ -45,7 +53,7 @@ export const TrainingSection: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-            {trainings.map((item, index) => (
+            {displayedDrills.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 30 }}

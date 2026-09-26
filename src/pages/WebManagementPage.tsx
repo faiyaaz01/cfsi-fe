@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
+  Home,
   Globe,
   BookOpen,
   FileText,
@@ -30,15 +31,16 @@ import { useNews } from '../context/NewsContext';
 import { useWebContent, DisplaySettings } from '../context/WebContentContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { Course, NewsPost, NewsCategory, TrainingPost, GalleryImage, VideoItem } from '../types';
+import { HomePageManager } from '../components/admin/HomePageManager';
 
-type SubTab = 'courses' | 'news' | 'drills' | 'photos' | 'videos' | 'display';
+type SubTab = 'homepage' | 'courses' | 'news' | 'drills' | 'photos' | 'videos' | 'display';
 
 interface WebManagementPageProps {
   isEmbedded?: boolean;
 }
 
 export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded = false }) => {
-  const [activeTab, setActiveTab] = useState<SubTab>('courses');
+  const [activeTab, setActiveTab] = useState<SubTab>('homepage');
   const confirm = useConfirm();
 
   // Real-time Web Content Context (FastAPI MongoDB backend + real-time localStorage & custom event dispatch)
@@ -204,7 +206,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const handleDeleteCourse = async (id: string, title: string) => {
     const confirmed = await confirm({
       title: 'Delete Course',
-      message: `Are you sure you want to delete course "${title}" from the catalog?`,
+      message: `Are you sure you want to delete the course "${title}"?`,
       confirmText: 'Delete Course',
       cancelText: 'Cancel',
       type: 'danger',
@@ -217,9 +219,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
   const handleClearAllCourses = async () => {
     const confirmed = await confirm({
-      title: 'Clear All Courses',
-      message: 'Are you sure you want to clear all courses from the database? This cannot be undone and will remove all programs from the public courses page and catalog.',
-      confirmText: 'Clear All Courses',
+      title: 'Delete All Courses',
+      message: 'Are you sure you want to delete all courses? This will remove all programs from the website catalog.',
+      confirmText: 'Delete All Courses',
       cancelText: 'Cancel',
       type: 'danger',
       icon: 'trash',
@@ -323,18 +325,18 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
     if (editingNews) {
       await updateNewsPost(editingNews.id, payload);
-      toast.success(`News bulletin "${payload.title}" updated!`);
+      toast.success(`News "${payload.title}" updated!`);
     } else {
       await addNewsPost(payload);
-      toast.success(`News bulletin "${payload.title}" published!`);
+      toast.success(`News "${payload.title}" published!`);
     }
     setIsNewsModalOpen(false);
   };
 
   const handleDeleteNews = async (id: string, title: string) => {
     const confirmed = await confirm({
-      title: 'Delete News Bulletin',
-      message: `Are you sure you want to delete news item "${title}"?`,
+      title: 'Delete News Article',
+      message: `Are you sure you want to delete "${title}"?`,
       confirmText: 'Delete News',
       cancelText: 'Cancel',
       type: 'danger',
@@ -342,15 +344,15 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     });
     if (confirmed) {
       await deleteNewsPost(id);
-      toast.success(`News item "${title}" removed.`);
+      toast.success(`"${title}" deleted.`);
     }
   };
 
   const handleClearAllNews = async () => {
     const confirmed = await confirm({
-      title: 'Clear All News',
-      message: 'Are you sure you want to clear all news bulletins and circulars from the database? This cannot be undone.',
-      confirmText: 'Clear All News',
+      title: 'Delete All News',
+      message: 'Are you sure you want to delete all news articles and notices? This cannot be undone.',
+      confirmText: 'Delete All News',
       cancelText: 'Cancel',
       type: 'danger',
       icon: 'trash',
@@ -454,8 +456,8 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
   const handleDeleteDrill = async (id: string, title: string) => {
     const confirmed = await confirm({
-      title: 'Delete Tactical Drill',
-      message: `Are you sure you want to delete ground drill "${title}"?`,
+      title: 'Delete Training Drill',
+      message: `Are you sure you want to delete "${title}"?`,
       confirmText: 'Delete Drill',
       cancelText: 'Cancel',
       type: 'danger',
@@ -468,9 +470,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
   const handleClearAllDrills = async () => {
     const confirmed = await confirm({
-      title: 'Clear All Drills',
-      message: 'Are you sure you want to clear all ground training drills from the database? This cannot be undone.',
-      confirmText: 'Clear All Drills',
+      title: 'Delete All Drills',
+      message: 'Are you sure you want to delete all training drills? This cannot be undone.',
+      confirmText: 'Delete All Drills',
       cancelText: 'Cancel',
       type: 'danger',
       icon: 'trash',
@@ -569,7 +571,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const handleDeletePhoto = async (id: string, title: string) => {
     const confirmed = await confirm({
       title: 'Delete Photo',
-      message: `Are you sure you want to delete photo "${title}" from the gallery?`,
+      message: `Are you sure you want to delete "${title}" from the photo gallery?`,
       confirmText: 'Delete Photo',
       cancelText: 'Cancel',
       type: 'danger',
@@ -582,9 +584,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
   const handleClearAllPhotos = async () => {
     const confirmed = await confirm({
-      title: 'Clear All Photos',
-      message: 'Are you sure you want to clear all photos from the gallery? This cannot be undone.',
-      confirmText: 'Clear All Photos',
+      title: 'Delete All Photos',
+      message: 'Are you sure you want to delete all photos from the gallery? This cannot be undone.',
+      confirmText: 'Delete All Photos',
       cancelText: 'Cancel',
       type: 'danger',
       icon: 'trash',
@@ -694,7 +696,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const handleDeleteVideo = async (id: string, title: string) => {
     const confirmed = await confirm({
       title: 'Delete Video',
-      message: `Are you sure you want to delete video "${title}" from the gallery?`,
+      message: `Are you sure you want to delete "${title}" from the video gallery?`,
       confirmText: 'Delete Video',
       cancelText: 'Cancel',
       type: 'danger',
@@ -707,9 +709,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
   const handleClearAllVideos = async () => {
     const confirmed = await confirm({
-      title: 'Clear All Videos',
-      message: 'Are you sure you want to clear all videos from the gallery? This cannot be undone.',
-      confirmText: 'Clear All Videos',
+      title: 'Delete All Videos',
+      message: 'Are you sure you want to delete all videos from the gallery? This cannot be undone.',
+      confirmText: 'Delete All Videos',
       cancelText: 'Cancel',
       type: 'danger',
       icon: 'trash',
@@ -805,17 +807,17 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     Web Management
                   </h1>
                   <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-700/50">
-                    Live CMS
+                    Live Website
                   </span>
                   {(isWebLoading || isNewsLoading) && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold text-gray-400 animate-pulse">
                       <RotateCw className="w-3 h-3 animate-spin" />
-                      <span>Syncing...</span>
+                      <span>Updating...</span>
                     </span>
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  Real-time content management & site-wide section controllers for CFSI platform
+                  Manage website pages, courses, news updates, photo/video galleries, and homepage layout
                 </p>
               </div>
             </div>
@@ -827,13 +829,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               onClick={() => {
                 refreshAllContent();
                 refreshNews();
-                toast.success('Synced live content with database.');
+                toast.success('Website content refreshed!');
               }}
               className="px-3 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-200 flex items-center gap-1.5 transition-colors"
-              title="Refresh database records"
+              title="Reload data from database"
             >
               <RotateCw className="w-3.5 h-3.5" />
-              <span>Sync Live Data</span>
+              <span>Refresh Content</span>
             </button>
             <Link
               to="/"
@@ -842,13 +844,29 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/15 border border-gray-200 dark:border-white/10 flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <ExternalLink className="w-3.5 h-3.5 text-blue-500" />
-              <span>View Live Site</span>
+              <span>View Website</span>
             </Link>
           </div>
         </div>
 
         {/* View Tabs */}
         <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('homepage')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'homepage'
+                ? 'bg-primary text-white shadow-md shadow-primary/20'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
+            }`}
+          >
+            <Home className="w-4 h-4" />
+            <span>Homepage Manager</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold uppercase">
+              NEW
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => setActiveTab('courses')}
@@ -859,7 +877,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Courses (<CountUp value={courses.length} />)</span>
+            <span>All Courses (<CountUp value={courses.length} />)</span>
           </button>
 
           <button
@@ -872,7 +890,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
             }`}
           >
             <FileText className="w-4 h-4" />
-            <span>News & Events (<CountUp value={newsPosts.length} />)</span>
+            <span>News & Notices (<CountUp value={newsPosts.length} />)</span>
           </button>
 
           <button
@@ -885,7 +903,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
             }`}
           >
             <Flame className="w-4 h-4" />
-            <span>Ground Drills (<CountUp value={trainings.length} />)</span>
+            <span>Training Drills (<CountUp value={trainings.length} />)</span>
           </button>
 
           <button
@@ -924,9 +942,16 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
             }`}
           >
             <Sliders className="w-4 h-4" />
-            <span>Display Controls</span>
+            <span>Portal Switches</span>
           </button>
         </div>
+
+        {/* ========================================================================= */}
+        {/* TAB 0: HOMEPAGE VISUAL MANAGER                                            */}
+        {/* ========================================================================= */}
+        {activeTab === 'homepage' && (
+          <HomePageManager />
+        )}
 
         {/* ========================================================================= */}
         {/* TAB 1: COURSES MANAGEMENT                                                 */}
@@ -938,13 +963,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <BookOpen className="w-4 h-4" />
-                    <span>Curriculum Catalog</span>
+                    <span>Course Catalog</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Courses & Certifications Management
+                    All Courses
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Add new degree/diploma courses, customize fees, physical requirements, and syllabi live on the portal.
+                    Add, edit, or remove courses. (To choose which courses appear on the front page, visit the Homepage Manager tab).
                   </p>
                 </div>
 
@@ -979,7 +1004,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     type="text"
                     value={courseSearch}
                     onChange={(e) => setCourseSearch(e.target.value)}
-                    placeholder="Search courses by title, slug, or details..."
+                    placeholder="Search courses by name or details..."
                     className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -993,12 +1018,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <BookOpen className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-black text-base text-gray-900 dark:text-white">
-                  {courseSearch ? 'No matching courses found' : 'No courses in catalog yet'}
+                  {courseSearch ? 'No courses match your search' : 'No courses added yet'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
                   {courseSearch
-                    ? 'Try adjusting your search keywords.'
-                    : 'Create your first real degree, diploma, or certification program using the button below.'}
+                    ? 'Try searching with different keywords.'
+                    : 'Click the button below to add your first course.'}
                 </p>
                 {!courseSearch && (
                   <button
@@ -1046,18 +1071,18 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                           <span className="font-bold text-gray-800 dark:text-gray-200">{course.duration}</span>
                         </div>
                         <div>
-                          <span className="text-gray-400 text-[10px] block uppercase font-bold">Tuition Fee</span>
+                          <span className="text-gray-400 text-[10px] block uppercase font-bold">Course Fee</span>
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">{course.fee}</span>
                         </div>
                         <div className="col-span-2 pt-1 border-t border-gray-200/50 dark:border-white/5">
-                          <span className="text-gray-400 text-[10px] block uppercase font-bold">Eligibility</span>
+                          <span className="text-gray-400 text-[10px] block uppercase font-bold">Who Can Join</span>
                           <span className="font-medium text-gray-700 dark:text-gray-300 truncate block">{course.eligibility}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mb-4">
-                        <span>• {(course.syllabus || []).length} Syllabus Modules</span>
-                        <span>• {(course.careerOpportunities || []).length} Career Tracks</span>
+                        <span>• {(course.syllabus || []).length} Topics Included</span>
+                        <span>• {(course.careerOpportunities || []).length} Career Paths</span>
                       </div>
                     </div>
 
@@ -1096,13 +1121,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <FileText className="w-4 h-4" />
-                    <span>Press Bulletins & Circulars</span>
+                    <span>Announcements & Circulars</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    News & Events Management
+                    News & Notices
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Publish official admission announcements, circulars, and batch exam notices live to the website.
+                    Post news articles, circulars, and exam dates. (To choose which ones appear on the front page, visit the Homepage Manager tab).
                   </p>
                 </div>
 
@@ -1112,7 +1137,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       type="button"
                       onClick={handleClearAllNews}
                       className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors"
-                      title="Delete all news bulletins"
+                      title="Delete all news articles"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Clear All</span>
@@ -1124,7 +1149,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/20 transition-all"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Publish News / Event</span>
+                    <span>Add News / Notice</span>
                   </button>
                 </div>
               </div>
@@ -1137,7 +1162,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     type="text"
                     value={newsSearch}
                     onChange={(e) => setNewsSearch(e.target.value)}
-                    placeholder="Search bulletins and events..."
+                    placeholder="Search news and notices..."
                     className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -1168,12 +1193,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <FileText className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-black text-base text-gray-900 dark:text-white">
-                  {newsSearch ? 'No matching bulletins found' : 'No news bulletins published yet'}
+                  {newsSearch ? 'No news matches your search' : 'No news articles posted yet'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
                   {newsSearch
-                    ? 'Try adjusting your search term.'
-                    : 'Publish your first real news circular or exam notice using the button below.'}
+                    ? 'Try searching with a different word.'
+                    : 'Click the button below to post your first news article.'}
                 </p>
                 {!newsSearch && (
                   <button
@@ -1182,7 +1207,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     className="mt-4 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2 bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/20 transition-all"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Publish First Bulletin</span>
+                    <span>Post First News Article</span>
                   </button>
                 )}
               </div>
@@ -1278,13 +1303,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <Flame className="w-4 h-4 text-orange-500" />
-                    <span>Tactical Ground Simulations</span>
+                    <span>Hands-On Training</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Ground Drills & Tactical Training Management
+                    Training Drills
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Manage real-time rescue protocols, smoke chamber drills, hazardous material simulations, and equipment lists.
+                    Add or edit firefighter training drills and practical exercises. (To feature them on the front page, visit the Homepage Manager tab).
                   </p>
                 </div>
 
@@ -1294,7 +1319,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       type="button"
                       onClick={handleClearAllDrills}
                       className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 transition-colors"
-                      title="Delete all ground drills"
+                      title="Delete all training drills"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Clear All</span>
@@ -1319,7 +1344,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     type="text"
                     value={drillSearch}
                     onChange={(e) => setDrillSearch(e.target.value)}
-                    placeholder="Search tactical drills and simulations..."
+                    placeholder="Search training drills by name..."
                     className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -1333,12 +1358,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <Flame className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-black text-base text-gray-900 dark:text-white">
-                  {drillSearch ? 'No matching drills found' : 'No ground training drills recorded yet'}
+                  {drillSearch ? 'No drills match your search' : 'No training drills added yet'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
                   {drillSearch
-                    ? 'Try adjusting your search keywords.'
-                    : 'Create tactical drill entries with hardware and practical highlights.'}
+                    ? 'Try searching with different keywords.'
+                    : 'Click the button below to add a practical training drill.'}
                 </p>
                 {!drillSearch && (
                   <button
@@ -1438,13 +1463,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <ImageIcon className="w-4 h-4 text-emerald-500" />
-                    <span>Campus Media & Gallery</span>
+                    <span>Photo Collection</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Photo Gallery Management
+                    Photo Gallery
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Upload live training drills, annual parade ceremonies, and specialized firefighting gear photos.
+                    Upload and manage photos of training drills, parade ceremonies, and firefighting equipment.
                   </p>
                 </div>
 
@@ -1510,12 +1535,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <ImageIcon className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-black text-base text-gray-900 dark:text-white">
-                  {photoSearch ? 'No matching photos found' : 'No photos uploaded to gallery yet'}
+                  {photoSearch ? 'No photos match your search' : 'No photos in gallery yet'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
                   {photoSearch
-                    ? 'Try adjusting your search keywords.'
-                    : 'Upload your first real campus, drill, or equipment photo using the button below.'}
+                    ? 'Try searching with different keywords.'
+                    : 'Click the button below to add your first photo.'}
                 </p>
                 {!photoSearch && (
                   <button
@@ -1524,7 +1549,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     className="mt-4 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2 bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/20 transition-all"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Upload First Photo</span>
+                    <span>Add First Photo</span>
                   </button>
                 )}
               </div>
@@ -1594,13 +1619,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
                     <Video className="w-4 h-4 text-rose-500" />
-                    <span>Live Video Footage</span>
+                    <span>Video Collection</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Video Gallery Management
+                    Video Gallery
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Embed YouTube footage of live foam tender operations, high-rise rappelling, and breathing apparatus drills.
+                    Add YouTube video links of live firefighter drills, demonstrations, and campus life.
                   </p>
                 </div>
 
@@ -1635,7 +1660,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     type="text"
                     value={videoSearch}
                     onChange={(e) => setVideoSearch(e.target.value)}
-                    placeholder="Search videos by title or category..."
+                    placeholder="Search videos by title or topic..."
                     className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -1666,12 +1691,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <Video className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-black text-base text-gray-900 dark:text-white">
-                  {videoSearch ? 'No matching videos found' : 'No videos added to gallery yet'}
+                  {videoSearch ? 'No videos match your search' : 'No videos in gallery yet'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
                   {videoSearch
-                    ? 'Try adjusting your search keywords.'
-                    : 'Embed your first YouTube video drill or tactical demonstration using the button below.'}
+                    ? 'Try searching with different keywords.'
+                    : 'Click the button below to add your first YouTube video.'}
                 </p>
                 {!videoSearch && (
                   <button
@@ -1770,15 +1795,15 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
             <FlatCard hoverEffect={false} className="p-6 border border-gray-200/80 dark:border-white/10 shadow-md">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-white/5">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
-                    <Sliders className="w-4 h-4" />
-                    <span>Feature & Visibility Controls</span>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Portal & System Access</span>
                   </div>
                   <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Dashboard & Website Display Management
+                    Portal & System Switches
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Control what to show and what to hide across the public website homepage and internal dashboard systems.
+                    Turn student portal features, attendance, branch login, and maintenance alert ON or OFF with a single click. (To manage public website sections, visit the Homepage Manager tab).
                   </p>
                 </div>
 
@@ -1786,9 +1811,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   type="button"
                   onClick={async () => {
                     const ok = await confirm({
-                      title: 'Restore Default Switches',
-                      message: 'Are you sure you want to reset all website and dashboard visibility switches back to standard defaults?',
-                      confirmText: 'Restore Defaults',
+                      title: 'Reset Portal Switches',
+                      message: 'Are you sure you want to reset all portal switches back to standard settings?',
+                      confirmText: 'Reset Switches',
                       cancelText: 'Cancel',
                       type: 'warning',
                       icon: 'warning',
@@ -1800,128 +1825,53 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300 transition-colors"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
-                  <span>Restore Standard Switches</span>
+                  <span>Reset Portal Switches</span>
                 </button>
               </div>
 
-              {/* SECTION A: PUBLIC WEBSITE DISPLAY CONTROLS */}
+              {/* STUDENT & PARTNER PORTAL ACCESS */}
               <div className="pt-6 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-blue-500" />
-                  <h3 className="font-heading font-black text-base text-gray-900 dark:text-white uppercase tracking-wider">
-                    A. Public Website Homepage Sections
-                  </h3>
-                </div>
-
-                <div className="space-y-3">
-                  {renderToggle(
-                    'heroNoticeBanner',
-                    'Emergency Admission Notice Banner',
-                    'Display top flashing red alert banner for ongoing admission season and batch registrations.',
-                    'Homepage Top'
-                  )}
-
-                  {renderToggle(
-                    'newsTickerMarquee',
-                    'Breaking News Marquee Ticker',
-                    'Running ticker displaying latest press updates and upcoming examination deadlines.',
-                    'Top Bar'
-                  )}
-
-                  {renderToggle(
-                    'coursesSection',
-                    'Courses & Programs Showcase',
-                    'Full interactive grid of Certificate, Diploma, Post-Graduate, and Safety Inspector programs.',
-                    'Homepage & Courses'
-                  )}
-
-                  {renderToggle(
-                    'groundTrainingSection',
-                    'Hands-On Ground Drills Showcase',
-                    'Interactive simulation module featuring search & rescue, rappelling, and chemical fire drill cards.',
-                    'Homepage'
-                  )}
-
-                  {renderToggle(
-                    'photoGallerySection',
-                    'Photo Gallery Section',
-                    'Live carousel and thumbnail previews of campus training, parade ceremonies, and fire vehicles.',
-                    'Gallery'
-                  )}
-
-                  {renderToggle(
-                    'videoGallerySection',
-                    'Tactical Video Drill Gallery',
-                    'YouTube live drill footage section demonstrating industrial foam and breathing apparatus drills.',
-                    'Gallery'
-                  )}
-
-                  {renderToggle(
-                    'studentVerificationBox',
-                    'Cadet Certificate Verification Tool',
-                    'Interactive online diploma and student verification box on the public homepage.',
-                    'Homepage'
-                  )}
-
-                  {renderToggle(
-                    'placementStatsBar',
-                    'Strength & Placement Statistics Bar',
-                    'Animated statistics showing cadets trained, placements in top industries, and drill hours logged.',
-                    'Homepage'
-                  )}
-
-                  {renderToggle(
-                    'admissionInquiryModal',
-                    'Floating Admission Inquiry Pop-up',
-                    'Direct lead capture form and quick consultation button for prospective student inquiries.',
-                    'Site-wide'
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION B: DASHBOARD & PORTALS */}
-              <div className="pt-8 border-t border-gray-100 dark:border-white/5 space-y-4">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-500" />
                   <h3 className="font-heading font-black text-base text-gray-900 dark:text-white uppercase tracking-wider">
-                    B. Dashboard & Portal Access Switches
+                    Student & Partner Portal Access
                   </h3>
                 </div>
 
                 <div className="space-y-3">
                   {renderToggle(
                     'attendanceSystem',
-                    'Cadet Daily Attendance Module',
-                    'Enables 24-hour attendance marking, punch in/out tracking, and slot attendance management in admin & teacher portals.',
-                    'Dashboard'
+                    'Daily Student Attendance',
+                    'Enable or disable marking student daily attendance in the admin and teacher panels.',
+                    'Attendance'
                   )}
 
                   {renderToggle(
                     'studentPortalLogin',
-                    'Student Self-Service Portal Login',
-                    'Allows active cadets to log into /student-login to view their attendance history, profile, and exam scores.',
-                    'Portals'
+                    'Student Portal Login',
+                    'Allow students to log into their personal portal to view attendance, profile, and exam scores.',
+                    'Student Login'
                   )}
 
                   {renderToggle(
                     'institutePortalLogin',
-                    'Franchise & Training Center Login',
-                    'Allows partner branches and training centers to sign in and register new candidates.',
-                    'Portals'
+                    'Franchise & Branch Login',
+                    'Allow partner training centers and branch institutes to log in.',
+                    'Branch Portal'
                   )}
 
                   {renderToggle(
                     'bulkStudentUpload',
-                    'CSV Bulk Cadet Roster Import',
-                    'Enables Excel/CSV spreadsheet upload tool for batch student registration on the user management page.',
+                    'Excel / CSV Bulk Student Upload',
+                    'Allow uploading many students at once using an Excel or CSV spreadsheet file.',
                     'Admin Tools'
                   )}
 
                   {renderToggle(
                     'maintenanceModeBanner',
-                    'Platform Maintenance Notice Banner',
-                    'Displays a warning notice across the website indicating scheduled server maintenance is underway.',
-                    'Site-wide Alert',
+                    'Maintenance Mode Notice',
+                    'Show a warning banner to all website visitors saying the site is currently being updated.',
+                    'Visitor Alert',
                     true
                   )}
                 </div>
@@ -1946,9 +1896,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                 <div>
                   <h3 className="font-heading font-black text-lg text-gray-900 dark:text-white">
-                    {editingCourse ? 'Edit Course Program' : 'Create New Course Program'}
+                    {editingCourse ? 'Edit Course' : 'Add New Course'}
                   </h3>
-                  <p className="text-xs text-gray-500">Configure program details, syllabus, duration, and tuition fee</p>
+                  <p className="text-xs text-gray-500">Fill in the course details below</p>
                 </div>
                 <button
                   type="button"
@@ -1963,21 +1913,21 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Course Title *
+                      Course Name *
                     </label>
                     <input
                       type="text"
                       required
                       value={courseForm.title}
                       onChange={(e) => setCourseForm(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="e.g. Diploma In Fire Safety"
+                      placeholder="e.g. Diploma in Fire Safety & Hazard Management"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      URL Slug (Auto-generated if blank)
+                      Web Link / Slug (Optional - auto created if blank)
                     </label>
                     <input
                       type="text"
@@ -1990,7 +1940,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Duration
+                      Course Duration
                     </label>
                     <input
                       type="text"
@@ -2003,7 +1953,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Tuition Fee Display
+                      Course Fee
                     </label>
                     <input
                       type="text"
@@ -2016,33 +1966,33 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Eligibility
+                      Who Can Join? (Eligibility)
                     </label>
                     <input
                       type="text"
                       value={courseForm.eligibility}
                       onChange={(e) => setCourseForm(prev => ({ ...prev, eligibility: e.target.value }))}
-                      placeholder="e.g. 12th Standard Pass (HSC)"
+                      placeholder="e.g. 10th or 12th Pass"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Badge Text (Optional)
+                      Highlight Tag (Optional)
                     </label>
                     <input
                       type="text"
                       value={courseForm.badge}
                       onChange={(e) => setCourseForm(prev => ({ ...prev, badge: e.target.value }))}
-                      placeholder="e.g. Flagship Program"
+                      placeholder="e.g. Most Popular, Admissions Open"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Certification Body
+                      Certificate Awarded By
                     </label>
                     <input
                       type="text"
@@ -2056,52 +2006,52 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Short Description
+                    Short Summary (shown on course cards)
                   </label>
                   <textarea
                     rows={2}
                     value={courseForm.shortDescription}
                     onChange={(e) => setCourseForm(prev => ({ ...prev, shortDescription: e.target.value }))}
-                    placeholder="Brief highlights for course card..."
+                    placeholder="Brief 1-2 sentence overview of this course..."
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Detailed Syllabus (1 per line)
+                    Syllabus / Topics (Write each topic on a new line)
                   </label>
                   <textarea
                     rows={4}
                     value={courseForm.syllabus}
                     onChange={(e) => setCourseForm(prev => ({ ...prev, syllabus: e.target.value }))}
-                    placeholder="Module 1: Fire Prevention & Engineering&#10;Module 2: Industrial Safety Regulations&#10;Module 3: Breathing Apparatus Drills"
+                    placeholder="Topic 1: Fire Prevention & Chemistry&#10;Topic 2: Industrial Safety Regulations&#10;Topic 3: Rescue Equipment Drills"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm font-mono bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Physical Fitness Standards (1 per line)
+                    Physical Fitness Requirements (Write each rule on a new line)
                   </label>
                   <textarea
                     rows={2}
                     value={courseForm.physicalRequirements}
                     onChange={(e) => setCourseForm(prev => ({ ...prev, physicalRequirements: e.target.value }))}
-                    placeholder="Height: Min 165 cm (Male)&#10;Vision: 6/6 without glasses"
+                    placeholder="Height: Minimum 165 cm&#10;Vision: Normal 6/6 without glasses"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm font-mono bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Career Opportunities / Roles (1 per line)
+                    Job Opportunities (Write each job role on a new line)
                   </label>
                   <textarea
                     rows={2}
                     value={courseForm.careerOpportunities}
                     onChange={(e) => setCourseForm(prev => ({ ...prev, careerOpportunities: e.target.value }))}
-                    placeholder="Fire Safety Officer&#10;Industrial HSE Supervisor"
+                    placeholder="Fire Safety Officer&#10;Industrial HSE Supervisor&#10;Safety Inspector"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm font-mono bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2142,9 +2092,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                 <div>
                   <h3 className="font-heading font-black text-lg text-gray-900 dark:text-white">
-                    {editingNews ? 'Edit News Bulletin' : 'Publish News or Event'}
+                    {editingNews ? 'Edit News Article' : 'Add News or Notice'}
                   </h3>
-                  <p className="text-xs text-gray-500">Live bulletin displayed in news section and news marquee</p>
+                  <p className="text-xs text-gray-500">Fill in the announcement details below</p>
                 </div>
                 <button
                   type="button"
@@ -2158,14 +2108,14 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <form onSubmit={handleSaveNews} className="p-6 space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Title *
+                    Headline / Title *
                   </label>
                   <input
                     type="text"
                     required
                     value={newsForm.title}
                     onChange={(e) => setNewsForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g. Admission Open for Diploma Fire Safety 2024-25"
+                    placeholder="e.g. Admissions Open for Diploma in Fire Safety 2026-27"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2195,7 +2145,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       type="text"
                       value={newsForm.date}
                       onChange={(e) => setNewsForm(prev => ({ ...prev, date: e.target.value }))}
-                      placeholder="e.g. Aug 15, 2024"
+                      placeholder="e.g. October 15, 2026"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -2203,7 +2153,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Image Thumbnail URL (Optional)
+                    Photo Link / Image URL (Optional)
                   </label>
                   <input
                     type="url"
@@ -2216,14 +2166,14 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Short Excerpt / Summary *
+                    Short Summary * (shown on news cards)
                   </label>
                   <textarea
                     rows={2}
                     required
                     value={newsForm.excerpt}
                     onChange={(e) => setNewsForm(prev => ({ ...prev, excerpt: e.target.value }))}
-                    placeholder="Brief news intro displayed on cards..."
+                    placeholder="Brief 1-2 sentence summary of this news..."
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2236,7 +2186,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     rows={4}
                     value={newsForm.content}
                     onChange={(e) => setNewsForm(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="Complete bulletin content..."
+                    placeholder="Complete announcement or notice details..."
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2250,7 +2200,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
                   />
                   <label htmlFor="isPinned" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
-                    Pin this bulletin to the top of the news board
+                    Pin this article to the top of the news page
                   </label>
                 </div>
 
@@ -2290,9 +2240,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                 <div>
                   <h3 className="font-heading font-black text-lg text-gray-900 dark:text-white">
-                    {editingDrill ? 'Edit Tactical Drill' : 'Add New Tactical Drill'}
+                    {editingDrill ? 'Edit Training Drill' : 'Add New Training Drill'}
                   </h3>
-                  <p className="text-xs text-gray-500">Configure practical scenario, equipment, and duration</p>
+                  <p className="text-xs text-gray-500">Fill in the drill details and highlights below</p>
                 </div>
                 <button
                   type="button"
@@ -2306,14 +2256,14 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <form onSubmit={handleSaveDrill} className="p-6 space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Drill Title *
+                    Drill Name *
                   </label>
                   <input
                     type="text"
                     required
                     value={drillForm.title}
                     onChange={(e) => setDrillForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g. Search & Rescue Tactical Operations"
+                    placeholder="e.g. High-Rise Search & Rescue Drill"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2321,26 +2271,26 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Tag / Category
+                      Category / Tag
                     </label>
                     <input
                       type="text"
                       value={drillForm.tag}
                       onChange={(e) => setDrillForm(prev => ({ ...prev, tag: e.target.value }))}
-                      placeholder="e.g. Tactical Rescue"
+                      placeholder="e.g. Rescue Drill, Live Fire Drill"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Duration
+                      Training Duration
                     </label>
                     <input
                       type="text"
                       value={drillForm.duration}
                       onChange={(e) => setDrillForm(prev => ({ ...prev, duration: e.target.value }))}
-                      placeholder="e.g. 45 Hours Intensive"
+                      placeholder="e.g. 40 Hours Practical"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -2348,7 +2298,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Image URL
+                    Photo URL
                   </label>
                   <input
                     type="url"
@@ -2361,39 +2311,39 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Description
+                    Description (What happens in this drill)
                   </label>
                   <textarea
                     rows={3}
                     value={drillForm.description}
                     onChange={(e) => setDrillForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Tactical ground simulation summary..."
+                    placeholder="Summary of hands-on exercises and simulated scenarios..."
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Drill Highlights (1 per line)
+                    Key Highlights / Skills (Write each on a new line)
                   </label>
                   <textarea
                     rows={3}
                     value={drillForm.highlights}
                     onChange={(e) => setDrillForm(prev => ({ ...prev, highlights: e.target.value }))}
-                    placeholder="Controlled hot-fire scenario navigation&#10;Hydraulic cutter victim extrication"
+                    placeholder="Controlled smoke navigation&#10;Hydraulic cutter victim rescue&#10;Thermal camera victim search"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm font-mono bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Equipment Deployed (comma-separated)
+                    Equipment Used (Separate names with commas)
                   </label>
                   <input
                     type="text"
                     value={drillForm.equipmentUsed}
                     onChange={(e) => setDrillForm(prev => ({ ...prev, equipmentUsed: e.target.value }))}
-                    placeholder="SCBA BA Set, Hydraulic Spreader, Thermal Camera"
+                    placeholder="SCBA Breathing Set, Hydraulic Spreader, Thermal Camera, Safety Ropes"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2434,9 +2384,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                 <div>
                   <h3 className="font-heading font-black text-lg text-gray-900 dark:text-white">
-                    {editingPhoto ? 'Edit Photo Entry' : 'Add Photo to Gallery'}
+                    {editingPhoto ? 'Edit Photo' : 'Add Photo to Gallery'}
                   </h3>
-                  <p className="text-xs text-gray-500">Add campus drill pictures or ceremonial awards photos</p>
+                  <p className="text-xs text-gray-500">Enter photo details and link below</p>
                 </div>
                 <button
                   type="button"
@@ -2457,7 +2407,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     required
                     value={photoForm.title}
                     onChange={(e) => setPhotoForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g. Live Fire Hose Stream Drill"
+                    placeholder="e.g. Live Fire Hose Training Drill"
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -2486,7 +2436,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       type="text"
                       value={photoForm.date}
                       onChange={(e) => setPhotoForm(prev => ({ ...prev, date: e.target.value }))}
-                      placeholder="e.g. August 2024"
+                      placeholder="e.g. September 2026"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -2494,7 +2444,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Image URL *
+                    Photo Link / Image URL *
                   </label>
                   <input
                     type="url"
@@ -2508,7 +2458,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Caption
+                    Photo Caption / Description (Optional)
                   </label>
                   <textarea
                     rows={2}
@@ -2555,9 +2505,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
               <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                 <div>
                   <h3 className="font-heading font-black text-lg text-gray-900 dark:text-white">
-                    {editingVideo ? 'Edit Video Drill' : 'Add Video to Gallery'}
+                    {editingVideo ? 'Edit YouTube Video' : 'Add YouTube Video'}
                   </h3>
-                  <p className="text-xs text-gray-500">Embed YouTube footage with automatic preview rendering</p>
+                  <p className="text-xs text-gray-500">Paste a YouTube link or video ID below</p>
                 </div>
                 <button
                   type="button"
@@ -2585,7 +2535,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    YouTube Video ID or Full URL *
+                    YouTube Link or Video ID *
                   </label>
                   <input
                     type="text"
@@ -2595,7 +2545,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     placeholder="e.g. DhFopy0Sh9I or https://youtube.com/watch?v=..."
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <p className="text-[10px] text-gray-400 mt-1">Accepts full YouTube URL or 11-digit video ID</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Accepts a full YouTube link (https://youtube.com/...) or the 11-digit video ID</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -2617,7 +2567,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                      Duration (mm:ss)
+                      Video Length (Duration)
                     </label>
                     <input
                       type="text"
@@ -2631,13 +2581,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Description
+                    Short Description
                   </label>
                   <textarea
                     rows={2}
                     value={videoForm.description}
                     onChange={(e) => setVideoForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Details about the drill maneuvers..."
+                    placeholder="Brief summary of what happens in the video..."
                     className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>

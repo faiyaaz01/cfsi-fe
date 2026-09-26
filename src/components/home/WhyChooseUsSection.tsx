@@ -4,6 +4,7 @@ import { ShieldCheck, Award, Building2, Users2, Compass, BadgePercent, CheckCirc
 import { SectionHeading } from '../common/SectionHeading';
 import { FlatCard } from '../common/FlatCard';
 import { Link } from 'react-router-dom';
+import { useWebContent } from '../../context/WebContentContext';
 
 const features = [
   {
@@ -39,14 +40,22 @@ const features = [
 ];
 
 export const WhyChooseUsSection: React.FC = () => {
+  const { homePageConfig } = useWebContent();
+
+  const isEnabled = homePageConfig?.showWhyChooseUs ?? true;
+  if (!isEnabled) return null;
+
+  const title = homePageConfig?.whyChooseUsTitle || 'EMPOWERING FUTURE SAFETY LEADERS';
+  const subtitle = homePageConfig?.whyChooseUsSubtitle || 'Discover what makes Central Fire Safety Institute the premier destination for fire engineering and disaster management in Gujarat.';
+
   return (
     <section className="py-12 sm:py-20 lg:py-24 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         <SectionHeading
           badge="Why Choose CFSI"
-          title="EMPOWERING FUTURE SAFETY LEADERS"
-          subtitle="Discover what makes Central Fire Safety Institute the premier destination for fire engineering and disaster management in Gujarat."
+          title={title}
+          subtitle={subtitle}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
