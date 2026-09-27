@@ -125,7 +125,10 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         setEditForm(prev => ({ ...prev, photoUrl }));
         toast.success('Photo preview updated! Click "Save Profile" to commit changes.');
       } else {
-        const updated = await api.adminUpdateStudent(currentCadet.id, { photoUrl });
+        const updated = await api.adminUpdateStudent(currentCadet.id, {
+          photoUrl,
+          studentPhone: currentCadet.studentPhone || editForm.studentPhone || undefined,
+        });
         const merged: StudentVerificationRecord = {
           ...currentCadet,
           ...updated,
@@ -152,8 +155,10 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
     try {
       setIsUploadingPhoto(true);
       setEditForm(prev => ({ ...prev, photoUrl: '' }));
-
-      const updated = await api.adminUpdateStudent(currentCadet.id, { photoUrl: '' });
+      const updated = await api.adminUpdateStudent(currentCadet.id, {
+        photoUrl: '',
+        studentPhone: currentCadet.studentPhone || editForm.studentPhone || undefined,
+      });
       const merged: StudentVerificationRecord = {
         ...currentCadet,
         ...updated,

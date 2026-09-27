@@ -328,6 +328,20 @@ export const ProfilePage: React.FC = () => {
                     />
                   </label>
                 )}
+
+                {!isLocked && Boolean(photoUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoUrl('');
+                      toast.info('Photo removed. Click "Save Profile" below to apply changes.');
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Remove Photo</span>
+                  </button>
+                )}
               </div>
 
               {!isLocked && (
