@@ -166,10 +166,7 @@ export const uploadToCloudinary = (
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', config.uploadPreset);
-    if (config.folder) {
-      formData.append('folder', config.folder);
-    }
+    formData.append('upload_preset', config.uploadPreset.trim());
 
     xhr.send(formData);
   });

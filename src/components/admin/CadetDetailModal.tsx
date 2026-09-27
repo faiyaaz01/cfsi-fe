@@ -146,6 +146,32 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
     }
   };
 
+  // Dedicated instant student photo removal
+  const handleRemoveStudentPhoto = async () => {
+    if (!currentCadet) return;
+    try {
+      setIsUploadingPhoto(true);
+      setEditForm(prev => ({ ...prev, photoUrl: '' }));
+
+      const updated = await api.adminUpdateStudent(currentCadet.id, { photoUrl: '' });
+      const merged: StudentVerificationRecord = {
+        ...currentCadet,
+        ...updated,
+        verificationStatus: currentCadet.verificationStatus,
+        photoUrl: '',
+      };
+
+      setDisplayCadet(merged);
+      onStudentUpdated?.(merged);
+      toast.success(`Photo removed for ${currentCadet.name}.`);
+    } catch (err: any) {
+      console.error('Failed to remove student photo:', err);
+      toast.error(err.message || 'Failed to remove student photo');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   useEffect(() => {
     if (currentCadet) {
       const prevBodyOverflow = document.body.style.overflow;
@@ -220,13 +246,13 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         mode: editForm.mode,
         centerName: editForm.centerName.trim(),
         presentAddress: editForm.presentAddress.trim(),
-        photoUrl: editForm.photoUrl !== undefined ? editForm.photoUrl : (currentCadet.photoUrl || ''),
+        photoUrl: editForm.photoUrl,
       });
 
       const merged: StudentVerificationRecord = {
         ...currentCadet,
         ...updatedProfile,
-        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : (editForm.photoUrl || currentCadet.photoUrl),
+        photoUrl: editForm.photoUrl,
         id: currentCadet.id,
         rollNo: currentCadet.rollNo,
         course: currentCadet.course,
@@ -352,7 +378,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
             <div className="flex items-center gap-4">
               <div className="relative shrink-0 group">
                 <UserAvatar
-                  photoUrl={isEditing ? (editForm.photoUrl || currentCadet.photoUrl) : currentCadet.photoUrl}
+                  photoUrl={isEditing ? editForm.photoUrl : (displayCadet?.photoUrl ?? currentCadet.photoUrl)}
                   name={currentCadet.name}
                   size="lg"
                 />
@@ -419,32 +445,17 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                       ) : (
                         <>
                           <Camera className="w-3.5 h-3.5" />
-                          <span>{(currentCadet.photoUrl || editForm.photoUrl) ? 'Change Photo' : 'Upload Student Photo'}</span>
+                          <span>{(isEditing ? editForm.photoUrl : (displayCadet?.photoUrl ?? currentCadet.photoUrl)) ? 'Change Photo' : 'Upload Student Photo'}</span>
                         </>
                       )}
                     </button>
-                    {(currentCadet.photoUrl || editForm.photoUrl) && (
+                    {Boolean(isEditing ? editForm.photoUrl : (displayCadet?.photoUrl ?? currentCadet.photoUrl)) && (
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (window.confirm(`Remove photo for ${currentCadet.name}?`)) {
-                            if (isEditing) {
-                              setEditForm(prev => ({ ...prev, photoUrl: '' }));
-                            } else {
-                              const updated = await api.adminUpdateStudent(currentCadet.id, { photoUrl: '' });
-                              const merged: StudentVerificationRecord = {
-                                ...currentCadet,
-                                ...updated,
-                                verificationStatus: currentCadet.verificationStatus,
-                                photoUrl: '',
-                              };
-                              setDisplayCadet(merged);
-                              onStudentUpdated?.(merged);
-                              toast.info('Student photo removed.');
-                            }
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        onClick={handleRemoveStudentPhoto}
+                        disabled={isUploadingPhoto}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title="Remove student photo"
                       >
                         <X className="w-3 h-3" />
                         <span>Remove</span>
@@ -551,7 +562,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                 />
                 <div className="p-4 rounded-xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row items-center gap-4">
                   <UserAvatar
-                    photoUrl={editForm.photoUrl || currentCadet.photoUrl}
+                    photoUrl={editForm.photoUrl}
                     name={editForm.name || currentCadet.name}
                     size="lg"
                   />
@@ -577,15 +588,16 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                         ) : (
                           <>
                             <FolderOpen className="w-3.5 h-3.5" />
-                            <span>{(editForm.photoUrl || currentCadet.photoUrl) ? 'Change Photo' : 'Upload Photo'}</span>
+                            <span>{editForm.photoUrl ? 'Change Photo' : 'Upload Photo'}</span>
                           </>
                         )}
                       </button>
-                      {(editForm.photoUrl || currentCadet.photoUrl) && (
+                      {Boolean(editForm.photoUrl) && (
                         <button
                           type="button"
-                          onClick={() => setEditForm(prev => ({ ...prev, photoUrl: '' }))}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-1 transition-colors"
+                          onClick={handleRemoveStudentPhoto}
+                          disabled={isUploadingPhoto}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-1 transition-colors cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                           <span>Remove Photo</span>
