@@ -16,8 +16,12 @@ export const LatestNewsSection: React.FC = () => {
 
   const sectionTitle = homePageConfig?.newsSectionTitle || 'Latest News & Events';
   const sectionSubtitle = homePageConfig?.newsSectionSubtitle || 'Stay informed with real-time updates from our Vadodara campus, drills, and admissions.';
+
+  // Mode: 'all' shows top 3 latest posts, 'custom' shows only the explicitly selected posts
+  const displayMode = homePageConfig?.newsDisplayMode || (homePageConfig?.featuredNewsIds && homePageConfig.featuredNewsIds.length > 0 ? 'custom' : 'all');
   const featuredIds = homePageConfig?.featuredNewsIds || [];
-  const latestPosts = featuredIds.length > 0
+
+  const latestPosts = displayMode === 'custom'
     ? posts.filter((p) => featuredIds.includes(p.id))
     : posts.slice(0, 3);
 

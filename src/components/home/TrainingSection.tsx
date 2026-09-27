@@ -14,8 +14,12 @@ export const TrainingSection: React.FC = () => {
 
   const sectionTitle = homePageConfig?.trainingSectionTitle || 'HANDS-ON GROUND TRAINING';
   const sectionSubtitle = homePageConfig?.trainingSectionSubtitle || 'Tactical simulations engineered to build muscle memory, fearless situational awareness, and split-second emergency decision making.';
+
+  // Mode: 'all' shows all drills, 'custom' shows only the explicitly selected drills
+  const displayMode = homePageConfig?.drillsDisplayMode || (homePageConfig?.featuredDrillIds && homePageConfig.featuredDrillIds.length > 0 ? 'custom' : 'all');
   const featuredIds = homePageConfig?.featuredDrillIds || [];
-  const displayedDrills = featuredIds.length > 0
+
+  const displayedDrills = displayMode === 'custom'
     ? trainings.filter((t) => featuredIds.includes(t.id))
     : trainings;
 

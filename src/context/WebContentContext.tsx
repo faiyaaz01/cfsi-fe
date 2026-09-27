@@ -57,13 +57,15 @@ export interface HomePageConfig {
   showNewsTicker: boolean;
   newsSectionTitle: string;
   newsSectionSubtitle: string;
-  featuredNewsIds: string[]; // Specific IDs of news to show on home! Empty = take top 3
+  newsDisplayMode?: 'all' | 'custom';
+  featuredNewsIds: string[]; // Specific IDs of news to show on home
 
   // 4. Featured Courses
   showCoursesSection: boolean;
   coursesSectionTitle: string;
   coursesSectionSubtitle: string;
-  featuredCourseIds: string[]; // Specific IDs of courses to show on home! Empty = show all
+  coursesDisplayMode?: 'all' | 'custom';
+  featuredCourseIds: string[]; // Specific IDs of courses to show on home
 
   // 5. Student Portal Quick Banner
   showPortalBanner: boolean;
@@ -79,7 +81,8 @@ export interface HomePageConfig {
   showTrainingSection: boolean;
   trainingSectionTitle: string;
   trainingSectionSubtitle: string;
-  featuredDrillIds: string[]; // Specific IDs of drills to show on home! Empty = show all
+  drillsDisplayMode?: 'all' | 'custom';
+  featuredDrillIds: string[]; // Specific IDs of drills to show on home
 
   // 8. Why Choose Us (Core Pillars)
   showWhyChooseUs: boolean;
@@ -113,15 +116,17 @@ export const defaultHomePageConfig: HomePageConfig = {
   showNewsTicker: true,
   newsSectionTitle: 'Latest News & Events',
   newsSectionSubtitle: 'Stay informed with real-time updates from our Vadodara campus, drills, and admissions.',
+  newsDisplayMode: 'all',
   featuredNewsIds: [],
 
   showCoursesSection: true,
   coursesSectionTitle: 'OUR COURSES',
   coursesSectionSubtitle: 'Government-recognized fire engineering and industrial safety certifications designed for high-demand municipal and corporate careers.',
+  coursesDisplayMode: 'all',
   featuredCourseIds: [],
 
   showPortalBanner: true,
-  portalBannerTitle: 'Check Live Drill Attendance & Training Records',
+  portalBannerTitle: 'Check Live Attendance',
   portalBannerSubtitle: 'Students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.',
   portalBannerBadge: 'Student Academic Portal',
 
@@ -136,6 +141,7 @@ export const defaultHomePageConfig: HomePageConfig = {
   showTrainingSection: true,
   trainingSectionTitle: 'HANDS-ON GROUND TRAINING',
   trainingSectionSubtitle: 'Tactical simulations engineered to build muscle memory, fearless situational awareness, and split-second emergency decision making.',
+  drillsDisplayMode: 'all',
   featuredDrillIds: [],
 
   showWhyChooseUs: true,
@@ -755,17 +761,37 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.setItem(STORAGE_HOMEPAGE_CONFIG, JSON.stringify(nextVal));
     } catch {}
 
-    // Synchronize notice banner with displaySettings if changed
+    // Synchronize section switches with displaySettings if changed
+    const newSettings = { ...displaySettings };
+    let settingsChanged = false;
+
     if (updated.showNoticeBanner !== undefined && displaySettings.heroNoticeBanner !== updated.showNoticeBanner) {
-      const updatedSettings = { ...displaySettings, heroNoticeBanner: updated.showNoticeBanner };
-      setDisplaySettings(updatedSettings);
+      newSettings.heroNoticeBanner = updated.showNoticeBanner;
+      settingsChanged = true;
+    }
+    if (updated.showCoursesSection !== undefined && displaySettings.coursesSection !== updated.showCoursesSection) {
+      newSettings.coursesSection = updated.showCoursesSection;
+      settingsChanged = true;
+    }
+    if (updated.showTrainingSection !== undefined && displaySettings.groundTrainingSection !== updated.showTrainingSection) {
+      newSettings.groundTrainingSection = updated.showTrainingSection;
+      settingsChanged = true;
+    }
+    if (updated.showNewsTicker !== undefined && displaySettings.newsTickerMarquee !== updated.showNewsTicker) {
+      newSettings.newsTickerMarquee = updated.showNewsTicker;
+      settingsChanged = true;
+    }
+
+    if (settingsChanged) {
+      setDisplaySettings(newSettings);
       try {
-        localStorage.setItem(STORAGE_DISPLAY_SETTINGS, JSON.stringify(updatedSettings));
+        localStorage.setItem(STORAGE_DISPLAY_SETTINGS, JSON.stringify(newSettings));
       } catch {}
-      void api.updateDisplaySettings(updatedSettings).catch(() => {});
+      void api.updateDisplaySettings(newSettings).catch(() => {});
     }
 
     setHomePageConfig(nextVal);
+    broadcastSync('homepage_config');
     toast.success('Homepage settings saved successfully!');
     try {
       await api.updateHomePageConfig(nextVal);

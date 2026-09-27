@@ -11,8 +11,8 @@ export const StudentPortalBanner: React.FC = () => {
   if (!isEnabled) return null;
 
   const badge = homePageConfig?.portalBannerBadge || 'Student Academic Portal';
-  const title = homePageConfig?.portalBannerTitle || 'Check Live Drill Attendance & Training Records';
-  const description = homePageConfig?.portalBannerSubtitle || 'Students can log in to view real-time ground drill muster records, breathing apparatus evaluations, and official training logs.';
+  const title = homePageConfig?.portalBannerTitle || 'Check Live Attendance';
+  const description = homePageConfig?.portalBannerSubtitle || 'Students can log in to view real-time attendance records.';
 
   return (
     <section className="py-8 bg-white dark:bg-dark-bg transition-colors duration-300">

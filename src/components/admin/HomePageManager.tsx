@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronUp,
   Wrench,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlatCard } from '../common/FlatCard';
@@ -97,30 +98,64 @@ export const HomePageManager: React.FC = () => {
     }
   };
 
+  const currentCoursesMode: 'all' | 'custom' = form.coursesDisplayMode || (form.featuredCourseIds && form.featuredCourseIds.length > 0 ? 'custom' : 'all');
+  const currentNewsMode: 'all' | 'custom' = form.newsDisplayMode || (form.featuredNewsIds && form.featuredNewsIds.length > 0 ? 'custom' : 'all');
+  const currentDrillsMode: 'all' | 'custom' = form.drillsDisplayMode || (form.featuredDrillIds && form.featuredDrillIds.length > 0 ? 'custom' : 'all');
+
   const toggleCourseSelection = (courseId: string) => {
     setForm((prev) => {
-      const current = prev.featuredCourseIds || [];
+      const mode = prev.coursesDisplayMode || (prev.featuredCourseIds && prev.featuredCourseIds.length > 0 ? 'custom' : 'all');
+      let current: string[];
+      if (mode === 'all') {
+        current = courses.map((c) => c.id);
+      } else {
+        current = prev.featuredCourseIds || [];
+      }
       const exists = current.includes(courseId);
       const updated = exists ? current.filter((id) => id !== courseId) : [...current, courseId];
-      return { ...prev, featuredCourseIds: updated };
+      return {
+        ...prev,
+        coursesDisplayMode: 'custom',
+        featuredCourseIds: updated,
+      };
     });
   };
 
   const toggleNewsSelection = (newsId: string) => {
     setForm((prev) => {
-      const current = prev.featuredNewsIds || [];
+      const mode = prev.newsDisplayMode || (prev.featuredNewsIds && prev.featuredNewsIds.length > 0 ? 'custom' : 'all');
+      let current: string[];
+      if (mode === 'all') {
+        current = newsPosts.slice(0, 3).map((p) => p.id);
+      } else {
+        current = prev.featuredNewsIds || [];
+      }
       const exists = current.includes(newsId);
       const updated = exists ? current.filter((id) => id !== newsId) : [...current, newsId];
-      return { ...prev, featuredNewsIds: updated };
+      return {
+        ...prev,
+        newsDisplayMode: 'custom',
+        featuredNewsIds: updated,
+      };
     });
   };
 
   const toggleDrillSelection = (drillId: string) => {
     setForm((prev) => {
-      const current = prev.featuredDrillIds || [];
+      const mode = prev.drillsDisplayMode || (prev.featuredDrillIds && prev.featuredDrillIds.length > 0 ? 'custom' : 'all');
+      let current: string[];
+      if (mode === 'all') {
+        current = trainings.map((t) => t.id);
+      } else {
+        current = prev.featuredDrillIds || [];
+      }
       const exists = current.includes(drillId);
       const updated = exists ? current.filter((id) => id !== drillId) : [...current, drillId];
-      return { ...prev, featuredDrillIds: updated };
+      return {
+        ...prev,
+        drillsDisplayMode: 'custom',
+        featuredDrillIds: updated,
+      };
     });
   };
 
@@ -180,21 +215,24 @@ export const HomePageManager: React.FC = () => {
         {/* Quick Section Summary Strip */}
         <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
           {[
-            { label: 'Notice Bar', visible: form.showNoticeBanner },
-            { label: 'Main Banner', visible: form.showHero },
-            { label: 'News Ticker', visible: form.showNewsSection },
-            { label: 'Courses', visible: form.showCoursesSection },
-            { label: 'Student Box', visible: form.showPortalBanner },
-            { label: 'Numbers', visible: form.showStatsSection },
-            { label: 'Drills', visible: form.showTrainingSection },
-            { label: 'Why Choose Us', visible: form.showWhyChooseUs },
+            { label: 'Notice Bar', key: 'showNoticeBanner', visible: form.showNoticeBanner },
+            { label: 'Main Banner', key: 'showHero', visible: form.showHero },
+            { label: 'News Ticker', key: 'showNewsSection', visible: form.showNewsSection },
+            { label: 'Courses', key: 'showCoursesSection', visible: form.showCoursesSection },
+            { label: 'Student Box', key: 'showPortalBanner', visible: form.showPortalBanner },
+            { label: 'Numbers', key: 'showStatsSection', visible: form.showStatsSection },
+            { label: 'Drills', key: 'showTrainingSection', visible: form.showTrainingSection },
+            { label: 'Why Choose Us', key: 'showWhyChooseUs', visible: form.showWhyChooseUs },
           ].map((sec, i) => (
-            <div
+            <button
               key={i}
-              className={`p-2.5 rounded-xl border text-center transition-all ${
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, [sec.key]: !prev[sec.key as keyof typeof form] }))}
+              title={`Click to turn ${sec.label} ${sec.visible ? 'OFF' : 'ON'}`}
+              className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                 sec.visible
-                  ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300/50 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300'
-                  : 'bg-gray-50/60 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-400'
+                  ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300/50 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60'
+                  : 'bg-gray-50/60 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-400 hover:bg-gray-100/60'
               }`}
             >
               <div className="text-[10px] font-black uppercase tracking-wider">{sec.label}</div>
@@ -211,7 +249,7 @@ export const HomePageManager: React.FC = () => {
                   </>
                 )}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </FlatCard>
@@ -439,9 +477,9 @@ export const HomePageManager: React.FC = () => {
                   {form.showCoursesSection ? 'Visible' : 'Hidden'}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                  {form.featuredCourseIds && form.featuredCourseIds.length > 0
-                    ? `${form.featuredCourseIds.length} Courses Selected`
-                    : 'Showing All Courses'}
+                  {currentCoursesMode === 'all'
+                    ? `Showing All Courses (${courses.length})`
+                    : `${((form.featuredCourseIds || []).filter(id => courses.some(c => c.id === id))).length} of ${courses.length} on Home`}
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -498,27 +536,83 @@ export const HomePageManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Simple course checklist */}
+            {/* Display Mode Switcher */}
+            <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>Display Mode</span>
+                  <span className="text-[10px] font-semibold text-gray-500">
+                    ({currentCoursesMode === 'all' ? 'All courses displayed' : 'Custom selection'})
+                  </span>
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  {currentCoursesMode === 'all'
+                    ? 'All catalog courses automatically show on the homepage.'
+                    : 'Only selected courses with the "ON HOME" badge will appear on the homepage.'}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#12181f] border border-gray-200 dark:border-white/10 rounded-xl shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, coursesDisplayMode: 'all' })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    currentCoursesMode === 'all'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Show All Courses
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({
+                    ...form,
+                    coursesDisplayMode: 'custom',
+                    featuredCourseIds: form.featuredCourseIds !== undefined && form.featuredCourseIds !== null
+                      ? form.featuredCourseIds
+                      : courses.map(c => c.id),
+                  })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    currentCoursesMode === 'custom'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Custom Selection
+                </button>
+              </div>
+            </div>
+
+            {/* Course checklist */}
             <div className="pt-2">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                 <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Tick the courses you want on the homepage:
+                  {currentCoursesMode === 'all' ? (
+                    <span className="text-blue-600 dark:text-blue-400">
+                      ℹ️ All courses are currently displayed. Click any course to customize selection.
+                    </span>
+                  ) : (
+                    <span>
+                      Select courses for homepage ({((form.featuredCourseIds || []).filter(id => courses.some(c => c.id === id))).length} of {courses.length} selected):
+                    </span>
+                  )}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, featuredCourseIds: courses.map((c) => c.id) })}
-                    className="text-[11px] font-bold text-primary hover:underline"
+                    onClick={() => setForm({ ...form, coursesDisplayMode: 'custom', featuredCourseIds: courses.map((c) => c.id) })}
+                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
                   >
                     Select All
                   </button>
                   <span className="text-gray-300 dark:text-gray-700">•</span>
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, featuredCourseIds: [] })}
-                    className="text-[11px] font-bold text-gray-500 hover:underline"
+                    onClick={() => setForm({ ...form, coursesDisplayMode: 'custom', featuredCourseIds: [] })}
+                    className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer"
                   >
-                    Show All (Default)
+                    Deselect All (Hide All)
                   </button>
                 </div>
               </div>
@@ -530,7 +624,9 @@ export const HomePageManager: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                   {courses.map((course) => {
-                    const isSelected = form.featuredCourseIds && form.featuredCourseIds.includes(course.id);
+                    const isSelected = currentCoursesMode === 'all'
+                      ? true
+                      : Boolean(form.featuredCourseIds && form.featuredCourseIds.includes(course.id));
                     return (
                       <div
                         key={course.id}
@@ -538,7 +634,7 @@ export const HomePageManager: React.FC = () => {
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
                           isSelected
                             ? 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-400 dark:border-blue-500/40 text-blue-900 dark:text-blue-200 shadow-sm'
-                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-white/10'
+                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-white/10 opacity-75'
                         }`}
                       >
                         <div className="mt-0.5 text-primary">
@@ -556,14 +652,27 @@ export const HomePageManager: React.FC = () => {
                             <span>{course.fee}</span>
                           </div>
                         </div>
-                        {isSelected && (
+                        {isSelected ? (
                           <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-600 text-white shrink-0">
-                            ON HOME
+                            {currentCoursesMode === 'all' ? 'INCLUDED' : 'ON HOME'}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-200 dark:bg-white/10 text-gray-500 shrink-0">
+                            HIDDEN
                           </span>
                         )}
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {currentCoursesMode === 'custom' && (!form.featuredCourseIds || form.featuredCourseIds.length === 0) && (
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>
+                    No courses are selected. With Custom Selection active and 0 courses chosen, the courses section on the homepage will be empty. Tick courses above or click <strong>Show All Courses</strong>.
+                  </span>
                 </div>
               )}
             </div>
@@ -591,9 +700,9 @@ export const HomePageManager: React.FC = () => {
                   {form.showNewsSection ? 'Visible' : 'Hidden'}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  {form.featuredNewsIds && form.featuredNewsIds.length > 0
-                    ? `${form.featuredNewsIds.length} Pinned to Home`
-                    : 'Showing Latest 3'}
+                  {currentNewsMode === 'all'
+                    ? 'Showing Latest 3 (Auto)'
+                    : `${((form.featuredNewsIds || []).filter(id => newsPosts.some(p => p.id === id))).length} of ${newsPosts.length} on Home`}
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -670,19 +779,85 @@ export const HomePageManager: React.FC = () => {
               </div>
             </div>
 
-            {/* News checklist */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Tick the news updates you want on the homepage:
-                </span>
+            {/* News Display Mode Switcher */}
+            <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>Display Mode</span>
+                  <span className="text-[10px] font-semibold text-gray-500">
+                    ({currentNewsMode === 'all' ? 'Auto latest news' : 'Custom selection'})
+                  </span>
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  {currentNewsMode === 'all'
+                    ? 'Automatically shows the 3 most recent news articles.'
+                    : 'Only selected news articles with the "ON HOME" badge will appear.'}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#12181f] border border-gray-200 dark:border-white/10 rounded-xl shrink-0">
                 <button
                   type="button"
-                  onClick={() => setForm({ ...form, featuredNewsIds: [] })}
-                  className="text-[11px] font-bold text-gray-500 hover:underline"
+                  onClick={() => setForm({ ...form, newsDisplayMode: 'all' })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    currentNewsMode === 'all'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
                 >
-                  Clear (Shows Latest 3)
+                  Latest 3 (Auto)
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({
+                    ...form,
+                    newsDisplayMode: 'custom',
+                    featuredNewsIds: form.featuredNewsIds !== undefined && form.featuredNewsIds !== null
+                      ? form.featuredNewsIds
+                      : newsPosts.slice(0, 3).map(p => p.id),
+                  })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    currentNewsMode === 'custom'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Custom Selection
+                </button>
+              </div>
+            </div>
+
+            {/* News checklist */}
+            <div className="pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  {currentNewsMode === 'all' ? (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      ℹ️ Showing top 3 latest articles automatically. Click any article to customize.
+                    </span>
+                  ) : (
+                    <span>
+                      Select news for homepage ({((form.featuredNewsIds || []).filter(id => newsPosts.some(p => p.id === id))).length} of {newsPosts.length} selected):
+                    </span>
+                  )}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, newsDisplayMode: 'custom', featuredNewsIds: newsPosts.map((p) => p.id) })}
+                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, newsDisplayMode: 'custom', featuredNewsIds: [] })}
+                    className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer"
+                  >
+                    Deselect All (Hide All)
+                  </button>
+                </div>
               </div>
 
               {newsPosts.length === 0 ? (
@@ -691,8 +866,10 @@ export const HomePageManager: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
-                  {newsPosts.map((post) => {
-                    const isSelected = form.featuredNewsIds && form.featuredNewsIds.includes(post.id);
+                  {newsPosts.map((post, idx) => {
+                    const isSelected = currentNewsMode === 'all'
+                      ? idx < 3
+                      : Boolean(form.featuredNewsIds && form.featuredNewsIds.includes(post.id));
                     return (
                       <div
                         key={post.id}
@@ -700,7 +877,7 @@ export const HomePageManager: React.FC = () => {
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
                           isSelected
                             ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-400 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 shadow-sm'
-                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-white/10'
+                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-white/10 opacity-75'
                         }`}
                       >
                         <div className="mt-0.5 text-amber-600">
@@ -718,14 +895,27 @@ export const HomePageManager: React.FC = () => {
                             <span>{post.date}</span>
                           </div>
                         </div>
-                        {isSelected && (
+                        {isSelected ? (
                           <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shrink-0">
-                            PINNED
+                            {currentNewsMode === 'all' ? 'AUTO (LATEST)' : 'ON HOME'}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-200 dark:bg-white/10 text-gray-500 shrink-0">
+                            HIDDEN
                           </span>
                         )}
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {currentNewsMode === 'custom' && (!form.featuredNewsIds || form.featuredNewsIds.length === 0) && (
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>
+                    No news articles are selected. With Custom Selection active and 0 chosen, the news section on the homepage will be empty. Tick articles above or switch to <strong>Latest 3 (Auto)</strong>.
+                  </span>
                 </div>
               )}
             </div>
@@ -934,9 +1124,9 @@ export const HomePageManager: React.FC = () => {
                   {form.showTrainingSection ? 'Visible' : 'Hidden'}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  {form.featuredDrillIds && form.featuredDrillIds.length > 0
-                    ? `${form.featuredDrillIds.length} Drills Selected`
-                    : 'Showing All Drills'}
+                  {currentDrillsMode === 'all'
+                    ? `Showing All Drills (${trainings.length})`
+                    : `${((form.featuredDrillIds || []).filter(id => trainings.some(t => t.id === id))).length} of ${trainings.length} on Home`}
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -957,7 +1147,7 @@ export const HomePageManager: React.FC = () => {
         </div>
 
         {form.showTrainingSection && (
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-3">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">
@@ -984,24 +1174,97 @@ export const HomePageManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Drill Selection */}
-            {trainings.length > 0 && (
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                    Tick the drills you want on the homepage:
+            {/* Drills Display Mode Switcher */}
+            <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>Display Mode</span>
+                  <span className="text-[10px] font-semibold text-gray-500">
+                    ({currentDrillsMode === 'all' ? 'All drills displayed' : 'Custom selection'})
                   </span>
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  {currentDrillsMode === 'all'
+                    ? 'All catalog drills automatically show on the homepage.'
+                    : 'Only selected drills with the "ON HOME" badge will appear.'}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#12181f] border border-gray-200 dark:border-white/10 rounded-xl shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, drillsDisplayMode: 'all' })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    currentDrillsMode === 'all'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Show All Drills
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({
+                    ...form,
+                    drillsDisplayMode: 'custom',
+                    featuredDrillIds: form.featuredDrillIds !== undefined && form.featuredDrillIds !== null
+                      ? form.featuredDrillIds
+                      : trainings.map(t => t.id),
+                  })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    currentDrillsMode === 'custom'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Custom Selection
+                </button>
+              </div>
+            </div>
+
+            {/* Drill Selection */}
+            <div className="pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  {currentDrillsMode === 'all' ? (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      ℹ️ All drills are currently displayed. Click any drill to customize selection.
+                    </span>
+                  ) : (
+                    <span>
+                      Select drills for homepage ({((form.featuredDrillIds || []).filter(id => trainings.some(t => t.id === id))).length} of {trainings.length} selected):
+                    </span>
+                  )}
+                </span>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, featuredDrillIds: [] })}
-                    className="text-[11px] font-bold text-gray-500 hover:underline"
+                    onClick={() => setForm({ ...form, drillsDisplayMode: 'custom', featuredDrillIds: trainings.map((t) => t.id) })}
+                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
                   >
-                    Clear (Shows All Drills)
+                    Select All
+                  </button>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, drillsDisplayMode: 'custom', featuredDrillIds: [] })}
+                    className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer"
+                  >
+                    Deselect All (Hide All)
                   </button>
                 </div>
+              </div>
+
+              {trainings.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-white/10 text-center text-xs text-gray-500">
+                  No drills found. Add drills in the "Training Drills" tab first.
+                </div>
+              ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                   {trainings.map((drill) => {
-                    const isSelected = form.featuredDrillIds && form.featuredDrillIds.includes(drill.id);
+                    const isSelected = currentDrillsMode === 'all'
+                      ? true
+                      : Boolean(form.featuredDrillIds && form.featuredDrillIds.includes(drill.id));
                     return (
                       <div
                         key={drill.id}
@@ -1009,7 +1272,7 @@ export const HomePageManager: React.FC = () => {
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
                           isSelected
                             ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-400 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 shadow-sm'
-                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-white/10'
+                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/5 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-white/10 opacity-75'
                         }`}
                       >
                         <div className="mt-0.5 text-amber-600">
@@ -1025,12 +1288,30 @@ export const HomePageManager: React.FC = () => {
                             Tag: {drill.tag} • {drill.duration}
                           </div>
                         </div>
+                        {isSelected ? (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shrink-0">
+                            {currentDrillsMode === 'all' ? 'INCLUDED' : 'ON HOME'}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-200 dark:bg-white/10 text-gray-500 shrink-0">
+                            HIDDEN
+                          </span>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
+
+              {currentDrillsMode === 'custom' && (!form.featuredDrillIds || form.featuredDrillIds.length === 0) && (
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>
+                    No drills are selected. With Custom Selection active and 0 chosen, the training drills section on the homepage will be empty. Tick drills above or switch to <strong>Show All Drills</strong>.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </FlatCard>

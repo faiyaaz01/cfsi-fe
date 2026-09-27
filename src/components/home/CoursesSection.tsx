@@ -24,8 +24,12 @@ export const CoursesSection: React.FC = () => {
 
   const sectionTitle = homePageConfig?.coursesSectionTitle || 'OUR COURSES';
   const sectionSubtitle = homePageConfig?.coursesSectionSubtitle || 'Government-recognized fire engineering and industrial safety certifications designed for high-demand municipal and corporate careers.';
+
+  // Mode: 'all' shows all courses, 'custom' shows only the explicitly selected courses
+  const displayMode = homePageConfig?.coursesDisplayMode || (homePageConfig?.featuredCourseIds && homePageConfig.featuredCourseIds.length > 0 ? 'custom' : 'all');
   const featuredIds = homePageConfig?.featuredCourseIds || [];
-  const displayedCourses = featuredIds.length > 0
+
+  const displayedCourses = displayMode === 'custom'
     ? courses.filter((c) => featuredIds.includes(c.id))
     : courses;
 

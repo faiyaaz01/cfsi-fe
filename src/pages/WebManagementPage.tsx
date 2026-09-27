@@ -54,6 +54,8 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     trainings,
     photos,
     videos,
+    homePageConfig,
+    updateHomePageConfig,
     isLoading: isWebLoading,
     addCourse,
     updateCourse,
@@ -92,6 +94,26 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
 
   // Cloudinary Storage Settings Modal State
   const [isCloudinaryModalOpen, setIsCloudinaryModalOpen] = useState(false);
+
+  // Homepage quick-toggle for courses
+  const handleToggleCourseHomepage = async (courseId: string) => {
+    const currentMode = homePageConfig.coursesDisplayMode || (homePageConfig.featuredCourseIds && homePageConfig.featuredCourseIds.length > 0 ? 'custom' : 'all');
+    let currentFeatured: string[];
+    if (currentMode === 'all') {
+      currentFeatured = courses.map((c) => c.id);
+    } else {
+      currentFeatured = homePageConfig.featuredCourseIds || [];
+    }
+    const isSelected = currentFeatured.includes(courseId);
+    const updatedFeatured = isSelected
+      ? currentFeatured.filter((id) => id !== courseId)
+      : [...currentFeatured, courseId];
+    await updateHomePageConfig({
+      coursesDisplayMode: 'custom',
+      featuredCourseIds: updatedFeatured,
+    });
+    toast.success(isSelected ? 'Course hidden from homepage' : 'Course added to homepage');
+  };
 
   // ==========================================
   // MANUAL SORTING MANAGEMENT HANDLERS
@@ -1098,11 +1120,31 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                             <span className="text-[11px] font-mono text-gray-400">/{course.slug}</span>
                           </div>
                         </div>
-                        {course.badge && (
-                          <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shrink-0">
-                            {course.badge}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                          {course.badge && (
+                            <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
+                              {course.badge}
+                            </span>
+                          )}
+                          {(() => {
+                            const mode = homePageConfig.coursesDisplayMode || (homePageConfig.featuredCourseIds && homePageConfig.featuredCourseIds.length > 0 ? 'custom' : 'all');
+                            const isOnHome = mode === 'all' || (homePageConfig.featuredCourseIds || []).includes(course.id);
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCourseHomepage(course.id)}
+                                className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition-all cursor-pointer flex items-center gap-1 border ${
+                                  isOnHome
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300'
+                                    : 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300'
+                                }`}
+                                title="Click to toggle whether this course appears on the front homepage"
+                              >
+                                <span>{isOnHome ? '✓ On Home' : '✕ Hidden on Home'}</span>
+                              </button>
+                            );
+                          })()}
+                        </div>
                       </div>
 
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
