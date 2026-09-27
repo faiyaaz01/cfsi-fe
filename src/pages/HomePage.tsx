@@ -6,6 +6,7 @@ import { StudentPortalBanner } from '../components/home/StudentPortalBanner';
 import { StatsSection } from '../components/home/StatsSection';
 import { TrainingSection } from '../components/home/TrainingSection';
 import { WhyChooseUsSection } from '../components/home/WhyChooseUsSection';
+import { NoticePopup } from '../components/home/NoticePopup';
 import { useWebContent } from '../context/WebContentContext';
 import { SEOHead } from '../components/common/SEOHead';
 import { getOrganizationSchema } from '../lib/seoSchemas';
@@ -25,6 +26,7 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-0">
+      <NoticePopup />
       <SEOHead
         title="Central Fire Safety Institute Vadodara"
         description="Central Fire Safety Institute (CFSI) Vadodara offers Government-recognized Diploma in Fire Safety, Sub-Fire Officer, and Health & Safety courses with 100% practical drills & placement support."
