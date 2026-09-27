@@ -28,7 +28,7 @@ const heroSlides = [
 
 export const HeroSection: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { homePageConfig, displaySettings, isLoading } = useWebContent();
+  const { homePageConfig, displaySettings } = useWebContent();
 
   // Auto-rotate hero backdrop slowly every 8 seconds for a relaxed, cinematic pace
   useEffect(() => {
@@ -40,9 +40,6 @@ export const HeroSection: React.FC = () => {
 
   const currentSlide = heroSlides[currentIndex];
 
-  const showNotice = !isLoading && (homePageConfig?.showNoticeBanner ?? false);
-  const noticeText = homePageConfig?.noticeBannerText || 'Admissions Open 2026 - Central Fire Safety Institute Vadodara';
-  const noticeBadge = homePageConfig?.noticeBannerBadge || 'Notice';
   const headline = homePageConfig?.heroHeadline || 'Central Fire Safety Institute';
   const subheadline = homePageConfig?.heroSubheadline || 'An ISO 9001:2015 Certified Institute';
   const primaryBtnText = homePageConfig?.heroPrimaryBtnText || 'Explore Courses';
@@ -86,20 +83,6 @@ export const HeroSection: React.FC = () => {
         >
           <div className="p-4 xs:p-5 sm:p-6 md:p-8 rounded-3xl bg-white/95 dark:bg-[#12181f]/95 backdrop-blur-md border border-white/80 dark:border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.25)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.7)] w-full overflow-hidden">
             
-            {/* Top Red Notice Banner if enabled */}
-            {showNotice && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mb-3 px-3 py-1.5 rounded-full bg-red-600 text-white text-[11px] sm:text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
-              >
-                <span className="px-2 py-0.2 rounded-full bg-white text-red-600 font-black text-[9px] uppercase tracking-wider">
-                  {noticeBadge}
-                </span>
-                <span className="truncate">{noticeText}</span>
-              </motion.div>
-            )}
-
             {/* CFSI Logo Emblem & Top Badge */}
             <div className="flex flex-col items-center justify-center mb-2">
               <div className="w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden p-0.5 bg-white shadow-md border border-primary/20 ring-2 ring-primary/10 mb-2">
