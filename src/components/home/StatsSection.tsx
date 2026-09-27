@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
-import { GraduationCap, BookOpen, Award, MapPin } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { GraduationCap, BookOpen, Award, Star, Shield, Trophy } from 'lucide-react';
 import { GlassCard } from '../common/GlassCard';
 import { CountUp } from '../common/CountUp';
 import { useWebContent } from '../../context/WebContentContext';
 
-const statIcons = [GraduationCap, BookOpen, Award, MapPin];
+const statIcons = [GraduationCap, BookOpen, Award, Star, Shield, Trophy];
 
 const defaultStats = [
   {
@@ -26,12 +26,6 @@ const defaultStats = [
     label: 'Years Experience',
     sublabel: 'In Fire Safety Training'
   },
-  {
-    value: 10,
-    suffix: '+',
-    label: 'Cities Across India',
-    sublabel: 'Alumni Placement Network'
-  }
 ];
 
 export const StatsSection: React.FC = () => {
@@ -44,15 +38,26 @@ export const StatsSection: React.FC = () => {
     ? homePageConfig.stats
     : defaultStats;
 
+  const count = currentStats.length;
+
+  // Dynamically pick the best grid layout based on how many stat cards exist
+  const gridClass =
+    count === 1 ? 'grid-cols-1 max-w-xs mx-auto' :
+    count === 2 ? 'grid-cols-2 max-w-2xl mx-auto' :
+    count === 3 ? 'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto' :
+    count === 4 ? 'grid-cols-2 lg:grid-cols-4' :
+    count === 5 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' :
+    'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+
   return (
     <section className="py-16 sm:py-20 bg-gradient-to-b from-primary/5 via-primary/[0.02] to-transparent dark:from-[#161d27]/60 dark:to-dark-bg transition-colors duration-300 relative overflow-hidden">
-      
+
       {/* Background Decorative Rings */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 right-0 -translate-y-1/2 w-72 h-72 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-6 lg:gap-8">
+        <div className={`grid ${gridClass} gap-3 xs:gap-4 sm:gap-6 lg:gap-8`}>
           {currentStats.map((stat, index) => {
             const Icon = statIcons[index % statIcons.length];
             return (
@@ -63,16 +68,15 @@ export const StatsSection: React.FC = () => {
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
               >
-                {/* Minimal Glass Card */}
                 <GlassCard hoverEffect={true} className="p-3.5 xs:p-4 sm:p-6 text-center h-full flex flex-col items-center justify-center">
                   <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-primary/20 to-accent/20 dark:from-primary/30 dark:to-accent/30 flex items-center justify-center text-primary dark:text-primary-light mb-2.5 sm:mb-4 shadow-sm">
                     <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-accent" />
                   </div>
 
-                  <CountUp 
-                    value={stat.value} 
-                    suffix={stat.suffix} 
-                    className="font-heading font-black text-2xl xs:text-3xl sm:text-4xl md:text-5xl text-gray-900 dark:text-white" 
+                  <CountUp
+                    value={stat.value}
+                    suffix={stat.suffix}
+                    className="font-heading font-black text-2xl xs:text-3xl sm:text-4xl md:text-5xl text-gray-900 dark:text-white"
                   />
 
                   <h3 className="mt-1.5 sm:mt-2 text-xs xs:text-sm sm:text-base font-extrabold text-gray-900 dark:text-white">
