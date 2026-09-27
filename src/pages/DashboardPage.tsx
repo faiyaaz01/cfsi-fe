@@ -114,7 +114,11 @@ export const DashboardPage: React.FC = () => {
     isDateLocked,
     hasDateDraft,
     discardDateDraft,
+    toggleDateLock,
   } = useStudentData();
+
+  const isAdmin = user?.role === 'admin';
+  const [isTogglingLock, setIsTogglingLock] = useState<boolean>(false);
 
   // --- CADET / STUDENT DIRECTORY STATE ---
   const [cadetSearch, setCadetSearch] = useState('');
@@ -301,6 +305,39 @@ export const DashboardPage: React.FC = () => {
       await discardDateDraft(selectedMusterDate);
       setHasPendingChanges(false);
       toast.info(`Draft muster for ${formattedDateLabel} discarded.`);
+    }
+  };
+
+  const handleUnlockAttendance = async () => {
+    try {
+      setIsTogglingLock(true);
+      await toggleDateLock(selectedMusterDate, false);
+      toast.success(`Attendance for ${formattedDateLabel} unlocked. You can now edit and mark attendance.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to unlock attendance');
+    } finally {
+      setIsTogglingLock(false);
+    }
+  };
+
+  const handleLockAttendance = async () => {
+    const confirmed = await confirm({
+      title: 'Lock Attendance for this date?',
+      message: `Are you sure you want to lock attendance for ${formattedDateLabel}?\n\nNon-admin staff will not be able to modify or mark attendance while locked.`,
+      confirmText: 'Lock Attendance',
+      type: 'danger',
+      icon: 'warning',
+    });
+    if (!confirmed) return;
+
+    try {
+      setIsTogglingLock(true);
+      await toggleDateLock(selectedMusterDate, true);
+      toast.info(`Attendance for ${formattedDateLabel} is now locked.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to lock attendance');
+    } finally {
+      setIsTogglingLock(false);
     }
   };
 
@@ -1171,48 +1208,119 @@ export const DashboardPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* Primary Upload Button */}
-                  <button
-                    type="button"
-                    onClick={handleUploadAttendance}
-                    disabled={isLocked || isFutureDate || isUploadingMuster}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ${
-                      isLocked || isFutureDate
-                        ? 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                        : 'bg-primary text-white hover:bg-primary-dark shadow-md ring-2 ring-primary/30'
-                    }`}
-                    title={
-                      isFutureDate
-                        ? 'Attendance opens when the day starts'
-                        : isLocked
-                        ? 'Attendance is locked (24h expired)'
-                        : 'Upload attendance to database'
-                    }
-                  >
-                    {isUploadingMuster ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Uploading Attendance...</span>
-                      </>
-                    ) : isFutureDate ? (
-                      <>
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>Not Open</span>
-                      </>
-                    ) : isLocked ? (
-                      <>
+                  {/* Admin Lock Attendance Button (when unlocked and past/current date) */}
+                  {isAdmin && !isFutureDate && !isLocked && (
+                    <button
+                      type="button"
+                      onClick={handleLockAttendance}
+                      disabled={isTogglingLock || isUploadingMuster}
+                      className="px-3 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-rose-50 dark:bg-white/10 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-200 dark:border-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+                      title="Lock attendance for this date (prevent further modifications)"
+                    >
+                      {isTogglingLock ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" />
+                          <span>Locking...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
+                          <span>Lock Attendance</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Primary Button: Unlock Attendance (if Admin & locked) or Upload / Disabled Status */}
+                  {isFutureDate ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center gap-1.5"
+                      title="Attendance opens when the day starts"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Not Open</span>
+                    </button>
+                  ) : isLocked ? (
+                    isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={handleUnlockAttendance}
+                        disabled={isTogglingLock}
+                        className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 active:scale-95 text-white shadow-md ring-2 ring-amber-400/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="Unlock attendance for this date (Admin Override)"
+                      >
+                        {isTogglingLock ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Unlocking...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="w-3.5 h-3.5" />
+                            <span>Unlock Attendance</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-4 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center gap-1.5"
+                        title="Attendance is locked (24h edit window expired)"
+                      >
                         <Lock className="w-3.5 h-3.5" />
                         <span>Locked</span>
-                      </>
-                    ) : (
-                      <>
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        <span>Upload Attendance</span>
-                      </>
-                    )}
-                  </button>
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleUploadAttendance}
+                      disabled={isUploadingMuster}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-dark shadow-md ring-2 ring-primary/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                      title="Upload attendance to database"
+                    >
+                      {isUploadingMuster ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading Attendance...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload Attendance</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Notice for Locked Date */}
+              {isLocked && !isFutureDate && (
+                <div className="p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 flex items-center justify-between gap-2 text-xs text-rose-900 dark:text-rose-200">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>
+                      <strong>Locked:</strong> The 24-hour editing window for {formattedDateLabel} has expired.
+                      {isAdmin ? ' As an administrator, you can click "Unlock Attendance" to make edits.' : ' Contact an administrator to unlock.'}
+                    </span>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={handleUnlockAttendance}
+                      disabled={isTogglingLock}
+                      className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors cursor-pointer shrink-0 flex items-center gap-1 shadow-xs"
+                    >
+                      <Unlock className="w-3 h-3" />
+                      <span>Unlock</span>
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Notice for Future Date */}
               {isFutureDate && (

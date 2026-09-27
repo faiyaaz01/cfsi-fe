@@ -282,6 +282,39 @@ export const api = {
     return response.json();
   },
 
+  /** Lock attendance muster for a date (Admin only) */
+  async lockDayAttendance(date: string): Promise<{ date: string; locked: boolean; message: string }> {
+    const response = await fetchWithAuth(`/attendance/day/${encodeURIComponent(date)}/lock`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to lock attendance');
+    }
+    return response.json();
+  },
+
+  /** Unlock attendance muster for a date (Admin only) */
+  async unlockDayAttendance(date: string): Promise<{ date: string; locked: boolean; can_edit_until?: string; message: string }> {
+    const response = await fetchWithAuth(`/attendance/day/${encodeURIComponent(date)}/unlock`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to unlock attendance');
+    }
+    return response.json();
+  },
+
+  /** Get lock status for a date */
+  async getDayLockStatus(date: string): Promise<{ date: string; locked: boolean; can_edit_until?: string }> {
+    const response = await fetchWithAuth(`/attendance/day/${encodeURIComponent(date)}/lock-status`);
+    if (!response.ok) {
+      return { date, locked: false };
+    }
+    return response.json();
+  },
+
   /** Check backend health and database mode */
   async checkHealth(): Promise<{ status: string; database: string; is_mock: boolean }> {
     const response = await fetch(`${API_BASE_URL}/health`);

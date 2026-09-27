@@ -50,6 +50,7 @@ interface StudentDataContextType {
   isDateLocked: (date: string) => { locked: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number };
   hasDateDraft: (date: string) => boolean;
   discardDateDraft: (date: string) => Promise<void>;
+  toggleDateLock: (date: string, lock: boolean) => Promise<void>;
   resetToSeed: () => Promise<void>;
   refreshAttendance: () => Promise<void>;
 }
@@ -464,15 +465,51 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     await fetchAttendance();
   };
 
+  // Track explicit admin lock/unlock overrides for the current session
+  const [adminDateLockOverrides, setAdminDateLockOverrides] = useState<Record<string, boolean>>({});
+
+  const toggleDateLock = async (date: string, lock: boolean) => {
+    if (lock) {
+      await api.lockDayAttendance(date);
+      setAdminDateLockOverrides((prev) => ({ ...prev, [date]: true }));
+    } else {
+      await api.unlockDayAttendance(date);
+      setAdminDateLockOverrides((prev) => ({ ...prev, [date]: false }));
+    }
+    await fetchAttendance();
+  };
+
   // Check whether attendance records for a specific date are locked (> 24h since upload)
   const isDateLocked = useCallback((date: string): { locked: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number } => {
+    // 1. Explicit admin override check
+    if (adminDateLockOverrides[date] !== undefined) {
+      const isManualLocked = adminDateLockOverrides[date];
+      return {
+        locked: isManualLocked,
+        remainingHours: isManualLocked ? 0 : 24,
+      };
+    }
+
     const dayRecords = attendance.filter((r) => r.date === date);
     if (dayRecords.length === 0) {
       return { locked: false };
     }
 
-    // Direct flag from backend
-    const lockedRecord = dayRecords.find((r) => r.isLocked);
+    // Direct flag from backend (e.g. if explicitly unlocked by admin with future deadline)
+    const explicitlyUnlocked = dayRecords.find((r) => r.isLocked === false && r.canEditUntil && new Date(r.canEditUntil).getTime() > Date.now());
+    if (explicitlyUnlocked) {
+      const diffMs = new Date(explicitlyUnlocked.canEditUntil!).getTime() - Date.now();
+      const remainingHours = Math.max(0, Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10);
+      return {
+        locked: false,
+        uploadedAt: explicitlyUnlocked.uploadedAt,
+        canEditUntil: explicitlyUnlocked.canEditUntil,
+        remainingHours,
+      };
+    }
+
+    // Direct flag from backend (e.g. explicitly locked by admin)
+    const lockedRecord = dayRecords.find((r) => r.isLocked === true);
     if (lockedRecord) {
       return {
         locked: true,
@@ -513,7 +550,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
 
     return { locked: false };
-  }, [attendance]);
+  }, [attendance, adminDateLockOverrides]);
 
   // Clear all attendance records on a given date from MongoDB
   const clearDayAttendance = async (date: string) => {
@@ -585,6 +622,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         isDateLocked,
         hasDateDraft,
         discardDateDraft,
+        toggleDateLock,
         resetToSeed,
         refreshAttendance,
       }}
