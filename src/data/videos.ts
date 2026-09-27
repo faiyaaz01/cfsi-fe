@@ -7,7 +7,10 @@ import { VideoItem } from '../types';
  */
 export const videosData: VideoItem[] = [];
 
-const DEMO_PREFIXES = ['vid-0', 'vid-1'];
+const LEGACY_VIDEO_IDS = new Set([
+  'vid-01', 'vid-02', 'vid-03', 'vid-04', 'vid-05', 'vid-06', 'vid-07',
+  'vid-08', 'vid-09', 'vid-10', 'vid-11', 'vid-12', 'vid-13', 'vid-14'
+]);
 
 export const getStoredVideos = (): VideoItem[] => {
   try {
@@ -15,7 +18,7 @@ export const getStoredVideos = (): VideoItem[] => {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        return parsed.filter(item => item.id && !DEMO_PREFIXES.some(p => item.id.startsWith(p)));
+        return parsed.filter(item => item.id && !LEGACY_VIDEO_IDS.has(item.id));
       }
     }
   } catch (e) {

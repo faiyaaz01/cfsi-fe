@@ -7,6 +7,8 @@ import { StatsSection } from '../components/home/StatsSection';
 import { TrainingSection } from '../components/home/TrainingSection';
 import { WhyChooseUsSection } from '../components/home/WhyChooseUsSection';
 import { useWebContent } from '../context/WebContentContext';
+import { SEOHead } from '../components/common/SEOHead';
+import { getOrganizationSchema } from '../lib/seoSchemas';
 
 export const HomePage: React.FC = () => {
   const { displaySettings, homePageConfig } = useWebContent();
@@ -19,8 +21,16 @@ export const HomePage: React.FC = () => {
   const showTraining = homePageConfig?.showTrainingSection ?? true;
   const showWhy = homePageConfig?.showWhyChooseUs ?? true;
 
+  const orgSchema = getOrganizationSchema();
+
   return (
     <div className="space-y-0">
+      <SEOHead
+        title="Central Fire Safety Institute Vadodara"
+        description="Central Fire Safety Institute (CFSI) Vadodara offers Government-recognized Diploma in Fire Safety, Sub-Fire Officer, and Health & Safety courses with 100% practical drills & placement support."
+        keywords="fire safety institute vadodara, fire safety engineering gujarat, sub fire officer training, industrial safety diploma, CFSI vadodara, fire fighting courses fees"
+        structuredData={orgSchema}
+      />
       {showHero && <HeroSection />}
       {showNews && <LatestNewsSection />}
       {showCourses && <CoursesSection />}

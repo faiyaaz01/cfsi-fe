@@ -5,6 +5,8 @@ import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { SkeletonGallery } from '../components/common/Skeleton';
 import { useWebContent } from '../context/WebContentContext';
+import { SEOHead } from '../components/common/SEOHead';
+import { getBreadcrumbSchema } from '../lib/seoSchemas';
 
 type CategoryFilter = 'All' | 'Training' | 'Events' | 'Equipment';
 
@@ -41,8 +43,19 @@ export const ImageGalleryPage: React.FC = () => {
     }
   };
 
+  const structuredData = getBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Photo Gallery', url: '/gallery/images' },
+  ]);
+
   return (
     <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <SEOHead
+        title="CFSI Training Photo Gallery | Ground Drills & Campus Life |"
+        description="Browse authentic photos of live firefighting exercises, smoke labyrinth navigation, high-rise rappelling, and industrial safety drills at CFSI Vadodara."
+        keywords="firefighter drill photos vadodara, fire safety training gallery, CFSI campus photos, fire engine drill pictures"
+        structuredData={structuredData}
+      />
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

@@ -163,13 +163,20 @@ export const defaultDisplaySettings: DisplaySettings = {
   maintenanceModeBanner: false,
 };
 
-// Known demo IDs to purge so only real items remain
-const DEMO_ID_PREFIXES = ['cfs-01', 'dfs-02', 'pgdfs-03', 'ffsi-04', 'tr-01', 'tr-02', 'tr-03', 'img-0', 'img-1', 'vid-0', 'vid-1'];
+// Exact legacy demo IDs to purge so real user uploads are never removed on refresh
+const LEGACY_DEMO_IDS = new Set([
+  'cfs-01', 'dfs-02', 'pgdfs-03', 'ffsi-04',
+  'tr-01', 'tr-02', 'tr-03',
+  'img-01', 'img-02', 'img-03', 'img-04', 'img-05', 'img-06', 'img-07',
+  'img-08', 'img-09', 'img-10', 'img-11', 'img-12', 'img-13', 'img-14',
+  'vid-01', 'vid-02', 'vid-03', 'vid-04', 'vid-05', 'vid-06', 'vid-07',
+  'vid-08', 'vid-09', 'vid-10', 'vid-11', 'vid-12', 'vid-13', 'vid-14'
+]);
 
 function filterOutDemoItems<T extends { id?: string }>(items: T[]): T[] {
   return items.filter(item => {
     if (!item.id) return false;
-    return !DEMO_ID_PREFIXES.some(prefix => item.id?.startsWith(prefix));
+    return !LEGACY_DEMO_IDS.has(item.id);
   });
 }
 

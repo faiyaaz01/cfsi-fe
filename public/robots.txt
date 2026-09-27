@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /courses
+Allow: /courses/*
+Allow: /news
+Allow: /gallery/images
+Allow: /gallery/videos
+Allow: /contact
+
+# Disallow private dashboards and student muster
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /student-data
+Disallow: /attendance
+Disallow: /attendance/*
+Disallow: /profile
+Disallow: /teacher/*
+Disallow: /leader/*
+Disallow: /student/dashboard
+Disallow: /api/*
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Sitemap URL
+Sitemap: https://cfsi.co.in/sitemap.xml

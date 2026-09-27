@@ -8,6 +8,8 @@ import { CourseModal } from '../components/home/CourseModal';
 import { SkeletonCourse } from '../components/common/Skeleton';
 import { Link, useParams } from 'react-router-dom';
 import { useWebContent } from '../context/WebContentContext';
+import { SEOHead } from '../components/common/SEOHead';
+import { getCourseSchema, getCoursesListSchema, getBreadcrumbSchema } from '../lib/seoSchemas';
 
 const iconMap: Record<string, React.ElementType> = {
   Flame: Flame,
@@ -24,8 +26,40 @@ export const CoursesPage: React.FC = () => {
   // If a slug is specified in URL, highlight or pre-open that course
   const activeCourseFromSlug = slug ? courses.find((c) => c.slug === slug) : null;
 
+  // SEO Configurations
+  const pageTitle = activeCourseFromSlug
+    ? `${activeCourseFromSlug.title} — Duration, Eligibility & Fees`
+    : 'Fire Safety & Industrial Safety Courses in Vadodara | Diploma Programs';
+
+  const pageDescription = activeCourseFromSlug
+    ? `${activeCourseFromSlug.shortDescription || activeCourseFromSlug.fullDescription} Duration: ${activeCourseFromSlug.duration}. Eligibility: ${activeCourseFromSlug.eligibility}. Certified by ${activeCourseFromSlug.certificationBody || 'CFSI'}.`
+    : 'Explore government-recognized Fire & Industrial Safety engineering courses at CFSI Vadodara. Diploma, Sub-Fire Officer & Certificate courses with 100% placement track record.';
+
+  const structuredData = activeCourseFromSlug
+    ? [
+        getCourseSchema(activeCourseFromSlug),
+        getBreadcrumbSchema([
+          { name: 'Home', url: '/' },
+          { name: 'Courses', url: '/courses' },
+          { name: activeCourseFromSlug.title, url: `/courses/${activeCourseFromSlug.slug}` },
+        ]),
+      ]
+    : [
+        getCoursesListSchema(courses),
+        getBreadcrumbSchema([
+          { name: 'Home', url: '/' },
+          { name: 'Courses', url: '/courses' },
+        ]),
+      ];
+
   return (
     <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        keywords="fire safety diploma vadodara, sub fire officer course, industrial safety engineering, safety inspector course fees, CFSI courses"
+        structuredData={structuredData}
+      />
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

@@ -10,7 +10,6 @@ import {
   Flame,
   Image as ImageIcon,
   Video,
-  Sliders,
   Plus,
   Search,
   Edit3,
@@ -22,18 +21,22 @@ import {
   Play,
   ShieldCheck,
   RotateCw,
-  AlertCircle
+  AlertCircle,
+  Cloud
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlatCard } from '../components/common/FlatCard';
 import { CountUp } from '../components/common/CountUp';
+import { ImageDropzone } from '../components/common/ImageDropzone';
+import { CloudinaryConfigModal } from '../components/common/CloudinaryConfigModal';
+import { isCloudinaryConfigured } from '../lib/cloudinary';
 import { useNews } from '../context/NewsContext';
-import { useWebContent, DisplaySettings } from '../context/WebContentContext';
+import { useWebContent } from '../context/WebContentContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { Course, NewsPost, NewsCategory, TrainingPost, GalleryImage, VideoItem } from '../types';
 import { HomePageManager } from '../components/admin/HomePageManager';
 
-type SubTab = 'homepage' | 'courses' | 'news' | 'drills' | 'photos' | 'videos' | 'display';
+type SubTab = 'homepage' | 'courses' | 'news' | 'drills' | 'photos' | 'videos';
 
 interface WebManagementPageProps {
   isEmbedded?: boolean;
@@ -49,7 +52,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     trainings,
     photos,
     videos,
-    displaySettings,
     isLoading: isWebLoading,
     addCourse,
     updateCourse,
@@ -67,8 +69,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     updateVideo,
     deleteVideo,
     clearAllVideos,
-    toggleDisplaySetting,
-    resetDisplaySettings,
     refreshAllContent,
   } = useWebContent();
 
@@ -82,6 +82,9 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     clearAllNews,
     refreshNews,
   } = useNews();
+
+  // Cloudinary Storage Settings Modal State
+  const [isCloudinaryModalOpen, setIsCloudinaryModalOpen] = useState(false);
 
   // ==========================================
   // MODULE 1: COURSES MANAGEMENT
@@ -517,7 +520,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const handleOpenAddPhoto = () => {
     setEditingPhoto(null);
     setPhotoForm({
-      id: `img-${Date.now()}`,
+      id: `photo-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       title: '',
       category: 'Training',
       imageUrl: '',
@@ -552,7 +555,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     }
 
     const payload: GalleryImage = {
-      id: photoForm.id || `img-${Date.now()}`,
+      id: photoForm.id || `photo-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       title: photoForm.title.trim(),
       category: photoForm.category,
       imageUrl: photoForm.imageUrl.trim(),
@@ -641,7 +644,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const handleOpenAddVideo = () => {
     setEditingVideo(null);
     setVideoForm({
-      id: `vid-${Date.now()}`,
+      id: `video-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       youtubeId: '',
       title: '',
       category: 'Practical Drill',
@@ -677,7 +680,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     }
 
     const payload: VideoItem = {
-      id: videoForm.id || `vid-${Date.now()}`,
+      id: videoForm.id || `video-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       youtubeId: cleanYtId,
       title: videoForm.title.trim(),
       category: videoForm.category,
@@ -730,58 +733,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     });
   }, [videos, videoSearch, videoCatFilter]);
 
-  // ==========================================
-  // MODULE 6: DASHBOARD & WEBSITE DISPLAY MANAGEMENT
-  // ==========================================
-  const renderToggle = (
-    key: keyof DisplaySettings,
-    title: string,
-    description: string,
-    badgeText: string,
-    isDanger = false
-  ) => {
-    const isEnabled = displaySettings[key];
-    return (
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-gray-50/80 dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-primary/30 transition-all">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-gray-900 dark:text-white">{title}</span>
-            <span className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full ${
-              isEnabled
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700'
-                : 'bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-            }`}>
-              {isEnabled ? 'Active / Visible' : 'Hidden'}
-            </span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">({badgeText})</span>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xl">
-            {description}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => toggleDisplaySetting(key, title)}
-          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-            isEnabled 
-              ? (isDanger ? 'bg-amber-600' : 'bg-primary') 
-              : 'bg-gray-300 dark:bg-gray-700'
-          }`}
-          role="switch"
-          aria-checked={isEnabled}
-        >
-          <span
-            aria-hidden="true"
-            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              isEnabled ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
-      </div>
-    );
-  };
-
   return (
     <div className={isEmbedded ? "w-full" : "min-h-screen bg-gray-50/50 dark:bg-dark-bg text-gray-900 dark:text-white transition-colors duration-300"}>
       <div className={isEmbedded ? "w-full space-y-6" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"}>
@@ -806,9 +757,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <h1 className="text-xl sm:text-2xl font-heading font-black tracking-tight text-gray-900 dark:text-white">
                     Web Management
                   </h1>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-700/50">
-                    Live Website
-                  </span>
                   {(isWebLoading || isNewsLoading) && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold text-gray-400 animate-pulse">
                       <RotateCw className="w-3 h-3 animate-spin" />
@@ -824,6 +772,18 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsCloudinaryModalOpen(true)}
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/15 border border-gray-200 dark:border-white/10 flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Cloudinary CDN Image Storage Settings"
+            >
+              <Cloud className="w-3.5 h-3.5 text-blue-500" />
+              <span>Cloud Storage</span>
+              {isCloudinaryConfigured() && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Connected" />
+              )}
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -850,11 +810,11 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
         </div>
 
         {/* View Tabs */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 border-b border-gray-200 dark:border-white/10 pb-3 overflow-x-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab('homepage')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'homepage'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -862,15 +822,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           >
             <Home className="w-4 h-4" />
             <span>Homepage Manager</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold uppercase">
-              NEW
-            </span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('courses')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'courses'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -883,7 +840,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           <button
             type="button"
             onClick={() => setActiveTab('news')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'news'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -896,7 +853,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           <button
             type="button"
             onClick={() => setActiveTab('drills')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'drills'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -909,7 +866,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           <button
             type="button"
             onClick={() => setActiveTab('photos')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'photos'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -922,7 +879,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           <button
             type="button"
             onClick={() => setActiveTab('videos')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all ${
               activeTab === 'videos'
                 ? 'bg-primary text-white shadow-md shadow-primary/20'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
@@ -930,19 +887,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           >
             <Video className="w-4 h-4" />
             <span>Video Gallery (<CountUp value={videos.length} />)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('display')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-              activeTab === 'display'
-                ? 'bg-primary text-white shadow-md shadow-primary/20'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-white/10'
-            }`}
-          >
-            <Sliders className="w-4 h-4" />
-            <span>Portal Switches</span>
           </button>
         </div>
 
@@ -1786,99 +1730,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
             )}
           </div>
         )}
-
-        {/* ========================================================================= */}
-        {/* TAB 6: DASHBOARD & WEBSITE DISPLAY MANAGEMENT                             */}
-        {/* ========================================================================= */}
-        {activeTab === 'display' && (
-          <div className="space-y-8">
-            <FlatCard hoverEffect={false} className="p-6 border border-gray-200/80 dark:border-white/10 shadow-md">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-white/5">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Portal & System Access</span>
-                  </div>
-                  <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900 dark:text-white">
-                    Portal & System Switches
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Turn student portal features, attendance, branch login, and maintenance alert ON or OFF with a single click. (To manage public website sections, visit the Homepage Manager tab).
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: 'Reset Portal Switches',
-                      message: 'Are you sure you want to reset all portal switches back to standard settings?',
-                      confirmText: 'Reset Switches',
-                      cancelText: 'Cancel',
-                      type: 'warning',
-                      icon: 'warning',
-                    });
-                    if (ok) {
-                      await resetDisplaySettings();
-                    }
-                  }}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300 transition-colors"
-                >
-                  <RotateCw className="w-3.5 h-3.5" />
-                  <span>Reset Portal Switches</span>
-                </button>
-              </div>
-
-              {/* STUDENT & PARTNER PORTAL ACCESS */}
-              <div className="pt-6 space-y-4">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  <h3 className="font-heading font-black text-base text-gray-900 dark:text-white uppercase tracking-wider">
-                    Student & Partner Portal Access
-                  </h3>
-                </div>
-
-                <div className="space-y-3">
-                  {renderToggle(
-                    'attendanceSystem',
-                    'Daily Student Attendance',
-                    'Enable or disable marking student daily attendance in the admin and teacher panels.',
-                    'Attendance'
-                  )}
-
-                  {renderToggle(
-                    'studentPortalLogin',
-                    'Student Portal Login',
-                    'Allow students to log into their personal portal to view attendance, profile, and exam scores.',
-                    'Student Login'
-                  )}
-
-                  {renderToggle(
-                    'institutePortalLogin',
-                    'Franchise & Branch Login',
-                    'Allow partner training centers and branch institutes to log in.',
-                    'Branch Portal'
-                  )}
-
-                  {renderToggle(
-                    'bulkStudentUpload',
-                    'Excel / CSV Bulk Student Upload',
-                    'Allow uploading many students at once using an Excel or CSV spreadsheet file.',
-                    'Admin Tools'
-                  )}
-
-                  {renderToggle(
-                    'maintenanceModeBanner',
-                    'Maintenance Mode Notice',
-                    'Show a warning banner to all website visitors saying the site is currently being updated.',
-                    'Visitor Alert',
-                    true
-                  )}
-                </div>
-              </div>
-            </FlatCard>
-          </div>
-        )}
       </div>
 
       {/* ========================================================================= */}
@@ -2151,18 +2002,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Photo Link / Image URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={newsForm.imageUrl}
-                    onChange={(e) => setNewsForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+                <ImageDropzone
+                  value={newsForm.imageUrl}
+                  onChange={(url) => setNewsForm(prev => ({ ...prev, imageUrl: url }))}
+                  label="News Cover Image (Optional)"
+                  helperText="Upload event photo or circular banner (JPG, PNG, WEBP up to 10MB)"
+                  placeholder="https://images.unsplash.com/... or paste direct URL"
+                />
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
@@ -2296,18 +2142,13 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Photo URL
-                  </label>
-                  <input
-                    type="url"
-                    value={drillForm.image}
-                    onChange={(e) => setDrillForm(prev => ({ ...prev, image: e.target.value }))}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+                <ImageDropzone
+                  value={drillForm.image}
+                  onChange={(url) => setDrillForm(prev => ({ ...prev, image: url }))}
+                  label="Drill Photo (Optional)"
+                  helperText="Upload practical drill photo or equipment demonstration (JPG, PNG, WEBP)"
+                  placeholder="https://images.unsplash.com/... or paste direct URL"
+                />
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
@@ -2442,19 +2283,14 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
-                    Photo Link / Image URL *
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    value={photoForm.imageUrl}
-                    onChange={(e) => setPhotoForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+                <ImageDropzone
+                  value={photoForm.imageUrl}
+                  onChange={(url) => setPhotoForm(prev => ({ ...prev, imageUrl: url }))}
+                  label="Gallery Photo / Image"
+                  required
+                  helperText="Upload practical drill, equipment, campus, or parade photos (JPG, PNG, WEBP up to 10MB)"
+                  placeholder="https://images.unsplash.com/... or paste direct URL"
+                />
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
@@ -2612,6 +2448,12 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           </div>
         )}
       </AnimatePresence>
+
+      {/* Cloudinary Storage Settings Modal */}
+      <CloudinaryConfigModal
+        isOpen={isCloudinaryModalOpen}
+        onClose={() => setIsCloudinaryModalOpen(false)}
+      />
     </div>
   );
 };

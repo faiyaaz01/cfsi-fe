@@ -29,6 +29,22 @@ export const CoursesSection: React.FC = () => {
     ? courses.filter((c) => featuredIds.includes(c.id))
     : courses;
 
+  const getGridContainerClass = (count: number) => {
+    if (count === 1) {
+      return 'max-w-md mx-auto';
+    }
+    if (count === 2) {
+      return 'max-w-3xl lg:max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 justify-center';
+    }
+    if (count === 3) {
+      return 'max-w-5xl lg:max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 justify-center';
+    }
+    if (count === 5 || count === 6) {
+      return 'max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 justify-center';
+    }
+    return 'max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8';
+  };
+
   return (
     <section id="courses" className="py-12 sm:py-20 lg:py-24 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
@@ -59,8 +75,8 @@ export const CoursesSection: React.FC = () => {
             </Link>
           </div>
         ) : (
-          /* Cards Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          /* Cards Grid dynamically centered and balanced */
+          <div className={getGridContainerClass(displayedCourses.length)}>
             {displayedCourses.map((course, index) => {
               const IconComponent = iconMap[course.icon] || Flame;
 
@@ -71,23 +87,26 @@ export const CoursesSection: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.45, delay: index * 0.08, ease: 'easeOut' }}
+                  className="h-full flex flex-col"
                 >
                   <FlatCard className="h-full flex flex-col justify-between p-6 group border border-gray-200/80 dark:border-white/10 hover:border-primary/50 dark:hover:border-primary/50 relative overflow-hidden">
                     
                     {/* Subtle top accent border line */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                    <div>
+                    <div className="flex-1 flex flex-col">
                       {/* Badge */}
-                      {course.badge && (
-                        <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent/10 text-accent dark:bg-accent/20 mb-4">
-                          {course.badge}
-                        </span>
-                      )}
+                      <div className="min-h-[26px] mb-3 flex items-center">
+                        {course.badge ? (
+                          <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent/10 text-accent dark:bg-accent/20">
+                            {course.badge}
+                          </span>
+                        ) : null}
+                      </div>
 
                       {/* Icon + Title */}
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm shrink-0">
                           <IconComponent className="w-6 h-6" />
                         </div>
                         <h3 className="font-heading font-extrabold text-lg sm:text-xl text-gray-900 dark:text-white leading-tight">
@@ -95,13 +114,13 @@ export const CoursesSection: React.FC = () => {
                         </h3>
                       </div>
 
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-5 leading-relaxed">
-                        {course.shortDescription}
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-5 leading-relaxed min-h-[2.5rem]">
+                        {course.shortDescription || 'Professional firefighter and industrial safety training curriculum.'}
                       </p>
 
                       {/* Meta specifics */}
-                      <div className="space-y-2 py-3 border-y border-gray-100 dark:border-white/5 text-xs text-gray-600 dark:text-gray-400">
-                        {course.duration && (
+                      <div className="mt-auto space-y-2 py-3 border-y border-gray-100 dark:border-white/5 text-xs text-gray-600 dark:text-gray-400">
+                        {course.duration ? (
                           <div className="flex items-center justify-between">
                             <span className="flex items-center gap-1.5 font-medium">
                               <Clock className="w-3.5 h-3.5 text-primary" />
@@ -109,8 +128,8 @@ export const CoursesSection: React.FC = () => {
                             </span>
                             <span className="font-bold text-gray-900 dark:text-white">{course.duration}</span>
                           </div>
-                        )}
-                        {course.eligibility && (
+                        ) : null}
+                        {course.eligibility ? (
                           <div className="flex items-center justify-between">
                             <span className="flex items-center gap-1.5 font-medium">
                               <GraduationCap className="w-3.5 h-3.5 text-accent" />
@@ -120,8 +139,8 @@ export const CoursesSection: React.FC = () => {
                               {course.eligibility}
                             </span>
                           </div>
-                        )}
-                        {course.fee && (
+                        ) : null}
+                        {course.fee ? (
                           <div className="flex items-center justify-between">
                             <span className="flex items-center gap-1.5 font-medium">
                               <IndianRupee className="w-3.5 h-3.5 text-emerald-500" />
@@ -131,12 +150,12 @@ export const CoursesSection: React.FC = () => {
                               {course.fee}
                             </span>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="pt-5 mt-2 flex items-center gap-2">
+                    <div className="pt-5 mt-auto flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setSelectedCourse(course)}

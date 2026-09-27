@@ -22,7 +22,6 @@ import {
   ArrowRight,
   LayoutDashboard
 } from 'lucide-react';
-import { coursesData } from '../../data/courses';
 import cfsiLogo from '../../assets/cfsi-logo.jpg';
 import { getLoggedStudent } from '../../lib/studentAuth';
 import { UserAvatar } from '../common/UserAvatar';
@@ -30,9 +29,8 @@ import { UserAvatar } from '../common/UserAvatar';
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileCoursesOpen, setMobileCoursesOpen] = useState(false);
   const [mobileGalleryOpen, setMobileGalleryOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<'gallery' | 'courses' | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<'gallery' | null>(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,7 +61,6 @@ export const Navbar: React.FC = () => {
     setMobileMenuOpen(false);
     setActiveDropdown(null);
     setProfileDropdownOpen(false);
-    setMobileCoursesOpen(false);
     setMobileGalleryOpen(false);
   }, [location.pathname]);
 
@@ -89,7 +86,6 @@ export const Navbar: React.FC = () => {
     }`;
 
   const isGalleryActive = location.pathname.startsWith('/gallery');
-  const isCoursesActive = location.pathname.startsWith('/courses') || location.pathname === '/student-data';
 
   return (
     <header
@@ -184,7 +180,7 @@ export const Navbar: React.FC = () => {
                       </div>
                       <div>
                         <div className="font-bold text-gray-900 dark:text-white">Video Gallery</div>
-                        <div className="text-[10px] text-gray-400">14 Live Drill Videos</div>
+                        <div className="text-[10px] text-gray-400"> Live Drill Videos</div>
                       </div>
                     </Link>
                   </motion.div>
@@ -192,63 +188,9 @@ export const Navbar: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            {/* Courses Dropdown (Click to toggle) */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setActiveDropdown(prev => prev === 'courses' ? null : 'courses')}
-                className={`relative px-3.5 py-1.5 rounded-lg text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-150 inline-flex items-center gap-1 cursor-pointer ${
-                  isCoursesActive || activeDropdown === 'courses'
-                    ? 'text-primary dark:text-primary-light bg-primary/10 dark:bg-primary/20 font-bold'
-                    : 'text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary-light hover:bg-gray-100/60 dark:hover:bg-white/5'
-                }`}
-              >
-                <span>Courses</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'courses' ? 'rotate-180 text-primary' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {activeDropdown === 'courses' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1.5 w-72 rounded-2xl bg-white dark:bg-[#161d27] shadow-xl border border-gray-100 dark:border-white/10 p-2.5 z-50"
-                  >
-                    <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                      Certified Programs
-                    </div>
-                    {coursesData.map((c) => (
-                      <Link
-                        key={c.id}
-                        to={`/courses/${c.slug}`}
-                        className="block px-3 py-2 rounded-xl text-xs hover:bg-primary/10 hover:text-primary dark:hover:bg-white/5 transition-colors group"
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <div className="font-bold text-gray-900 dark:text-white group-hover:text-primary dark:group-hover:text-primary-light">
-                          {c.title}
-                        </div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                          {c.duration} • {c.eligibility}
-                        </div>
-                      </Link>
-                    ))}
-
-                    <div className="my-1.5 border-t border-gray-100 dark:border-white/10" />
-
-                    <Link
-                      to="/student-data"
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/10 transition-colors"
-                      onClick={() => setActiveDropdown(null)}
-                    >
-                      <Users className="w-4 h-4 text-accent" />
-                      <span>Pass Out Student Roster</span>
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <NavLink to="/courses" className={({ isActive }) => getNavLinkClass(isActive)}>
+              Courses
+            </NavLink>
 
             <NavLink to="/news" className={({ isActive }) => getNavLinkClass(isActive)}>
               News & Events
@@ -572,56 +514,20 @@ export const Navbar: React.FC = () => {
                   <span>About Us</span>
                 </NavLink>
 
-                {/* Courses & Programs Accordion */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setMobileCoursesOpen(prev => !prev)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                      location.pathname.startsWith('/courses') || mobileCoursesOpen
+                <NavLink
+                  to="/courses"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                      isActive
                         ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light'
                         : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <BookOpen className="w-4 h-4 text-primary" />
-                      <span>Certified Courses</span>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileCoursesOpen ? 'rotate-180 text-primary' : 'text-gray-400'}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {mobileCoursesOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.15 }}
-                        className="overflow-hidden pl-7 pr-2 py-1.5 space-y-1"
-                      >
-                        {coursesData.map((c) => (
-                          <Link
-                            key={c.id}
-                            to={`/courses/${c.slug}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="block px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <div className="font-bold text-gray-900 dark:text-white">{c.title}</div>
-                            <div className="text-[10px] text-gray-500 dark:text-gray-400">{c.duration} • {c.eligibility}</div>
-                          </Link>
-                        ))}
-                        <Link
-                          to="/student-data"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/5 transition-colors"
-                        >
-                          <Users className="w-3.5 h-3.5 text-accent" />
-                          <span>Pass Out Student Roster</span>
-                        </Link>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                    }`
+                  }
+                >
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  <span>Courses</span>
+                </NavLink>
 
                 {/* Galleries Accordion */}
                 <div>

@@ -19,6 +19,8 @@ import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { SkeletonNews } from '../components/common/Skeleton';
 import { toast } from 'sonner';
+import { SEOHead } from '../components/common/SEOHead';
+import { getNewsArticleSchema, getBreadcrumbSchema } from '../lib/seoSchemas';
 
 export const NewsPage: React.FC = () => {
   const { posts, isLoading } = useNews();
@@ -69,8 +71,41 @@ export const NewsPage: React.FC = () => {
     }
   };
 
+  const pageTitle = activeModalPost
+    ? `${activeModalPost.title} — Notice & Announcement`
+    : 'News, Circulars & Examination Announcements | CFSI Vadodara';
+
+  const pageDescription = activeModalPost
+    ? activeModalPost.excerpt || activeModalPost.content.slice(0, 160)
+    : 'Stay informed with the latest admission notices, practical training schedules, circulars, and exam updates from Central Fire Safety Institute Vadodara.';
+
+  const pageImage = activeModalPost?.imageUrl || undefined;
+
+  const structuredData = activeModalPost
+    ? [
+        getNewsArticleSchema(activeModalPost),
+        getBreadcrumbSchema([
+          { name: 'Home', url: '/' },
+          { name: 'News', url: '/news' },
+          { name: activeModalPost.title, url: `/news?id=${activeModalPost.id}` },
+        ]),
+      ]
+    : [
+        getBreadcrumbSchema([
+          { name: 'Home', url: '/' },
+          { name: 'News', url: '/news' },
+        ]),
+      ];
+
   return (
     <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        keywords="fire safety news vadodara, CFSI circulars, admission notices 2026, firefighter exam dates, fire institute updates gujarat"
+        ogImage={pageImage}
+        structuredData={structuredData}
+      />
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

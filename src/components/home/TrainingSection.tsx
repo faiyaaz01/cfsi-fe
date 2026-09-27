@@ -19,6 +19,12 @@ export const TrainingSection: React.FC = () => {
     ? trainings.filter((t) => featuredIds.includes(t.id))
     : trainings;
 
+  const getTrainingGridClass = (count: number) => {
+    if (count === 1) return 'max-w-md mx-auto';
+    if (count === 2) return 'max-w-3xl lg:max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 justify-center';
+    return 'grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8';
+  };
+
   return (
     <section className="py-12 sm:py-20 lg:py-24 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-t border-gray-200/80 dark:border-white/5 w-full max-w-full overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
@@ -52,7 +58,7 @@ export const TrainingSection: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className={getTrainingGridClass(displayedDrills.length)}>
             {displayedDrills.map((item, index) => (
               <motion.div
                 key={item.id}
@@ -60,6 +66,7 @@ export const TrainingSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.5, delay: index * 0.1, ease: 'easeOut' }}
+                className="h-full flex flex-col"
               >
                 <FlatCard className="h-full flex flex-col overflow-hidden group border border-gray-200/80 dark:border-white/10 relative hover:border-amber-400 dark:hover:border-amber-400 shadow-sm hover:shadow-xl transition-all duration-300">
                   

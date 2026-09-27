@@ -17,6 +17,8 @@ import { GlassCard } from '../components/common/GlassCard';
 import { FlatCard } from '../components/common/FlatCard';
 import { coursesData } from '../data/courses';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
+import { SEOHead } from '../components/common/SEOHead';
+import { getOrganizationSchema, getBreadcrumbSchema } from '../lib/seoSchemas';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -60,8 +62,22 @@ export const ContactPage: React.FC = () => {
     reset();
   };
 
+  const structuredData = [
+    getOrganizationSchema(),
+    getBreadcrumbSchema([
+      { name: 'Home', url: '/' },
+      { name: 'Contact Us', url: '/contact' },
+    ]),
+  ];
+
   return (
     <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <SEOHead
+        title="Contact Central Fire Safety Institute (CFSI) | Vadodara Campus Helpline"
+        description="Get in touch with CFSI Vadodara admission desk. Speak with our career counselors for course fees, hostel facilities, batch timings, and campus visits in Gujarat."
+        keywords="contact CFSI vadodara, fire safety institute phone number, fire academy address vadodara, fire engineering admission helpline"
+        structuredData={structuredData}
+      />
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -138,9 +154,9 @@ export const ContactPage: React.FC = () => {
                       <a href="mailto:centralfirevadodara@gmail.com" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
                         centralfirevadodara@gmail.com
                       </a>
-                      <a href="mailto:admissions@cfsi.co.in" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">
-                        admissions@cfsi.co.in
-                      </a>
+                      {/*<a href="mailto:admissions@cfsi.co.in" className="block text-sm font-bold text-gray-900 dark:text-white hover:text-accent">*/}
+                      {/*  admissions@cfsi.co.in*/}
+                      {/*</a>*/}
                     </div>
                   </div>
                 </div>
@@ -153,7 +169,7 @@ export const ContactPage: React.FC = () => {
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Campus Location:</div>
                     <p className="mt-0.5 text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 leading-relaxed">
-                      Near GIDC Industrial Zone, Waghodia Road, Vadodara, Gujarat - 390019, India.
+                      Akhil Hind Mahila Parishad Building, opp. Nehru Bhawan, Kirtistambh, Vadodara, Gujarat 390001
                     </p>
                   </div>
                 </div>
@@ -333,10 +349,10 @@ export const ContactPage: React.FC = () => {
           <div className="p-4 bg-gray-100 dark:bg-[#161d27] border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200">
               <MapPin className="w-4 h-4 text-accent" />
-              <span>Campus Map: CFSI Vadodara, Gujarat (Waghodia Road / GIDC Corridor)</span>
+              <span>Campus Map: Akhil Hind Mahila Parishad Building, opp. Nehru Bhawan, Kirtistambh, Vadodara</span>
             </div>
             <a
-              href="https://maps.google.com/?q=Vadodara+Gujarat"
+              href="https://www.google.com/maps/search/?api=1&query=Akhil+Hind+Mahila+Parishad+Building,+opp.+Nehru+Bhawan,+Kirtistambh,+Vadodara,+Gujarat+390001"
               target="_blank"
               rel="noreferrer"
               className="text-xs font-bold text-primary dark:text-primary-light hover:underline"
@@ -347,7 +363,7 @@ export const ContactPage: React.FC = () => {
           <div className="w-full h-80 bg-gray-200 dark:bg-gray-800 relative">
             <iframe
               title="CFSI Vadodara Map Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118147.6820202978!2d73.10304561726084!3d22.322394747761066!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395fc8ab91a3ddab%3A0xac39d3bfe1473fb8!2sVadodara%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+              src="https://maps.google.com/maps?q=Akhil+Hind+Mahila+Parishad+Building,+opp.+Nehru+Bhawan,+Kirtistambh,+Vadodara,+Gujarat+390001&t=&z=16&ie=UTF8&iwloc=&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}

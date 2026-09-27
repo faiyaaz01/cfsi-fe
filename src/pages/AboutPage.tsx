@@ -20,6 +20,8 @@ import { GlassCard } from '../components/common/GlassCard';
 import { Link } from 'react-router-dom';
 import heroBatchImg from '../assets/hero-batch.jpg';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
+import { SEOHead } from '../components/common/SEOHead';
+import { getOrganizationSchema, getBreadcrumbSchema } from '../lib/seoSchemas';
 
 const missionCards = [
   {
@@ -74,8 +76,22 @@ export const AboutPage: React.FC = () => {
     }
   }, []);
 
+  const structuredData = [
+    getOrganizationSchema(),
+    getBreadcrumbSchema([
+      { name: 'Home', url: '/' },
+      { name: 'About Us', url: '/about' },
+    ]),
+  ];
+
   return (
     <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 w-full max-w-full overflow-hidden">
+      <SEOHead
+        title="About Central Fire Safety Institute (CFSI) | Vadodara"
+        description="Learn about Central Fire Safety Institute (CFSI) in Vadodara, Gujarat. Discover our ISO 9001:2015 certification, tactical 4-storey drill tower, smoke labyrinth, and placement track record."
+        keywords="about CFSI vadodara, fire safety academy gujarat, fire engineering faculty, fire drill tower vadodara, ISO certified safety institute"
+        structuredData={structuredData}
+      />
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb & Hero */}

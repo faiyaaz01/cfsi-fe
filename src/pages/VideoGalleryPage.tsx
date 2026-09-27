@@ -6,6 +6,8 @@ import { SectionHeading } from '../components/common/SectionHeading';
 import { FlatCard } from '../components/common/FlatCard';
 import { SkeletonGallery } from '../components/common/Skeleton';
 import { useWebContent } from '../context/WebContentContext';
+import { SEOHead } from '../components/common/SEOHead';
+import { getBreadcrumbSchema } from '../lib/seoSchemas';
 
 export const VideoGalleryPage: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
@@ -18,8 +20,19 @@ export const VideoGalleryPage: React.FC = () => {
     ? videos
     : videos.filter((v) => v.category === selectedCategory);
 
+  const structuredData = getBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Video Gallery', url: '/gallery/videos' },
+  ]);
+
   return (
     <div className="py-10 sm:py-16 bg-white dark:bg-dark-bg transition-colors duration-300 min-h-screen w-full max-w-full overflow-hidden">
+      <SEOHead
+        title="CFSI Drills & Demo Videos | Central Fire Safety Institute"
+        description="Watch real fire fighting drills, rescue operations, hydraulic equipment handling, and student cadet exercises at CFSI Vadodara."
+        keywords="firefighter drill videos vadodara, fire safety training youtube, high angle rescue demonstration, CFSI video gallery"
+        structuredData={structuredData}
+      />
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

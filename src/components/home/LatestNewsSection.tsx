@@ -36,6 +36,12 @@ export const LatestNewsSection: React.FC = () => {
     }
   };
 
+  const getNewsGridClass = (count: number) => {
+    if (count === 1) return 'max-w-md mx-auto';
+    if (count === 2) return 'max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 justify-center';
+    return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8';
+  };
+
   return (
     <section className="py-12 sm:py-20 bg-gray-50 dark:bg-[#12181f] transition-colors duration-300 border-b border-gray-100 dark:border-white/5 w-full max-w-full overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
@@ -60,7 +66,7 @@ export const LatestNewsSection: React.FC = () => {
         </div>
 
         {/* 3 Most Recent Items Grid with Slow, Gentle Zoom In Effect */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className={getNewsGridClass(latestPosts.length)}>
           {latestPosts.map((post, index) => (
             <motion.div
               key={post.id}
@@ -68,6 +74,7 @@ export const LatestNewsSection: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.45, delay: index * 0.08, ease: 'easeOut' }}
+              className="h-full flex flex-col"
             >
               <FlatCard className="h-full flex flex-col overflow-hidden group border border-gray-200/80 dark:border-white/10 hover:border-primary/40 dark:hover:border-primary/40 shadow-sm hover:shadow-xl transition-all duration-300">
                 {/* Image with Gentle, Slow Zoom-In on Card Hover */}

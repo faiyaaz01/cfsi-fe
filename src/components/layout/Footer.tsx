@@ -259,12 +259,12 @@ export const Footer: React.FC = () => {
                     >
                       centralfirevadodara@gmail.com
                     </a>
-                    <a
-                      href="mailto:admissions@cfsi.co.in"
-                      className="block font-medium text-gray-600 dark:text-gray-400 hover:text-accent transition-colors truncate"
-                    >
-                      admissions@cfsi.co.in
-                    </a>
+                    {/*<a*/}
+                    {/*  href="mailto:admissions@cfsi.co.in"*/}
+                    {/*  className="block font-medium text-gray-600 dark:text-gray-400 hover:text-accent transition-colors truncate"*/}
+                    {/*>*/}
+                    {/*  admissions@cfsi.co.in*/}
+                    {/*</a>*/}
                   </div>
                 </div>
               </div>
@@ -277,7 +277,7 @@ export const Footer: React.FC = () => {
                 <div className="space-y-1">
                   <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Campus Address:</p>
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium text-[11px]">
-                    Central Fire Safety Institute (CFSI), Near GIDC Industrial Zone, Waghodia Road, Vadodara, Gujarat - 390019
+                    Central Fire Safety Institute (CFSI), Akhil Hind Mahila Parishad Building, opp. Nehru Bhawan, Kirtistambh, Vadodara, Gujarat 390001
                   </p>
                   <Link
                     to="/contact"

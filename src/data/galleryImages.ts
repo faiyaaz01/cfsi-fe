@@ -7,7 +7,10 @@ import { GalleryImage } from '../types';
  */
 export const galleryImagesData: GalleryImage[] = [];
 
-const DEMO_PREFIXES = ['img-0', 'img-1'];
+const LEGACY_IMAGE_IDS = new Set([
+  'img-01', 'img-02', 'img-03', 'img-04', 'img-05', 'img-06', 'img-07',
+  'img-08', 'img-09', 'img-10', 'img-11', 'img-12', 'img-13', 'img-14'
+]);
 
 export const getStoredGalleryImages = (): GalleryImage[] => {
   try {
@@ -15,7 +18,7 @@ export const getStoredGalleryImages = (): GalleryImage[] => {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        return parsed.filter(item => item.id && !DEMO_PREFIXES.some(p => item.id.startsWith(p)));
+        return parsed.filter(item => item.id && !LEGACY_IMAGE_IDS.has(item.id));
       }
     }
   } catch (e) {

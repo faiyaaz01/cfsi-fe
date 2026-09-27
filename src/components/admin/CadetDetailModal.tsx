@@ -12,7 +12,9 @@ import {
   UserMinus,
   RefreshCw,
   Edit3,
-  Save
+  Save,
+  Camera,
+  FolderOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StudentVerificationRecord } from '../../types';
@@ -21,6 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api, AuthUser } from '../../lib/api';
 import { TablePagination } from '../common/TablePagination';
 import { UserAvatar } from '../common/UserAvatar';
+import { processAndUploadImage } from '../../lib/imageProcessor';
 
 interface CadetDetailModalProps {
   cadet: StudentVerificationRecord | null;
@@ -45,6 +48,10 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
   const [displayCadet, setDisplayCadet] = useState<StudentVerificationRecord | null>(cadet);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
+  const editPhotoInputRef = React.useRef<HTMLInputElement>(null);
+
   const [editForm, setEditForm] = useState({
     name: '',
     fatherName: '',
@@ -60,6 +67,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
     mode: 'REGULAR',
     centerName: '',
     presentAddress: '',
+    photoUrl: '',
   });
 
   const [isLeader, setIsLeader] = useState<boolean>(false);
@@ -86,6 +94,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
       mode: c.mode || 'REGULAR',
       centerName: c.centerName || c.centerLocation || '',
       presentAddress: c.presentAddress || '',
+      photoUrl: c.photoUrl || '',
     });
     setIsEditing(true);
   };
@@ -100,6 +109,42 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
   }, [cadet, initialEditMode]);
 
   const currentCadet = displayCadet || cadet;
+
+  // Handle direct upload/replace of student photo by admin
+  const handleStudentPhotoSelected = async (file: File) => {
+    if (!file || !currentCadet) return;
+    try {
+      setIsUploadingPhoto(true);
+      const photoUrl = await processAndUploadImage(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.85
+      });
+
+      if (isEditing) {
+        setEditForm(prev => ({ ...prev, photoUrl }));
+        toast.success('Photo preview updated! Click "Save Profile" to commit changes.');
+      } else {
+        const updated = await api.adminUpdateStudent(currentCadet.id, { photoUrl });
+        const merged: StudentVerificationRecord = {
+          ...currentCadet,
+          ...updated,
+          verificationStatus: currentCadet.verificationStatus,
+          photoUrl,
+        };
+        setDisplayCadet(merged);
+        onStudentUpdated?.(merged);
+        toast.success(`Photo updated successfully for ${merged.name}!`);
+      }
+    } catch (err: any) {
+      console.error('Failed to upload student photo:', err);
+      toast.error(err.message || 'Failed to upload student photo');
+    } finally {
+      setIsUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+      if (editPhotoInputRef.current) editPhotoInputRef.current.value = '';
+    }
+  };
 
   useEffect(() => {
     if (currentCadet) {
@@ -175,13 +220,13 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         mode: editForm.mode,
         centerName: editForm.centerName.trim(),
         presentAddress: editForm.presentAddress.trim(),
-        photoUrl: currentCadet.photoUrl || '',
+        photoUrl: editForm.photoUrl !== undefined ? editForm.photoUrl : (currentCadet.photoUrl || ''),
       });
 
       const merged: StudentVerificationRecord = {
         ...currentCadet,
         ...updatedProfile,
-        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : currentCadet.photoUrl,
+        photoUrl: updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : (editForm.photoUrl || currentCadet.photoUrl),
         id: currentCadet.id,
         rollNo: currentCadet.rollNo,
         course: currentCadet.course,
@@ -288,16 +333,47 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
         {/* Top Strip */}
         <div className="h-2 w-full bg-primary shrink-0" />
 
+        {/* Hidden inputs for uploading student photo */}
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              handleStudentPhotoSelected(e.target.files[0]);
+            }
+          }}
+        />
+
         {/* Fixed Modal Header */}
         <div className="p-5 sm:px-8 sm:py-5 border-b border-gray-100 dark:border-white/10 shrink-0 bg-white dark:bg-[#12181f]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="relative shrink-0">
+              <div className="relative shrink-0 group">
                 <UserAvatar
-                  photoUrl={currentCadet.photoUrl}
+                  photoUrl={isEditing ? (editForm.photoUrl || currentCadet.photoUrl) : currentCadet.photoUrl}
                   name={currentCadet.name}
                   size="lg"
                 />
+                {currentUser?.role === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={isUploadingPhoto}
+                    className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
+                    title="Upload student photo"
+                  >
+                    {isUploadingPhoto ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Camera className="w-4 h-4 mb-0.5" />
+                        <span className="text-[9px] font-bold">Upload</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 <div className="absolute bottom-0 right-0 p-1 bg-emerald-500 text-white rounded-full border-2 border-white dark:border-[#161d27]" title="Verified">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </div>
@@ -325,6 +401,57 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   Father: <span className="font-semibold text-gray-800 dark:text-gray-200">{currentCadet.fatherName || 'N/A'}</span> • Batch: {currentCadet.batch}
                 </p>
+
+                {/* Direct Upload Student Photo Action for Admin */}
+                {currentUser?.role === 'admin' && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={isUploadingPhoto}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-all shadow-xs cursor-pointer active:scale-95"
+                    >
+                      {isUploadingPhoto ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>{(currentCadet.photoUrl || editForm.photoUrl) ? 'Change Photo' : 'Upload Student Photo'}</span>
+                        </>
+                      )}
+                    </button>
+                    {(currentCadet.photoUrl || editForm.photoUrl) && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (window.confirm(`Remove photo for ${currentCadet.name}?`)) {
+                            if (isEditing) {
+                              setEditForm(prev => ({ ...prev, photoUrl: '' }));
+                            } else {
+                              const updated = await api.adminUpdateStudent(currentCadet.id, { photoUrl: '' });
+                              const merged: StudentVerificationRecord = {
+                                ...currentCadet,
+                                ...updated,
+                                verificationStatus: currentCadet.verificationStatus,
+                                photoUrl: '',
+                              };
+                              setDisplayCadet(merged);
+                              onStudentUpdated?.(merged);
+                              toast.info('Student photo removed.');
+                            }
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -410,6 +537,64 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
 
             {isEditing ? (
               <div className="bg-primary/5 dark:bg-white/5 border border-primary/20 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
+                {/* Photo Upload Section in Edit Mode */}
+                <input
+                  ref={editPhotoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleStudentPhotoSelected(e.target.files[0]);
+                    }
+                  }}
+                />
+                <div className="p-4 rounded-xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row items-center gap-4">
+                  <UserAvatar
+                    photoUrl={editForm.photoUrl || currentCadet.photoUrl}
+                    name={editForm.name || currentCadet.name}
+                    size="lg"
+                  />
+                  <div className="flex-1 space-y-1 text-center sm:text-left">
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200">
+                      Student Profile Photo
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Direct upload for student portrait / identity photo (JPG, PNG, WEBP)
+                    </p>
+                    <div className="flex items-center gap-2 pt-1 justify-center sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => editPhotoInputRef.current?.click()}
+                        disabled={isUploadingPhoto}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-hover flex items-center gap-1.5 shadow-xs transition-colors"
+                      >
+                        {isUploadingPhoto ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FolderOpen className="w-3.5 h-3.5" />
+                            <span>{(editForm.photoUrl || currentCadet.photoUrl) ? 'Change Photo' : 'Upload Photo'}</span>
+                          </>
+                        )}
+                      </button>
+                      {(editForm.photoUrl || currentCadet.photoUrl) && (
+                        <button
+                          type="button"
+                          onClick={() => setEditForm(prev => ({ ...prev, photoUrl: '' }))}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-1 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Remove Photo</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs sm:text-[12.5px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
