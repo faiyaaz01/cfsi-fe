@@ -28,7 +28,7 @@ const heroSlides = [
 
 export const HeroSection: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { homePageConfig, displaySettings } = useWebContent();
+  const { homePageConfig, displaySettings, isLoading } = useWebContent();
 
   // Auto-rotate hero backdrop slowly every 8 seconds for a relaxed, cinematic pace
   useEffect(() => {
@@ -40,7 +40,7 @@ export const HeroSection: React.FC = () => {
 
   const currentSlide = heroSlides[currentIndex];
 
-  const showNotice = homePageConfig?.showNoticeBanner ?? true;
+  const showNotice = !isLoading && (homePageConfig?.showNoticeBanner ?? false);
   const noticeText = homePageConfig?.noticeBannerText || 'Admissions Open 2026 - Central Fire Safety Institute Vadodara';
   const noticeBadge = homePageConfig?.noticeBannerBadge || 'Notice';
   const headline = homePageConfig?.heroHeadline || 'Central Fire Safety Institute';

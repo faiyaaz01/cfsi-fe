@@ -308,7 +308,7 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return defaultHomePageConfig;
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Broadcast helper
   const broadcastSync = (type: string) => {
