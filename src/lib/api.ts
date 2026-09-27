@@ -840,4 +840,59 @@ export const api = {
       throw new Error(err.detail || 'Failed to delete news');
     }
   },
+
+  async reorderCourses(ids: string[]): Promise<void> {
+    const response = await fetchWithAuth('/web/courses/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to reorder courses');
+    }
+  },
+
+  async reorderDrills(ids: string[]): Promise<void> {
+    const response = await fetchWithAuth('/web/drills/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to reorder drills');
+    }
+  },
+
+  async reorderPhotos(ids: string[]): Promise<void> {
+    const response = await fetchWithAuth('/web/photos/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to reorder photos');
+    }
+  },
+
+  async reorderVideos(ids: string[]): Promise<void> {
+    const response = await fetchWithAuth('/web/videos/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to reorder videos');
+    }
+  },
+
+  async reorderNews(ids: string[]): Promise<void> {
+    const response = await fetchWithAuth('/news/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to reorder news');
+    }
+  },
 };

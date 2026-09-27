@@ -193,24 +193,28 @@ interface WebContentContextType {
   updateCourse: (id: string, course: Partial<Course>) => Promise<void>;
   deleteCourse: (id: string) => Promise<void>;
   clearAllCourses: () => Promise<void>;
+  reorderCourses: (orderedIds: string[]) => Promise<void>;
 
   // Real-time Drill Actions
   addTraining: (drill: TrainingPost) => Promise<void>;
   updateTraining: (id: string, drill: Partial<TrainingPost>) => Promise<void>;
   deleteTraining: (id: string) => Promise<void>;
   clearAllTrainings: () => Promise<void>;
+  reorderTrainings: (orderedIds: string[]) => Promise<void>;
 
   // Real-time Photo Actions
   addPhoto: (photo: GalleryImage) => Promise<void>;
   updatePhoto: (id: string, photo: Partial<GalleryImage>) => Promise<void>;
   deletePhoto: (id: string) => Promise<void>;
   clearAllPhotos: () => Promise<void>;
+  reorderPhotos: (orderedIds: string[]) => Promise<void>;
 
   // Real-time Video Actions
   addVideo: (video: VideoItem) => Promise<void>;
   updateVideo: (id: string, video: Partial<VideoItem>) => Promise<void>;
   deleteVideo: (id: string) => Promise<void>;
   clearAllVideos: () => Promise<void>;
+  reorderVideos: (orderedIds: string[]) => Promise<void>;
 
   // Display Switches
   toggleDisplaySetting: (key: keyof DisplaySettings, label: string) => Promise<void>;
@@ -467,6 +471,31 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  const reorderCourses = async (orderedIds: string[]) => {
+    setCourses(prev => {
+      const map = new Map(prev.map(c => [c.id, c]));
+      const next: Course[] = [];
+      orderedIds.forEach((id, idx) => {
+        const item = map.get(id);
+        if (item) {
+          next.push({ ...item, order: idx });
+          map.delete(id);
+        }
+      });
+      map.forEach(item => next.push(item));
+      try {
+        localStorage.setItem(STORAGE_COURSES, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    broadcastSync('courses');
+    try {
+      await api.reorderCourses(orderedIds);
+    } catch (e) {
+      console.warn('Backend courses reorder failed:', e);
+    }
+  };
+
   // ==========================================
   // TRAINING DRILLS ACTIONS
   // ==========================================
@@ -507,6 +536,31 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       await api.clearAllDrills();
     } catch (e) {
       console.warn('Backend sync failed, saved in local real-time store:', e);
+    }
+  };
+
+  const reorderTrainings = async (orderedIds: string[]) => {
+    setTrainings(prev => {
+      const map = new Map(prev.map(t => [t.id, t]));
+      const next: TrainingPost[] = [];
+      orderedIds.forEach((id, idx) => {
+        const item = map.get(id);
+        if (item) {
+          next.push({ ...item, order: idx });
+          map.delete(id);
+        }
+      });
+      map.forEach(item => next.push(item));
+      try {
+        localStorage.setItem(STORAGE_TRAINING, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    broadcastSync('drills');
+    try {
+      await api.reorderDrills(orderedIds);
+    } catch (e) {
+      console.warn('Backend drills reorder failed:', e);
     }
   };
 
@@ -553,6 +607,31 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  const reorderPhotos = async (orderedIds: string[]) => {
+    setPhotos(prev => {
+      const map = new Map(prev.map(p => [p.id, p]));
+      const next: GalleryImage[] = [];
+      orderedIds.forEach((id, idx) => {
+        const item = map.get(id);
+        if (item) {
+          next.push({ ...item, order: idx });
+          map.delete(id);
+        }
+      });
+      map.forEach(item => next.push(item));
+      try {
+        localStorage.setItem(STORAGE_GALLERY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    broadcastSync('photos');
+    try {
+      await api.reorderPhotos(orderedIds);
+    } catch (e) {
+      console.warn('Backend photos reorder failed:', e);
+    }
+  };
+
   // ==========================================
   // VIDEO GALLERY ACTIONS
   // ==========================================
@@ -593,6 +672,31 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       await api.clearAllVideos();
     } catch (e) {
       console.warn('Backend sync failed, saved in local real-time store:', e);
+    }
+  };
+
+  const reorderVideos = async (orderedIds: string[]) => {
+    setVideos(prev => {
+      const map = new Map(prev.map(v => [v.id, v]));
+      const next: VideoItem[] = [];
+      orderedIds.forEach((id, idx) => {
+        const item = map.get(id);
+        if (item) {
+          next.push({ ...item, order: idx });
+          map.delete(id);
+        }
+      });
+      map.forEach(item => next.push(item));
+      try {
+        localStorage.setItem(STORAGE_VIDEOS, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    broadcastSync('videos');
+    try {
+      await api.reorderVideos(orderedIds);
+    } catch (e) {
+      console.warn('Backend videos reorder failed:', e);
     }
   };
 
@@ -697,18 +801,22 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateCourse,
         deleteCourse,
         clearAllCourses,
+        reorderCourses,
         addTraining,
         updateTraining,
         deleteTraining,
         clearAllTrainings,
+        reorderTrainings,
         addPhoto,
         updatePhoto,
         deletePhoto,
         clearAllPhotos,
+        reorderPhotos,
         addVideo,
         updateVideo,
         deleteVideo,
         clearAllVideos,
+        reorderVideos,
         toggleDisplaySetting,
         resetDisplaySettings,
         updateHomePageConfig,

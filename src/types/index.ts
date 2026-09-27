@@ -10,6 +10,7 @@ export interface NewsPost {
   imageUrl?: string;
   author?: string;
   isPinned?: boolean;
+  order?: number;
   createdAt: string;
 }
 
@@ -29,6 +30,7 @@ export interface Course {
   physicalRequirements?: string[];
   careerOpportunities: string[];
   certificationBody: string;
+  order?: number;
 }
 
 export interface VideoItem {
@@ -38,6 +40,7 @@ export interface VideoItem {
   category: 'Practical Drill' | 'Fire Demo' | 'Search & Rescue' | 'Campus Life';
   duration: string;
   description: string;
+  order?: number;
 }
 
 export interface GalleryImage {
@@ -47,6 +50,7 @@ export interface GalleryImage {
   imageUrl: string;
   caption: string;
   date: string;
+  order?: number;
 }
 
 export interface TrainingPost {
@@ -58,6 +62,7 @@ export interface TrainingPost {
   description: string;
   highlights: string[];
   equipmentUsed: string[];
+  order?: number;
 }
 
 export interface StudentVerificationRecord {

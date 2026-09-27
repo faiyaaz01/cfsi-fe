@@ -18,6 +18,7 @@ interface NewsContextType {
   updatePost: (id: string, updated: Partial<Omit<NewsPost, 'id' | 'createdAt'>>) => Promise<void>;
   deletePost: (id: string) => Promise<void>;
   clearAllNews: () => Promise<void>;
+  reorderNews: (orderedIds: string[]) => Promise<void>;
   resetToSeed: () => void;
   getPostsByCategory: (category: NewsCategory | 'All') => NewsPost[];
   refreshNews: () => Promise<void>;
@@ -167,6 +168,32 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('All news bulletins cleared.');
   };
 
+  const reorderNews = async (orderedIds: string[]) => {
+    setPosts(prev => {
+      const map = new Map(prev.map(p => [p.id, p]));
+      const next: NewsPost[] = [];
+      orderedIds.forEach((id, idx) => {
+        const item = map.get(id);
+        if (item) {
+          next.push({ ...item, order: idx });
+          map.delete(id);
+        }
+      });
+      map.forEach(item => next.push(item));
+      try {
+        localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    notifyChange();
+
+    try {
+      await api.reorderNews(orderedIds);
+    } catch (err) {
+      console.warn('News reordered locally, backend sync failed', err);
+    }
+  };
+
   const resetToSeed = () => {
     clearAllNews();
   };
@@ -185,6 +212,7 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatePost,
         deletePost,
         clearAllNews,
+        reorderNews,
         resetToSeed,
         getPostsByCategory,
         refreshNews,

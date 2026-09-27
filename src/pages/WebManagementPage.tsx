@@ -22,7 +22,9 @@ import {
   ShieldCheck,
   RotateCw,
   AlertCircle,
-  Cloud
+  Cloud,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlatCard } from '../components/common/FlatCard';
@@ -57,18 +59,22 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     updateCourse,
     deleteCourse,
     clearAllCourses,
+    reorderCourses,
     addTraining,
     updateTraining,
     deleteTraining,
     clearAllTrainings,
+    reorderTrainings,
     addPhoto,
     updatePhoto,
     deletePhoto,
     clearAllPhotos,
+    reorderPhotos,
     addVideo,
     updateVideo,
     deleteVideo,
     clearAllVideos,
+    reorderVideos,
     refreshAllContent,
   } = useWebContent();
 
@@ -80,11 +86,80 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     updatePost: updateNewsPost,
     deletePost: deleteNewsPost,
     clearAllNews,
+    reorderNews,
     refreshNews,
   } = useNews();
 
   // Cloudinary Storage Settings Modal State
   const [isCloudinaryModalOpen, setIsCloudinaryModalOpen] = useState(false);
+
+  // ==========================================
+  // MANUAL SORTING MANAGEMENT HANDLERS
+  // ==========================================
+  const handleMoveCourse = async (courseId: string, direction: 'up' | 'down') => {
+    const currentIndex = courses.findIndex(c => c.id === courseId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= courses.length) return;
+    const newItems = [...courses];
+    const temp = newItems[currentIndex];
+    newItems[currentIndex] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    await reorderCourses(newItems.map(c => c.id));
+    toast.success('Course order updated');
+  };
+
+  const handleMoveNews = async (newsId: string, direction: 'up' | 'down') => {
+    const currentIndex = newsPosts.findIndex(n => n.id === newsId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= newsPosts.length) return;
+    const newItems = [...newsPosts];
+    const temp = newItems[currentIndex];
+    newItems[currentIndex] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    await reorderNews(newItems.map(n => n.id));
+    toast.success('News bulletin order updated');
+  };
+
+  const handleMoveDrill = async (drillId: string, direction: 'up' | 'down') => {
+    const currentIndex = trainings.findIndex(t => t.id === drillId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= trainings.length) return;
+    const newItems = [...trainings];
+    const temp = newItems[currentIndex];
+    newItems[currentIndex] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    await reorderTrainings(newItems.map(t => t.id));
+    toast.success('Training drill order updated');
+  };
+
+  const handleMovePhoto = async (photoId: string, direction: 'up' | 'down') => {
+    const currentIndex = photos.findIndex(p => p.id === photoId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= photos.length) return;
+    const newItems = [...photos];
+    const temp = newItems[currentIndex];
+    newItems[currentIndex] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    await reorderPhotos(newItems.map(p => p.id));
+    toast.success('Photo gallery order updated');
+  };
+
+  const handleMoveVideo = async (videoId: string, direction: 'up' | 'down') => {
+    const currentIndex = videos.findIndex(v => v.id === videoId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= videos.length) return;
+    const newItems = [...videos];
+    const temp = newItems[currentIndex];
+    newItems[currentIndex] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    await reorderVideos(newItems.map(v => v.id));
+    toast.success('Video gallery order updated');
+  };
 
   // ==========================================
   // MODULE 1: COURSES MANAGEMENT
@@ -110,6 +185,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     physicalRequirements: string;
     careerOpportunities: string;
     certificationBody: string;
+    order: number;
   }>({
     id: '',
     title: '',
@@ -126,6 +202,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     physicalRequirements: '',
     careerOpportunities: '',
     certificationBody: '',
+    order: 1,
   });
 
   const handleOpenAddCourse = () => {
@@ -146,6 +223,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       physicalRequirements: '',
       careerOpportunities: '',
       certificationBody: '',
+      order: courses.length + 1,
     });
     setIsCourseModalOpen(true);
   };
@@ -168,6 +246,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       physicalRequirements: (course.physicalRequirements || []).join('\n'),
       careerOpportunities: (course.careerOpportunities || []).join('\n'),
       certificationBody: course.certificationBody,
+      order: course.order ?? (courses.findIndex(c => c.id === course.id) + 1),
     });
     setIsCourseModalOpen(true);
   };
@@ -196,6 +275,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       physicalRequirements: courseForm.physicalRequirements.split('\n').map(s => s.trim()).filter(Boolean),
       careerOpportunities: courseForm.careerOpportunities.split('\n').map(s => s.trim()).filter(Boolean),
       certificationBody: courseForm.certificationBody.trim(),
+      order: Number(courseForm.order) || 1,
     };
 
     if (editingCourse) {
@@ -260,6 +340,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     imageUrl: string;
     author: string;
     isPinned: boolean;
+    order: number;
   }>({
     id: '',
     title: '',
@@ -270,6 +351,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     imageUrl: '',
     author: '',
     isPinned: false,
+    order: 1,
   });
 
   const handleOpenAddNews = () => {
@@ -284,6 +366,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       imageUrl: '',
       author: '',
       isPinned: false,
+      order: newsPosts.length + 1,
     });
     setIsNewsModalOpen(true);
   };
@@ -300,6 +383,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       imageUrl: post.imageUrl || '',
       author: post.author || '',
       isPinned: !!post.isPinned,
+      order: post.order ?? (newsPosts.findIndex(p => p.id === post.id) + 1),
     });
     setIsNewsModalOpen(true);
   };
@@ -324,6 +408,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       imageUrl: newsForm.imageUrl.trim() || undefined,
       author: newsForm.author.trim() || undefined,
       isPinned: newsForm.isPinned,
+      order: Number(newsForm.order) || 1,
     };
 
     if (editingNews) {
@@ -390,6 +475,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     description: string;
     highlights: string;
     equipmentUsed: string;
+    order: number;
   }>({
     id: '',
     title: '',
@@ -399,6 +485,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     description: '',
     highlights: '',
     equipmentUsed: '',
+    order: 1,
   });
 
   const handleOpenAddDrill = () => {
@@ -412,6 +499,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       description: '',
       highlights: '',
       equipmentUsed: '',
+      order: trainings.length + 1,
     });
     setIsDrillModalOpen(true);
   };
@@ -427,6 +515,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       description: drill.description,
       highlights: (drill.highlights || []).join('\n'),
       equipmentUsed: (drill.equipmentUsed || []).join(', '),
+      order: drill.order ?? (trainings.findIndex(t => t.id === drill.id) + 1),
     });
     setIsDrillModalOpen(true);
   };
@@ -447,6 +536,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       description: drillForm.description.trim(),
       highlights: drillForm.highlights.split('\n').map(h => h.trim()).filter(Boolean),
       equipmentUsed: drillForm.equipmentUsed.split(',').map(eq => eq.trim()).filter(Boolean),
+      order: Number(drillForm.order) || 1,
     };
 
     if (editingDrill) {
@@ -508,6 +598,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     imageUrl: string;
     caption: string;
     date: string;
+    order: number;
   }>({
     id: '',
     title: '',
@@ -515,6 +606,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     imageUrl: '',
     caption: '',
     date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    order: 1,
   });
 
   const handleOpenAddPhoto = () => {
@@ -526,6 +618,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       imageUrl: '',
       caption: '',
       date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      order: photos.length + 1,
     });
     setIsPhotoModalOpen(true);
   };
@@ -539,6 +632,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       imageUrl: photo.imageUrl,
       caption: photo.caption,
       date: photo.date,
+      order: photo.order ?? (photos.findIndex(p => p.id === photo.id) + 1),
     });
     setIsPhotoModalOpen(true);
   };
@@ -561,6 +655,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       imageUrl: photoForm.imageUrl.trim(),
       caption: photoForm.caption.trim() || photoForm.title.trim(),
       date: photoForm.date.trim() || '2024',
+      order: Number(photoForm.order) || 1,
     };
 
     if (editingPhoto) {
@@ -623,6 +718,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     category: 'Practical Drill' | 'Fire Demo' | 'Search & Rescue' | 'Campus Life';
     duration: string;
     description: string;
+    order: number;
   }>({
     id: '',
     youtubeId: '',
@@ -630,6 +726,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     category: 'Practical Drill',
     duration: '',
     description: '',
+    order: 1,
   });
 
   const extractYoutubeId = (input: string): string => {
@@ -650,6 +747,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       category: 'Practical Drill',
       duration: '',
       description: '',
+      order: videos.length + 1,
     });
     setIsVideoModalOpen(true);
   };
@@ -663,6 +761,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       category: video.category,
       duration: video.duration,
       description: video.description,
+      order: video.order ?? (videos.findIndex(v => v.id === video.id) + 1),
     });
     setIsVideoModalOpen(true);
   };
@@ -686,6 +785,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
       category: videoForm.category,
       duration: videoForm.duration.trim() || '3:00',
       description: videoForm.description.trim(),
+      order: Number(videoForm.order) || 1,
     };
 
     if (editingVideo) {
@@ -1030,23 +1130,51 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditCourse(course)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-blue-500" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCourse(course.id, course.title)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
+                    <div className="flex items-center justify-between gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-1 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary font-mono text-[11px] font-bold shrink-0" title="Display Order Sequence">
+                          #{courses.findIndex(c => c.id === course.id) + 1}
+                        </span>
+                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 p-0.5 rounded-lg border border-gray-200/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveCourse(course.id, 'up')}
+                            disabled={courses.findIndex(c => c.id === course.id) === 0}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-xs disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Up in sequence"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveCourse(course.id, 'down')}
+                            disabled={courses.findIndex(c => c.id === course.id) === courses.length - 1}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-xs disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Down in sequence"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCourse(course)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 transition-colors cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCourse(course.id, course.title)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </div>
                   </FlatCard>
                 ))}
@@ -1200,22 +1328,51 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     </div>
 
                     <div className="px-5 pb-5 pt-3 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateNewsPost(item.id, { isPinned: !item.isPinned });
-                          toast.success(`Post "${item.title}" ${!item.isPinned ? 'pinned' : 'unpinned'}.`);
-                        }}
-                        className="text-xs font-semibold text-gray-500 hover:text-primary transition-colors"
-                      >
-                        {item.isPinned ? 'Unpin' : 'Pin to Top'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary font-mono text-[11px] font-bold shrink-0" title="Display Sequence">
+                          #{newsPosts.findIndex(n => n.id === item.id) + 1}
+                        </span>
+                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 p-0.5 rounded-lg border border-gray-200/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveNews(item.id, 'up')}
+                            disabled={newsPosts.findIndex(n => n.id === item.id) === 0}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Up in order"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveNews(item.id, 'down')}
+                            disabled={newsPosts.findIndex(n => n.id === item.id) === newsPosts.length - 1}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Down in order"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateNewsPost(item.id, { isPinned: !item.isPinned });
+                            toast.success(`Post "${item.title}" ${!item.isPinned ? 'pinned' : 'unpinned'}.`);
+                          }}
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                            item.isPinned
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                              : 'text-gray-500 hover:text-primary'
+                          }`}
+                        >
+                          {item.isPinned ? 'Unpin' : 'Pin'}
+                        </button>
+                      </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => handleOpenEditNews(item)}
-                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200"
+                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200 cursor-pointer"
                           title="Edit News"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -1223,7 +1380,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                         <button
                           type="button"
                           onClick={() => handleDeleteNews(item.id, item.title)}
-                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400"
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 cursor-pointer"
                           title="Delete News"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1372,23 +1529,51 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       </div>
                     </div>
 
-                    <div className="p-4 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditDrill(drill)}
-                        className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200"
-                        title="Edit Drill"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-blue-500" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDrill(drill.id, drill.title)}
-                        className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400"
-                        title="Delete Drill"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="p-4 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-1 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary font-mono text-[11px] font-bold shrink-0" title="Display Sequence">
+                          #{trainings.findIndex(t => t.id === drill.id) + 1}
+                        </span>
+                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 p-0.5 rounded-lg border border-gray-200/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveDrill(drill.id, 'up')}
+                            disabled={trainings.findIndex(t => t.id === drill.id) === 0}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Up in order"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveDrill(drill.id, 'down')}
+                            disabled={trainings.findIndex(t => t.id === drill.id) === trainings.length - 1}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Down in order"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditDrill(drill)}
+                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200 cursor-pointer"
+                          title="Edit Drill"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-blue-500" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDrill(drill.id, drill.title)}
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 cursor-pointer"
+                          title="Delete Drill"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </FlatCard>
                 ))}
@@ -1528,23 +1713,51 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       </div>
                     </div>
 
-                    <div className="p-4 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditPhoto(photo)}
-                        className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200"
-                        title="Edit Photo"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-blue-500" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePhoto(photo.id, photo.title)}
-                        className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400"
-                        title="Delete Photo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="p-4 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-1 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary font-mono text-[11px] font-bold shrink-0" title="Display Sequence">
+                          #{photos.findIndex(p => p.id === photo.id) + 1}
+                        </span>
+                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 p-0.5 rounded-lg border border-gray-200/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => handleMovePhoto(photo.id, 'up')}
+                            disabled={photos.findIndex(p => p.id === photo.id) === 0}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Up in order"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMovePhoto(photo.id, 'down')}
+                            disabled={photos.findIndex(p => p.id === photo.id) === photos.length - 1}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Down in order"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditPhoto(photo)}
+                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200 cursor-pointer"
+                          title="Edit Photo"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-blue-500" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePhoto(photo.id, photo.title)}
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 cursor-pointer"
+                          title="Delete Photo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </FlatCard>
                 ))}
@@ -1695,21 +1908,46 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                     </div>
 
                     <div className="p-4 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-                      <a
-                        href={`https://www.youtube.com/watch?v=${vid.youtubeId}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Watch</span>
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary font-mono text-[11px] font-bold shrink-0" title="Display Sequence">
+                          #{videos.findIndex(v => v.id === vid.id) + 1}
+                        </span>
+                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 p-0.5 rounded-lg border border-gray-200/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveVideo(vid.id, 'up')}
+                            disabled={videos.findIndex(v => v.id === vid.id) === 0}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Up in order"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveVideo(vid.id, 'down')}
+                            disabled={videos.findIndex(v => v.id === vid.id) === videos.length - 1}
+                            className="p-1 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            title="Move Down in order"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <a
+                          href={`https://www.youtube.com/watch?v=${vid.youtubeId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1 ml-1"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Watch</span>
+                        </a>
+                      </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => handleOpenEditVideo(vid)}
-                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200"
+                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-700 dark:text-gray-200 cursor-pointer"
                           title="Edit Video"
                         >
                           <Edit3 className="w-3.5 h-3.5 text-blue-500" />
@@ -1717,7 +1955,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                         <button
                           type="button"
                           onClick={() => handleDeleteVideo(vid.id, vid.title)}
-                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400"
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 cursor-pointer"
                           title="Delete Video"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1853,6 +2091,20 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                      Display Sequence / Order
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={courseForm.order || 1}
+                      onChange={(e) => setCourseForm(prev => ({ ...prev, order: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      placeholder="1"
+                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -1971,7 +2223,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
                       Category
@@ -1997,6 +2249,20 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       value={newsForm.date}
                       onChange={(e) => setNewsForm(prev => ({ ...prev, date: e.target.value }))}
                       placeholder="e.g. October 15, 2026"
+                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                      Display Sequence
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={newsForm.order || 1}
+                      onChange={(e) => setNewsForm(prev => ({ ...prev, order: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      placeholder="1"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -2114,7 +2380,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
                       Category / Tag
@@ -2137,6 +2403,20 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       value={drillForm.duration}
                       onChange={(e) => setDrillForm(prev => ({ ...prev, duration: e.target.value }))}
                       placeholder="e.g. 40 Hours Practical"
+                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                      Display Sequence
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={drillForm.order || 1}
+                      onChange={(e) => setDrillForm(prev => ({ ...prev, order: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      placeholder="1"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -2253,7 +2533,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
                       Category
@@ -2278,6 +2558,20 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       value={photoForm.date}
                       onChange={(e) => setPhotoForm(prev => ({ ...prev, date: e.target.value }))}
                       placeholder="e.g. September 2026"
+                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                      Display Sequence
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={photoForm.order || 1}
+                      onChange={(e) => setPhotoForm(prev => ({ ...prev, order: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      placeholder="1"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -2384,7 +2678,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                   <p className="text-[10px] text-gray-400 mt-1">Accepts a full YouTube link (https://youtube.com/...) or the 11-digit video ID</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
                       Category
@@ -2410,6 +2704,20 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
                       value={videoForm.duration}
                       onChange={(e) => setVideoForm(prev => ({ ...prev, duration: e.target.value }))}
                       placeholder="e.g. 4:15"
+                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                      Display Sequence
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={videoForm.order || 1}
+                      onChange={(e) => setVideoForm(prev => ({ ...prev, order: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      placeholder="1"
                       className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
