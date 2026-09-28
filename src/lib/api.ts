@@ -20,6 +20,38 @@ if (import.meta.env.DEV) {
 const TOKEN_STORAGE_KEY = 'cfsi_jwt_token';
 const USER_STORAGE_KEY = 'cfsi_auth_user';
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+const apiMemoryCache = new Map<string, CacheEntry<any>>();
+
+export function getCached<T>(key: string, maxAgeMs = 120000): T | null {
+  const entry = apiMemoryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > maxAgeMs) {
+    apiMemoryCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+export function setCached<T>(key: string, data: T): void {
+  apiMemoryCache.set(key, { data, timestamp: Date.now() });
+}
+
+export function clearApiCache(prefix?: string): void {
+  if (!prefix) {
+    apiMemoryCache.clear();
+    return;
+  }
+  for (const key of Array.from(apiMemoryCache.keys())) {
+    if (key.startsWith(prefix)) {
+      apiMemoryCache.delete(key);
+    }
+  }
+}
+
 export function normalizeAttendance(record: any): AttendanceRecord {
   return {
     id: String(record.id || record._id || `att-${Date.now()}`),
@@ -139,45 +171,15 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
   return response;
 }
 
-// In-Memory Request Cache with TTL to eliminate duplicate fetches during navigation
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-}
-const memCache = new Map<string, CacheEntry<any>>();
-
-export function getCached<T>(key: string, ttlMs: number): T | null {
-  const entry = memCache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.timestamp > ttlMs) {
-    memCache.delete(key);
-    return null;
-  }
-  return entry.data as T;
-}
-
-export function setCached<T>(key: string, data: T): void {
-  memCache.set(key, { data, timestamp: Date.now() });
-}
-
-export function clearApiCache(prefix?: string): void {
-  if (!prefix) {
-    memCache.clear();
-    return;
-  }
-  for (const key of memCache.keys()) {
-    if (key.startsWith(prefix)) {
-      memCache.delete(key);
-    }
-  }
-}
-
 export const api = {
   async logout() { await fetchWithAuth('/auth/logout', {method: 'POST'}); },
+  async clearCache(prefix?: string) {
+    clearApiCache(prefix);
+  },
   async users(method = 'GET', id = '', body?: unknown, force = false): Promise<any> {
     const isListGet = method === 'GET' && !id;
     if (isListGet && !force) {
-      const cached = getCached('users_list', 60000);
+      const cached = getCached<any>('users_list');
       if (cached) return cached;
     }
     const response = await fetchWithAuth(`/users${id ? '/' + encodeURIComponent(id) : ''}`, {method, ...(body ? {body: JSON.stringify(body)} : {})});
@@ -185,14 +187,13 @@ export const api = {
       const error = await response.json().catch(() => ({}));
       throw new Error(typeof error.detail === 'string' ? error.detail : 'Please check the user fields and try again.');
     }
-    const result = response.status === 204 ? null : await response.json();
-    if (isListGet && result) {
-      setCached('users_list', result);
+    const resData = response.status === 204 ? null : await response.json();
+    if (isListGet && resData) {
+      setCached('users_list', resData);
     } else if (method !== 'GET') {
-      clearApiCache('users');
-      clearApiCache('students');
+      clearApiCache('users_');
     }
-    return result;
+    return resData;
   },
   /** Login with username and password against MongoDB hashed credentials */
   async login(username: string, password: string, role?: string): Promise<AuthResponse> {
@@ -505,6 +506,8 @@ export const api = {
       throw new Error(err.detail || 'Failed to update student profile');
     }
     const doc = await response.json();
+    clearApiCache('students_');
+    clearApiCache('users_');
     return {
       id: String(doc.id || doc._id || ''),
       rollNo: doc.rollNo || doc.roll_no,
@@ -561,8 +564,8 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to bulk import students');
     }
-    clearApiCache('students');
-    clearApiCache('users');
+    clearApiCache('students_');
+    clearApiCache('users_');
     return response.json();
   },
 
@@ -570,7 +573,7 @@ export const api = {
   async getStudents(course?: string, force = false): Promise<StudentVerificationRecord[]> {
     const cacheKey = `students_${course || 'all'}`;
     if (!force) {
-      const cached = getCached<StudentVerificationRecord[]>(cacheKey, 60000);
+      const cached = getCached<StudentVerificationRecord[]>(cacheKey);
       if (cached) return cached;
     }
     const query = course && course !== 'All' ? `?course=${encodeURIComponent(course)}` : '';
@@ -579,7 +582,7 @@ export const api = {
       throw new Error('Failed to fetch students from database');
     }
     const data = await response.json();
-    const mapped = (data || []).map((doc: any): StudentVerificationRecord => ({
+    const result = (data || []).map((doc: any): StudentVerificationRecord => ({
       id: String(doc.id || doc._id || ''),
       rollNo: String(doc.rollNo || doc.roll_no || ''),
       enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
@@ -610,8 +613,8 @@ export const api = {
       nationality: doc.nationality || 'INDIAN',
       state: doc.state || 'GUJARAT',
     }));
-    setCached(cacheKey, mapped);
-    return mapped;
+    setCached(cacheKey, result);
+    return result;
   },
 
   /** Delete a student record and linked user account from MongoDB */
@@ -623,8 +626,8 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to delete student from database');
     }
-    clearApiCache('students');
-    clearApiCache('users');
+    clearApiCache('students_');
+    clearApiCache('users_');
   },
 
   /** Delete a user account and associated student/attendance data from MongoDB */
@@ -636,8 +639,8 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to delete user from database');
     }
-    clearApiCache('users');
-    clearApiCache('students');
+    clearApiCache('users_');
+    clearApiCache('students_');
   },
 
   // ==========================================

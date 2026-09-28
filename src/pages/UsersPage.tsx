@@ -134,13 +134,17 @@ export function UsersPage({ isEmbedded = false, onNavigateToStudent }: UsersPage
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
   // Load user directory from FastAPI + MongoDB
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (force = false) => {
     try {
       setBusy(true);
       setError('');
+      if (force) {
+        api.clearCache('users_');
+        api.clearCache('students_');
+      }
       const [data, sData] = await Promise.all([
-        api.users('GET'),
-        api.getStudents().catch(() => [])
+        api.users('GET', '', undefined, force),
+        api.getStudents(undefined, force).catch(() => [])
       ]);
       if (Array.isArray(data)) {
         setUsers(data);
@@ -647,7 +651,7 @@ export function UsersPage({ isEmbedded = false, onNavigateToStudent }: UsersPage
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={loadUsers}
+              onClick={() => loadUsers(true)}
               disabled={busy}
               className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/15 border border-gray-200 dark:border-white/10 flex items-center gap-1.5 transition-colors shadow-sm"
               title="Refresh User Directory"
