@@ -135,7 +135,6 @@ export const defaultHomePageConfig: HomePageConfig = {
     { value: 500, suffix: '+', label: 'Students Trained', sublabel: 'Serving across India' },
     { value: 4, suffix: '', label: 'Govt. Affiliated Courses', sublabel: 'Certificate to Diploma' },
     { value: 15, suffix: '+', label: 'Years Experience', sublabel: 'In Fire Safety Training' },
-    { value: 10, suffix: '+', label: 'Cities Across India', sublabel: 'Alumni Placement Network' }
   ],
 
   showTrainingSection: true,
@@ -489,9 +488,6 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       });
       map.forEach(item => next.push(item));
-      try {
-        localStorage.setItem(STORAGE_COURSES, JSON.stringify(next));
-      } catch {}
       return next;
     });
     broadcastSync('courses');
@@ -557,9 +553,6 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       });
       map.forEach(item => next.push(item));
-      try {
-        localStorage.setItem(STORAGE_TRAINING, JSON.stringify(next));
-      } catch {}
       return next;
     });
     broadcastSync('drills');
@@ -625,9 +618,6 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       });
       map.forEach(item => next.push(item));
-      try {
-        localStorage.setItem(STORAGE_GALLERY, JSON.stringify(next));
-      } catch {}
       return next;
     });
     broadcastSync('photos');
@@ -693,9 +683,6 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       });
       map.forEach(item => next.push(item));
-      try {
-        localStorage.setItem(STORAGE_VIDEOS, JSON.stringify(next));
-      } catch {}
       return next;
     });
     broadcastSync('videos');

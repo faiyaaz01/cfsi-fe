@@ -28,7 +28,9 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     try {
       const part = getToken()?.split('.')[1];
       if (!part) return;
-      const expires = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000;
+      const parsed = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+      if (!parsed.exp) return;
+      const expires = parsed.exp * 1000;
       const timer = window.setTimeout(clearAuth, Math.max(0, Math.min(expires - Date.now(), 2147483647)));
       return () => clearTimeout(timer);
     } catch { clearAuth(); }

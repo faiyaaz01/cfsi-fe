@@ -1,6 +1,3 @@
-import { AuthProvider, AuthGuard, GuestGuard } from './context/AuthContext';
-import { LeaderDashboardPage } from './pages/LeaderDashboardPage';
-import { PortalPage } from './pages/PortalPage';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -9,6 +6,7 @@ import { NewsProvider } from './context/NewsContext';
 import { StudentDataProvider } from './context/StudentDataContext';
 import { WebContentProvider } from './context/WebContentContext';
 import { ConfirmProvider } from './context/ConfirmContext';
+import { AuthProvider, AuthGuard, GuestGuard } from './context/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
@@ -22,7 +20,7 @@ import { StudentDataPage } from './pages/StudentDataPage';
 import { LoginPage } from './pages/LoginPage';
 import { StudentLoginPage } from './pages/StudentLoginPage';
 import { InstituteLoginPage } from './pages/InstituteLoginPage';
-import { StudentDashboardPage } from './pages/StudentDashboardPage';
+import { PortalPage } from './pages/PortalPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SlotAttendancePage } from './pages/SlotAttendancePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -33,11 +31,11 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <Toaster 
-        theme={theme} 
-        position="top-right" 
-        richColors 
-        closeButton 
+      <Toaster
+        theme={theme}
+        position="top-right"
+        richColors
+        closeButton
       />
       <Router>
         <PageLoader />
