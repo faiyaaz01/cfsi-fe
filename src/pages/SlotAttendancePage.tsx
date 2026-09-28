@@ -29,6 +29,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useStudentData } from '../context/StudentDataContext';
 import { useConfirm } from '../context/ConfirmContext';
+import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning';
 import { AttendanceSlot, AttendanceStatus, StudentVerificationRecord } from '../types';
 import { api } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
@@ -358,6 +359,14 @@ export const SlotAttendancePage: React.FC = () => {
 
   // Local storage draft active check
   const isDraftActive = hasDateDraft(activeDate) || hasPendingChanges;
+
+  // Unsaved marks departure protection (browser close/reload, in-app links, browser back)
+  useUnsavedChangesWarning(isDraftActive, {
+    title: 'Unsaved Attendance Changes',
+    message: `You have unsaved attendance marks for ${formatDateLabel(activeDate)} (${activeSlot})!\n\nIf you leave now without uploading, these marks will remain uncommitted.\n\nAre you sure you want to leave without saving?`,
+    confirmText: 'Discard & Leave',
+    cancelText: 'Stay & Save'
+  });
 
   const handleDiscardDraft = async () => {
     const confirmed = await confirm({

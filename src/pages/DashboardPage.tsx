@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { useStudentData } from '../context/StudentDataContext';
 import { useConfirm } from '../context/ConfirmContext';
+import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning';
 import { AttendanceRecord, AttendanceStatus, AttendanceSlot, StudentVerificationRecord } from '../types';
 import { studentsData } from '../data/students';
 import { SectionHeading } from '../components/common/SectionHeading';
@@ -90,13 +91,6 @@ export const DashboardPage: React.FC = () => {
     }
   }, [tabParam]);
 
-  const handleSelectTab = (tab: 'students' | 'attendance' | 'users' | 'web') => {
-    setActiveTab(tab);
-    if (window.location.pathname !== '/dashboard' || window.location.search) {
-      window.history.replaceState({}, '', '/dashboard');
-    }
-  };
-  
   const confirm = useConfirm();
 
   // Student Data context (Attendance)
@@ -250,6 +244,17 @@ export const DashboardPage: React.FC = () => {
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   });
+
+  const formattedDateLabel = useMemo(() => {
+    try {
+      const [year, month, day] = selectedMusterDate.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      return d.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return selectedMusterDate;
+    }
+  }, [selectedMusterDate]);
+
   const [musterCourseFilter, setMusterCourseFilter] = useState<string>('All');
   const [musterSearch, setMusterSearch] = useState<string>('');
   const [musterInstructor, setMusterInstructor] = useState<string>('Chief Instructor Dave');
@@ -291,6 +296,32 @@ export const DashboardPage: React.FC = () => {
   );
   const isLocked = lockStatus.locked;
   const isMusterDraftActive = hasDateDraft(selectedMusterDate) || hasPendingChanges;
+
+  // Unsaved muster departure protection (browser close/reload, in-app links, browser back)
+  useUnsavedChangesWarning(activeTab === 'attendance' && isMusterDraftActive, {
+    title: 'Unsaved Muster Changes',
+    message: `You have unsaved attendance marks for ${formattedDateLabel}!\n\nIf you leave now without clicking "Upload Muster", your marks will remain uncommitted.\n\nAre you sure you want to leave without saving?`,
+    confirmText: 'Discard & Leave',
+    cancelText: 'Stay & Save'
+  });
+
+  const handleSelectTab = async (tab: 'students' | 'attendance' | 'users' | 'web') => {
+    if (activeTab === 'attendance' && tab !== 'attendance' && isMusterDraftActive) {
+      const proceed = await confirm({
+        title: 'Unsaved Muster Changes',
+        message: `You have unsaved attendance marks for ${selectedMusterDate}!\n\nIf you switch tabs without uploading, these marks will remain uncommitted.\n\nDo you want to switch tabs anyway?`,
+        confirmText: 'Switch Tab',
+        cancelText: 'Stay on Muster',
+        type: 'warning',
+        icon: 'warning'
+      });
+      if (!proceed) return;
+    }
+    setActiveTab(tab);
+    if (window.location.pathname !== '/dashboard' || window.location.search) {
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  };
 
   const handleDiscardMusterDraft = async () => {
     const confirmed = await confirm({
@@ -419,16 +450,6 @@ export const DashboardPage: React.FC = () => {
     setSelectedMusterDate(todayDateStr);
     setHasPendingChanges(false);
   };
-
-  const formattedDateLabel = useMemo(() => {
-    try {
-      const [year, month, day] = selectedMusterDate.split('-').map(Number);
-      const d = new Date(year, month - 1, day);
-      return d.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
-    } catch {
-      return selectedMusterDate;
-    }
-  }, [selectedMusterDate]);
 
   const formatDateLabel = (dateStr: string) => {
     try {

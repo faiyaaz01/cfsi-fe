@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useStudentData } from '../context/StudentDataContext';
+import { useConfirm } from '../context/ConfirmContext';
+import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning';
 import { AttendanceSlot, AttendanceStatus, StudentVerificationRecord } from '../types';
 import { api } from '../lib/api';
 import { UserAvatar } from '../components/common/UserAvatar';
@@ -125,6 +127,17 @@ export const TeacherDashboardPage: React.FC = () => {
   const [topicOrModule, setTopicOrModule] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
+
+  const confirm = useConfirm();
+
+  // Unsaved marks departure protection (browser close/reload, in-app links, browser back)
+  const isDirty = hasPendingChanges || hasDateDraft(activeDate);
+  useUnsavedChangesWarning(isDirty, {
+    title: 'Unsaved Attendance Changes',
+    message: `You have unsaved attendance marks for ${activeDate} (${activeSlot})!\n\nIf you leave now without saving, these marks will not be committed to the official database records.\n\nAre you sure you want to leave without saving?`,
+    confirmText: 'Discard & Leave',
+    cancelText: 'Stay & Save'
+  });
 
   // Cadets Roster (Instant Cache-First)
   const [cadets, setCadets] = useState<StudentVerificationRecord[]>(() => {
@@ -232,7 +245,7 @@ export const TeacherDashboardPage: React.FC = () => {
     return Array.from(set).sort();
   }, [cadets]);
 
-  // Set default topic when activeSlot changes
+  // Set default topic when activeSlot or activeDate changes
   useEffect(() => {
     const currentSlotConfig = SLOTS_LIST.find((s) => s.id === activeSlot);
     if (currentSlotConfig) {
@@ -243,7 +256,42 @@ export const TeacherDashboardPage: React.FC = () => {
       setTopicOrModule(existingRecordWithTopic?.topicOrModule || currentSlotConfig.defaultTopic);
     }
     setHasPendingChanges(false);
-  }, [activeSlot, activeDate, attendance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSlot, activeDate]);
+
+  // Safe slot selection with unsaved warning popup
+  const handleSelectSlot = async (newSlot: AttendanceSlot) => {
+    if (newSlot === activeSlot) return;
+    if (hasPendingChanges) {
+      const proceed = await confirm({
+        title: 'Unsaved Slot Changes',
+        message: `You have unsaved attendance marks in ${activeSlot}!\n\nDo you want to switch to ${newSlot} without uploading? Your changes will remain in local draft until you click "Save & Upload Muster".`,
+        confirmText: 'Switch Slot',
+        cancelText: 'Stay in Current Slot',
+        type: 'warning',
+        icon: 'warning'
+      });
+      if (!proceed) return;
+    }
+    setActiveSlot(newSlot);
+  };
+
+  // Safe date selection with unsaved warning popup
+  const handleSelectDate = async (newDate: string) => {
+    if (newDate === activeDate) return;
+    if (hasPendingChanges) {
+      const proceed = await confirm({
+        title: 'Unsaved Date Muster',
+        message: `You have unsaved attendance marks for ${activeDate}!\n\nIf you change dates without clicking "Save & Upload Muster", your marks will remain uncommitted.\n\nDo you want to switch dates anyway?`,
+        confirmText: 'Switch Date',
+        cancelText: 'Stay on Current Date',
+        type: 'warning',
+        icon: 'warning'
+      });
+      if (!proceed) return;
+    }
+    setActiveDate(newDate);
+  };
 
   // Attendance lookup for a cadet in the active slot & date
   const getCadetRecord = useCallback(
@@ -383,9 +431,9 @@ export const TeacherDashboardPage: React.FC = () => {
       const y = current.getFullYear();
       const m = String(current.getMonth() + 1).padStart(2, '0');
       const d = String(current.getDate()).padStart(2, '0');
-      setActiveDate(`${y}-${m}-${d}`);
+      handleSelectDate(`${y}-${m}-${d}`);
     } catch {
-      setActiveDate(todayStr);
+      handleSelectDate(todayStr);
     }
   };
 
@@ -564,7 +612,7 @@ export const TeacherDashboardPage: React.FC = () => {
                   type="date"
                   value={activeDate}
                   onChange={(e) => {
-                    if (e.target.value) setActiveDate(e.target.value);
+                    if (e.target.value) handleSelectDate(e.target.value);
                   }}
                   className="absolute inset-0 opacity-0 cursor-pointer pointer-events-auto w-full h-full"
                   aria-label="Select Date"
@@ -585,7 +633,7 @@ export const TeacherDashboardPage: React.FC = () => {
               <div className="flex items-center gap-1.5 ml-1">
                 <button
                   type="button"
-                  onClick={() => setActiveDate(todayStr)}
+                  onClick={() => handleSelectDate(todayStr)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeDate === todayStr
                       ? 'bg-primary text-white shadow-xs'
@@ -596,7 +644,7 @@ export const TeacherDashboardPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveDate(yesterdayStr)}
+                  onClick={() => handleSelectDate(yesterdayStr)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeDate === yesterdayStr
                       ? 'bg-primary text-white shadow-xs'
@@ -631,7 +679,7 @@ export const TeacherDashboardPage: React.FC = () => {
                 <button
                   key={slot.id}
                   type="button"
-                  onClick={() => setActiveSlot(slot.id)}
+                  onClick={() => handleSelectSlot(slot.id)}
                   className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
                     isSelected
                       ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-sm'
