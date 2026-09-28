@@ -4,6 +4,7 @@ import { useAuth, homeFor } from '../context/AuthContext';
 import { api } from '../lib/api';
 import { StudentProfile } from '../types';
 import { toast } from 'sonner';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { SkeletonProfile } from '../components/common/Skeleton';
 import { UserAvatar } from '../components/common/UserAvatar';
 import {
@@ -48,6 +49,7 @@ export const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  useBodyScrollLock(previewModalOpen);
   const [phoneError, setPhoneError] = useState('');
 
   // Form states

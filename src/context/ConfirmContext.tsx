@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, AlertCircle, HelpCircle, X } from 'lucide-react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export interface ConfirmOptions {
   title?: string;
@@ -51,6 +52,7 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const { isOpen, options } = dialogState;
+  useBodyScrollLock(isOpen);
   const {
     title = 'Confirm Action',
     message,

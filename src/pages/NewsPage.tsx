@@ -21,6 +21,7 @@ import { SkeletonNews } from '../components/common/Skeleton';
 import { toast } from 'sonner';
 import { SEOHead } from '../components/common/SEOHead';
 import { getNewsArticleSchema, getBreadcrumbSchema } from '../lib/seoSchemas';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const NewsPage: React.FC = () => {
   const { posts, isLoading } = useNews();
@@ -28,6 +29,7 @@ export const NewsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModalPost, setActiveModalPost] = useState<NewsPost | null>(null);
+  useBodyScrollLock(Boolean(activeModalPost));
 
   const categories = ['All', 'News', 'Event', 'Announcement', 'Institute Updates'];
 

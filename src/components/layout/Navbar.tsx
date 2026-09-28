@@ -25,10 +25,12 @@ import {
 import cfsiLogo from '../../assets/cfsi-logo.jpg';
 import { getLoggedStudent } from '../../lib/studentAuth';
 import { UserAvatar } from '../common/UserAvatar';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useBodyScrollLock(mobileMenuOpen);
   const [mobileGalleryOpen, setMobileGalleryOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'gallery' | null>(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);

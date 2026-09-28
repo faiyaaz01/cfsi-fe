@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { StudentProfile, AttendanceSlot } from '../types';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { 
   Calendar, 
   Clock, 
@@ -89,6 +90,7 @@ export function PortalPage() {
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  useBodyScrollLock(previewModalOpen);
 
   // Student view & Cadet Leadership detection
   const isStudentView = user?.role === 'student' || user?.role === 'leader';

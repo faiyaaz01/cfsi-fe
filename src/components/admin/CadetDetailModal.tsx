@@ -24,6 +24,7 @@ import { api, AuthUser } from '../../lib/api';
 import { TablePagination } from '../common/TablePagination';
 import { UserAvatar } from '../common/UserAvatar';
 import { processAndUploadImage } from '../../lib/imageProcessor';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface CadetDetailModalProps {
   cadet: StudentVerificationRecord | null;
@@ -40,6 +41,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
   onStudentUpdated,
   initialEditMode = false,
 }) => {
+  useBodyScrollLock(Boolean(cadet));
   const { user: currentUser } = useAuth();
   const { getStudentAttendanceSummary, getAttendanceByStudent } = useStudentData();
   const [modalAttPage, setModalAttPage] = useState(1);

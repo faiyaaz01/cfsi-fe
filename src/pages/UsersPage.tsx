@@ -49,6 +49,7 @@ import { BulkStudentImportModal } from '../components/admin/BulkStudentImportMod
 import { CountUp } from '../components/common/CountUp';
 import { SkeletonStats, Skeleton } from '../components/common/Skeleton';
 import { TablePagination } from '../components/common/TablePagination';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface UserFormData {
   username: string;
@@ -161,20 +162,17 @@ export function UsersPage({ isEmbedded = false, onNavigateToStudent }: UsersPage
   }, [loadUsers]);
 
   // Modal ESC key listener and scroll locking
+  useBodyScrollLock(isFormOpen);
+
   useEffect(() => {
+    if (!isFormOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFormOpen) {
+      if (e.key === 'Escape') {
         handleCancelEdit();
       }
     };
-    if (isFormOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    } else {
-      document.body.style.overflow = '';
-    }
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isFormOpen]);

@@ -8,9 +8,11 @@ import { SkeletonGallery } from '../components/common/Skeleton';
 import { useWebContent } from '../context/WebContentContext';
 import { SEOHead } from '../components/common/SEOHead';
 import { getBreadcrumbSchema } from '../lib/seoSchemas';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const VideoGalleryPage: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
+  useBodyScrollLock(Boolean(selectedVideo));
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const { videos, isLoading } = useWebContent();
 

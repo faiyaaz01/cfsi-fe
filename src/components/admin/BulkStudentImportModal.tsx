@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ParsedStudentRow {
   rollNo: string;
@@ -61,6 +62,8 @@ export const BulkStudentImportModal: React.FC<BulkStudentImportModalProps> = ({
   const [importResult, setImportResult] = useState<any | null>(null);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
 

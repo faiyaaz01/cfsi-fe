@@ -28,6 +28,7 @@ import {
   Key
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { api, AuthUser } from '../lib/api';
 import { StudentVerificationRecord } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -108,6 +109,7 @@ export const LeadershipManagementPage: React.FC = () => {
 
   // Promote cadet to leader modal state
   const [promoteModalOpen, setPromoteModalOpen] = useState(false);
+  useBodyScrollLock(Boolean(selectedUserForEdit || promoteModalOpen));
   const [promoteUserId, setPromoteUserId] = useState('');
   const [promoteStudentSearch, setPromoteStudentSearch] = useState('');
   const [selectedStudentForPromotion, setSelectedStudentForPromotion] = useState<{

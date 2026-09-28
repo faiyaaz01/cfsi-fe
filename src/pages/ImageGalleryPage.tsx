@@ -7,6 +7,7 @@ import { SkeletonGallery } from '../components/common/Skeleton';
 import { useWebContent } from '../context/WebContentContext';
 import { SEOHead } from '../components/common/SEOHead';
 import { getBreadcrumbSchema } from '../lib/seoSchemas';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 type CategoryFilter = 'All' | 'Training' | 'Events' | 'Equipment';
 
@@ -15,6 +16,7 @@ const categories: CategoryFilter[] = ['All', 'Training', 'Events', 'Equipment'];
 export const ImageGalleryPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
+  useBodyScrollLock(activeLightboxIndex !== null);
   const { photos, isLoading } = useWebContent();
 
   const filteredImages = activeCategory === 'All'

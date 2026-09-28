@@ -19,6 +19,7 @@ import {
   isCloudinaryConfigured,
   CloudinaryConfig,
 } from '../../lib/cloudinary';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface CloudinaryConfigModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const CloudinaryConfigModal: React.FC<CloudinaryConfigModalProps> = ({
   onClose,
   onConfigSaved,
 }) => {
+  useBodyScrollLock(isOpen);
   const [cloudName, setCloudName] = useState('');
   const [uploadPreset, setUploadPreset] = useState('');
   const [folder, setFolder] = useState('cfsi_portal');

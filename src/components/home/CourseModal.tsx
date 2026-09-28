@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Course } from '../../types';
 import { Link } from 'react-router-dom';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface CourseModalProps {
   course: Course | null;
@@ -20,6 +21,8 @@ interface CourseModalProps {
 }
 
 export const CourseModal: React.FC<CourseModalProps> = ({ course, onClose }) => {
+  useBodyScrollLock(Boolean(course));
+
   if (!course) return null;
 
   return (

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, AlertCircle, HelpCircle, X } from 'lucide-react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
   isLoading = false,
 }) => {
+  useBodyScrollLock(isOpen);
   useEffect(() => {
     if (!isOpen) return;
 

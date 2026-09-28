@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlatCard } from '../components/common/FlatCard';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { CountUp } from '../components/common/CountUp';
 import { ImageDropzone } from '../components/common/ImageDropzone';
 import { CloudinaryConfigModal } from '../components/common/CloudinaryConfigModal';
@@ -732,6 +733,10 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const [videoCatFilter, setVideoCatFilter] = useState<string>('All');
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // Prevent background scroll when any editor modal is open
+  const isAnyWebModalOpen = isCourseModalOpen || isNewsModalOpen || isDrillModalOpen || isPhotoModalOpen || isVideoModalOpen || isCloudinaryModalOpen;
+  useBodyScrollLock(isAnyWebModalOpen);
 
   const [videoForm, setVideoForm] = useState<{
     id: string;

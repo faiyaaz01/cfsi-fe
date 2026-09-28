@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Megaphone, GraduationCap, CalendarDays, MapPin } from 'lucide-react';
 import { useWebContent } from '../../context/WebContentContext';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export const NoticePopup: React.FC = () => {
   const { homePageConfig } = useWebContent();
@@ -13,6 +14,9 @@ export const NoticePopup: React.FC = () => {
   const noticeBadge = homePageConfig?.noticeBannerBadge || 'Notice';
 
   const visible = showNotice && !isDismissed;
+
+  // Prevent background page from scrolling while notice popup is visible
+  useBodyScrollLock(visible);
 
   const dismiss = () => {
     setIsDismissed(true);
