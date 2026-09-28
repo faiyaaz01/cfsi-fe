@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   RotateCw,
   AlertCircle,
-  Cloud,
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
@@ -31,8 +30,6 @@ import { FlatCard } from '../components/common/FlatCard';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { CountUp } from '../components/common/CountUp';
 import { ImageDropzone } from '../components/common/ImageDropzone';
-import { CloudinaryConfigModal } from '../components/common/CloudinaryConfigModal';
-import { isCloudinaryConfigured } from '../lib/cloudinary';
 import { useNews } from '../context/NewsContext';
 import { useWebContent } from '../context/WebContentContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -92,9 +89,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
     reorderNews,
     refreshNews,
   } = useNews();
-
-  // Cloudinary Storage Settings Modal State
-  const [isCloudinaryModalOpen, setIsCloudinaryModalOpen] = useState(false);
 
   // Homepage quick-toggle for courses
   const handleToggleCourseHomepage = async (courseId: string) => {
@@ -735,7 +729,7 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // Prevent background scroll when any editor modal is open
-  const isAnyWebModalOpen = isCourseModalOpen || isNewsModalOpen || isDrillModalOpen || isPhotoModalOpen || isVideoModalOpen || isCloudinaryModalOpen;
+  const isAnyWebModalOpen = isCourseModalOpen || isNewsModalOpen || isDrillModalOpen || isPhotoModalOpen || isVideoModalOpen;
   useBodyScrollLock(isAnyWebModalOpen);
 
   const [videoForm, setVideoForm] = useState<{
@@ -899,18 +893,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsCloudinaryModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/15 border border-gray-200 dark:border-white/10 flex items-center gap-1.5 transition-colors shadow-sm"
-              title="Cloudinary CDN Image Storage Settings"
-            >
-              <Cloud className="w-3.5 h-3.5 text-blue-500" />
-              <span>Cloud Storage</span>
-              {isCloudinaryConfigured() && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Connected" />
-              )}
-            </button>
             <button
               type="button"
               onClick={() => {
@@ -2803,12 +2785,6 @@ export const WebManagementPage: React.FC<WebManagementPageProps> = ({ isEmbedded
           </div>
         )}
       </AnimatePresence>
-
-      {/* Cloudinary Storage Settings Modal */}
-      <CloudinaryConfigModal
-        isOpen={isCloudinaryModalOpen}
-        onClose={() => setIsCloudinaryModalOpen(false)}
-      />
     </div>
   );
 };
