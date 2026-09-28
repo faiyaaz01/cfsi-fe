@@ -97,8 +97,19 @@ const clearDraftForDate = (date: string) => {
   } catch {}
 };
 
+const ATTENDANCE_CACHE_KEY = 'cfsi_attendance_cache';
+
 export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem(ATTENDANCE_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
   const [loading, setLoading] = useState<boolean>(false);
   const [draftVersion, setDraftVersion] = useState<number>(0);
 
@@ -145,6 +156,9 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
 
       setAttendance(merged);
+      try {
+        localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(merged));
+      } catch {}
     } catch (err) {
       console.error('Failed to load attendance from MongoDB:', err);
     } finally {
@@ -445,15 +459,26 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // 3. Clear the draft in localStorage for this date
     clearDraftForDate(date);
     setDraftVersion((v) => v + 1);
+    lastFetchRef.current = Date.now(); // Suppress redundant SSE re-fetch on self upload
 
-    // 4. Update React state with saved records from server
+    // 4. Update React state with saved records from server and update local cache
     if (Array.isArray(saved) && saved.length > 0) {
       setAttendance((prev) => {
         const copy = [...prev.filter((r) => r.date !== date)];
-        return [...saved, ...copy];
+        const next = [...saved, ...copy];
+        try {
+          localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
       });
     } else if (recordsToSync.length === 0) {
-      setAttendance((prev) => prev.filter((r) => r.date !== date));
+      setAttendance((prev) => {
+        const next = prev.filter((r) => r.date !== date);
+        try {
+          localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     }
 
     return saved;

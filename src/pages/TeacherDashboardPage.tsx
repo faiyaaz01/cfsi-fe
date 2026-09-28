@@ -126,9 +126,24 @@ export const TeacherDashboardPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
 
-  // Cadets Roster
-  const [cadets, setCadets] = useState<StudentVerificationRecord[]>([]);
-  const [isLoadingCadets, setIsLoadingCadets] = useState<boolean>(true);
+  // Cadets Roster (Instant Cache-First)
+  const [cadets, setCadets] = useState<StudentVerificationRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('cfsi_cadets_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+  const [isLoadingCadets, setIsLoadingCadets] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('cfsi_cadets_cache');
+      if (cached && JSON.parse(cached).length > 0) return false;
+    } catch {}
+    return true;
+  });
 
   // Hidden date input ref for tap-to-open calendar picker
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -143,7 +158,6 @@ export const TeacherDashboardPage: React.FC = () => {
   // Load cadets list from backend
   const loadCadets = useCallback(async () => {
     try {
-      setIsLoadingCadets(true);
       const data = await api.getStudents();
       const sorted = (data || []).sort((a, b) => {
         const rollA = getNumericRoll(a);
@@ -152,6 +166,9 @@ export const TeacherDashboardPage: React.FC = () => {
         return a.name.localeCompare(b.name);
       });
       setCadets(sorted);
+      try {
+        localStorage.setItem('cfsi_cadets_cache', JSON.stringify(sorted));
+      } catch {}
     } catch (err) {
       console.warn('Could not load cadets:', err);
       toast.error('Failed to load cadet roster.');
