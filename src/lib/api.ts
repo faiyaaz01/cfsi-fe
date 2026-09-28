@@ -8,7 +8,7 @@ import { AttendanceRecord, StudentProfile, StudentVerificationRecord, Course, Tr
 const rawApiEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
 export const API_BASE_URL = rawApiEnv
   ? (rawApiEnv.endsWith('/api') ? rawApiEnv.replace(/\/$/, '') : `${rawApiEnv.replace(/\/$/, '')}/api`)
-  : '/api';
+  : (import.meta.env.DEV ? '/api' : 'https://cfsibe.vercel.app/api');
 
 export const APP_ENV = (import.meta.env.VITE_APP_ENV as string | undefined)?.trim() || (import.meta.env.DEV ? 'development' : 'production');
 
