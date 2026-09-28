@@ -139,15 +139,60 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
   return response;
 }
 
+// In-Memory Request Cache with TTL to eliminate duplicate fetches during navigation
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+const memCache = new Map<string, CacheEntry<any>>();
+
+export function getCached<T>(key: string, ttlMs: number): T | null {
+  const entry = memCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > ttlMs) {
+    memCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+export function setCached<T>(key: string, data: T): void {
+  memCache.set(key, { data, timestamp: Date.now() });
+}
+
+export function clearApiCache(prefix?: string): void {
+  if (!prefix) {
+    memCache.clear();
+    return;
+  }
+  for (const key of memCache.keys()) {
+    if (key.startsWith(prefix)) {
+      memCache.delete(key);
+    }
+  }
+}
+
 export const api = {
   async logout() { await fetchWithAuth('/auth/logout', {method: 'POST'}); },
-  async users(method = 'GET', id = '', body?: unknown): Promise<any> {
+  async users(method = 'GET', id = '', body?: unknown, force = false): Promise<any> {
+    const isListGet = method === 'GET' && !id;
+    if (isListGet && !force) {
+      const cached = getCached('users_list', 60000);
+      if (cached) return cached;
+    }
     const response = await fetchWithAuth(`/users${id ? '/' + encodeURIComponent(id) : ''}`, {method, ...(body ? {body: JSON.stringify(body)} : {})});
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(typeof error.detail === 'string' ? error.detail : 'Please check the user fields and try again.');
     }
-    return response.status === 204 ? null : response.json();
+    const result = response.status === 204 ? null : await response.json();
+    if (isListGet && result) {
+      setCached('users_list', result);
+    } else if (method !== 'GET') {
+      clearApiCache('users');
+      clearApiCache('students');
+    }
+    return result;
   },
   /** Login with username and password against MongoDB hashed credentials */
   async login(username: string, password: string, role?: string): Promise<AuthResponse> {
@@ -516,18 +561,25 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to bulk import students');
     }
+    clearApiCache('students');
+    clearApiCache('users');
     return response.json();
   },
 
   /** Get enrolled students list from MongoDB */
-  async getStudents(course?: string): Promise<StudentVerificationRecord[]> {
+  async getStudents(course?: string, force = false): Promise<StudentVerificationRecord[]> {
+    const cacheKey = `students_${course || 'all'}`;
+    if (!force) {
+      const cached = getCached<StudentVerificationRecord[]>(cacheKey, 60000);
+      if (cached) return cached;
+    }
     const query = course && course !== 'All' ? `?course=${encodeURIComponent(course)}` : '';
     const response = await fetchWithAuth(`/students${query}`);
     if (!response.ok) {
       throw new Error('Failed to fetch students from database');
     }
     const data = await response.json();
-    return (data || []).map((doc: any): StudentVerificationRecord => ({
+    const mapped = (data || []).map((doc: any): StudentVerificationRecord => ({
       id: String(doc.id || doc._id || ''),
       rollNo: String(doc.rollNo || doc.roll_no || ''),
       enrollmentNo: doc.enrollmentNo || doc.enrollment_no || doc.id || doc._id,
@@ -558,6 +610,8 @@ export const api = {
       nationality: doc.nationality || 'INDIAN',
       state: doc.state || 'GUJARAT',
     }));
+    setCached(cacheKey, mapped);
+    return mapped;
   },
 
   /** Delete a student record and linked user account from MongoDB */
@@ -569,6 +623,8 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to delete student from database');
     }
+    clearApiCache('students');
+    clearApiCache('users');
   },
 
   /** Delete a user account and associated student/attendance data from MongoDB */
@@ -580,6 +636,8 @@ export const api = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.detail || 'Failed to delete user from database');
     }
+    clearApiCache('users');
+    clearApiCache('students');
   },
 
   // ==========================================
