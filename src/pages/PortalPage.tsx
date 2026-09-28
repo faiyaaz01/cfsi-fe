@@ -205,7 +205,13 @@ export function PortalPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const load = async () => {
+  const lastLoadRef = useRef<number>(0);
+  const load = async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastLoadRef.current < 15000) {
+      return;
+    }
+    lastLoadRef.current = now;
     try {
       const mySid = isStudentView ? (profile?.id || user?.student_id || user?.username) : undefined;
       const a = await api.getAttendance(mySid ? { studentId: mySid } : undefined);
@@ -219,7 +225,7 @@ export function PortalPage() {
 
   // Initial load
   useEffect(() => {
-    load();
+    load(true);
     if (isStudentView) {
       api.getStudentProfile()
         .then((p) => setProfile(p))
@@ -248,10 +254,17 @@ export function PortalPage() {
         try {
           const data = JSON.parse(event.data);
           if (data.event === 'attendance_updated') {
-            load();
+            load(false);
           }
         } catch (err) {
           console.error('SSE parse error:', err);
+        }
+      };
+      eventSource.onerror = () => {
+        // Close on disconnect to prevent aggressive auto-reconnect storm on serverless
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
         }
       };
     } catch (err) {
