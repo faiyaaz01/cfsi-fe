@@ -18,6 +18,9 @@ import {
   ChevronUp,
   Wrench,
   AlertCircle,
+  CalendarDays,
+  MapPin,
+  Megaphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlatCard } from '../common/FlatCard';
@@ -255,7 +258,7 @@ export const HomePageManager: React.FC = () => {
       </FlatCard>
 
       {/* ========================================================================= */}
-      {/* 1. TOP RED NOTICE BAR                                                     */}
+      {/* 1. ADMISSION & URGENT NOTICE POPUP                                        */}
       {/* ========================================================================= */}
       <FlatCard hoverEffect={false} className="p-6 border border-gray-200/80 dark:border-white/10 shadow-sm bg-white dark:bg-[#12181f]">
         <div className="flex items-center justify-between gap-4">
@@ -266,7 +269,7 @@ export const HomePageManager: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-heading font-black text-base text-gray-900 dark:text-white">
-                  1. Top Red Notice Bar
+                  1. Admission & Notice Popup
                 </h3>
                 <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase ${
                   form.showNoticeBanner ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-gray-200 dark:bg-white/10 text-gray-500'
@@ -275,7 +278,7 @@ export const HomePageManager: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                A red alert strip at the very top of the website for urgent announcements or admission dates.
+                Centered announcement popup window shown to visitors upon opening or refreshing the homepage.
               </p>
             </div>
           </div>
@@ -292,31 +295,159 @@ export const HomePageManager: React.FC = () => {
         </div>
 
         {form.showNoticeBanner && (
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">
-                Notice Message
-              </label>
-              <input
-                type="text"
-                value={form.noticeBannerText}
-                onChange={(e) => setForm({ ...form, noticeBannerText: e.target.value })}
-                placeholder="e.g. Admissions Open 2026 - Central Fire Safety Institute Vadodara"
-                className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
-              />
+          <div className="mt-5 pt-5 border-t border-gray-100 dark:border-white/5 space-y-4">
+            
+            {/* Row 1: Headline & Badge */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Main Headline / Notice Message *
+                </label>
+                <input
+                  type="text"
+                  value={form.noticeBannerText}
+                  onChange={(e) => setForm({ ...form, noticeBannerText: e.target.value })}
+                  placeholder="e.g. Admissions Open 2027-28"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Header Badge Text
+                </label>
+                <input
+                  type="text"
+                  value={form.noticeBannerBadge}
+                  onChange={(e) => setForm({ ...form, noticeBannerBadge: e.target.value })}
+                  placeholder="e.g. Notice or Urgent"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
+                />
+              </div>
             </div>
+
+            {/* Row 2: 3 Info Pills */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">
-                Badge Text
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                3 Highlight Tags (Pills)
               </label>
-              <input
-                type="text"
-                value={form.noticeBannerBadge}
-                onChange={(e) => setForm({ ...form, noticeBannerBadge: e.target.value })}
-                placeholder="e.g. Notice or Urgent"
-                className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 mb-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-red-500" />
+                    <span>Tag 1 (Red)</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={form.noticePill1 ?? 'Admissions Open'}
+                    onChange={(e) => setForm({ ...form, noticePill1: e.target.value })}
+                    placeholder="e.g. Admissions Open"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 mb-1">
+                    <CalendarDays className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Tag 2 (Blue)</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={form.noticePill2 ?? 'Batch 2026'}
+                    onChange={(e) => setForm({ ...form, noticePill2: e.target.value })}
+                    placeholder="e.g. Batch 2027-28"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 mb-1">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Tag 3 (Green)</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={form.noticePill3 ?? 'Vadodara, Gujarat'}
+                    onChange={(e) => setForm({ ...form, noticePill3: e.target.value })}
+                    placeholder="e.g. Vadodara, Gujarat"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Row 3: Description Note & Close Button Text */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="sm:col-span-3">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Popup Description Note
+                </label>
+                <textarea
+                  rows={2}
+                  value={form.noticeDescription ?? 'Limited seats available. Government-recognized certificate & diploma programs in Fire Safety Engineering and Industrial Safety Management.'}
+                  onChange={(e) => setForm({ ...form, noticeDescription: e.target.value })}
+                  placeholder="Enter detailed sub-note or guidelines..."
+                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Close Button Text
+                </label>
+                <input
+                  type="text"
+                  value={form.noticeCloseBtnText ?? 'Close'}
+                  onChange={(e) => setForm({ ...form, noticeCloseBtnText: e.target.value })}
+                  placeholder="e.g. Close"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {/* Live Popup Preview Box */}
+            <div className="mt-3 pt-4 border-t border-gray-100 dark:border-white/5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                Live Popup Preview
+              </span>
+              <div className="max-w-md mx-auto rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-md">
+                <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 text-white">
+                  {form.noticeBannerBadge && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase mb-1.5">
+                      <Megaphone className="w-2.5 h-2.5" />
+                      {form.noticeBannerBadge}
+                    </span>
+                  )}
+                  <h4 className="font-heading font-black text-base text-white leading-snug">
+                    {form.noticeBannerText || 'Admissions Open'}
+                  </h4>
+                </div>
+                <div className="bg-white dark:bg-[#1a2232] p-4 space-y-2.5">
+                  <div className="flex flex-wrap gap-1.5">
+                    {form.noticePill1 && (
+                      <span className="px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 text-[10px] font-bold">
+                        🎓 {form.noticePill1}
+                      </span>
+                    )}
+                    {form.noticePill2 && (
+                      <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-[10px] font-bold">
+                        📅 {form.noticePill2}
+                      </span>
+                    )}
+                    {form.noticePill3 && (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
+                        📍 {form.noticePill3}
+                      </span>
+                    )}
+                  </div>
+                  {form.noticeDescription && (
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                      {form.noticeDescription}
+                    </p>
+                  )}
+                  <div className="w-full py-1.5 rounded-lg bg-gray-100 dark:bg-white/10 text-center text-xs font-bold text-gray-700 dark:text-gray-300">
+                    {form.noticeCloseBtnText || 'Close'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
       </FlatCard>

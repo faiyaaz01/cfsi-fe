@@ -35,12 +35,17 @@ export interface StatItemConfig {
 }
 
 export interface HomePageConfig {
-  // 1. Top Emergency Notice Bar
+  // 1. Admission / Notice Popup
   showNoticeBanner: boolean;
   noticeBannerText: string;
   noticeBannerBadge: string;
   noticeBannerLink: string;
   noticeBannerBtnText: string;
+  noticePill1?: string;
+  noticePill2?: string;
+  noticePill3?: string;
+  noticeDescription?: string;
+  noticeCloseBtnText?: string;
 
   // 2. Hero Section
   showHero: boolean;
@@ -102,6 +107,11 @@ export const defaultHomePageConfig: HomePageConfig = {
   noticeBannerBadge: 'Notice',
   noticeBannerLink: '/about#verification',
   noticeBannerBtnText: 'Verify Student',
+  noticePill1: 'Admissions Open',
+  noticePill2: 'Batch 2026',
+  noticePill3: 'Vadodara, Gujarat',
+  noticeDescription: 'Limited seats available. Government-recognized certificate & diploma programs in Fire Safety Engineering and Industrial Safety Management.',
+  noticeCloseBtnText: 'Close',
 
   showHero: true,
   heroHeadline: 'Central Fire Safety Institute',

@@ -10,8 +10,13 @@ export const NoticePopup: React.FC = () => {
 
   // Show immediately if enabled in current config without an artificial delay
   const showNotice = Boolean(homePageConfig?.showNoticeBanner);
-  const noticeText = homePageConfig?.noticeBannerText || '';
+  const noticeText = homePageConfig?.noticeBannerText || 'Admissions Open 2026 - Central Fire Safety Institute Vadodara';
   const noticeBadge = homePageConfig?.noticeBannerBadge || 'Notice';
+  const pill1 = homePageConfig?.noticePill1 !== undefined ? homePageConfig.noticePill1 : 'Admissions Open';
+  const pill2 = homePageConfig?.noticePill2 !== undefined ? homePageConfig.noticePill2 : 'Batch 2026';
+  const pill3 = homePageConfig?.noticePill3 !== undefined ? homePageConfig.noticePill3 : 'Vadodara, Gujarat';
+  const description = homePageConfig?.noticeDescription !== undefined ? homePageConfig.noticeDescription : 'Limited seats available. Government-recognized certificate & diploma programs in Fire Safety Engineering and Industrial Safety Management.';
+  const closeBtnText = homePageConfig?.noticeCloseBtnText || 'Close';
 
   const visible = showNotice && !isDismissed;
 
@@ -63,12 +68,14 @@ export const NoticePopup: React.FC = () => {
                 </button>
 
                 {/* Badge */}
-                <div className="flex items-center gap-2 mb-5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[11px] font-black uppercase tracking-widest">
-                    <Megaphone className="w-3.5 h-3.5" />
-                    {noticeBadge}
-                  </span>
-                </div>
+                {noticeBadge && (
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[11px] font-black uppercase tracking-widest">
+                      <Megaphone className="w-3.5 h-3.5" />
+                      {noticeBadge}
+                    </span>
+                  </div>
+                )}
 
                 {/* Main notice text */}
                 <h2 className="text-white font-black text-2xl sm:text-3xl leading-tight">
@@ -87,34 +94,44 @@ export const NoticePopup: React.FC = () => {
               <div className="bg-white dark:bg-[#1a2232] px-7 py-6 flex flex-col gap-4">
 
                 {/* Info pills */}
-                <div className="flex flex-wrap gap-3">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-bold border border-red-100 dark:border-red-800/40">
-                    <GraduationCap className="w-4 h-4" />
-                    Admissions Open
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-100 dark:border-blue-800/40">
-                    <CalendarDays className="w-4 h-4" />
-                    Batch 2026
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-100 dark:border-emerald-800/40">
-                    <MapPin className="w-4 h-4" />
-                    Vadodara, Gujarat
-                  </span>
-                </div>
+                {(pill1 || pill2 || pill3) && (
+                  <div className="flex flex-wrap gap-3">
+                    {pill1 && (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-bold border border-red-100 dark:border-red-800/40">
+                        <GraduationCap className="w-4 h-4" />
+                        {pill1}
+                      </span>
+                    )}
+                    {pill2 && (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-100 dark:border-blue-800/40">
+                        <CalendarDays className="w-4 h-4" />
+                        {pill2}
+                      </span>
+                    )}
+                    {pill3 && (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-100 dark:border-emerald-800/40">
+                        <MapPin className="w-4 h-4" />
+                        {pill3}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* Sub note */}
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Limited seats available. Government-recognized certificate & diploma programs in Fire Safety Engineering and Industrial Safety Management.
-                </p>
+                {description && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                    {description}
+                  </p>
+                )}
 
                 {/* Close button row */}
                 <div className="pt-1">
                   <button
                     onClick={dismiss}
                     type="button"
-                    className="w-full py-3 rounded-2xl text-sm font-bold bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200"
+                    className="w-full py-3 rounded-2xl text-sm font-bold bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 cursor-pointer"
                   >
-                    Close
+                    {closeBtnText}
                   </button>
                 </div>
               </div>
