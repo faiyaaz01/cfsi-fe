@@ -5,7 +5,6 @@ import {
   ArrowLeft, 
   Lock, 
   CheckCircle2, 
-  AlertCircle, 
   Calendar, 
   ChevronLeft, 
   ChevronRight, 
@@ -603,14 +602,6 @@ export const SlotAttendancePage: React.FC = () => {
                 <Lock className="w-3.5 h-3.5" />
                 <span>Locked (24h Ended)</span>
               </span>
-            ) : isDraftActive ? (
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
-                title="Unsaved changes stored in local storage. Click Submit Attendance to sync to database."
-              >
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <span>Draft in Local Storage</span>
-              </span>
             ) : dateLock.uploadedAt ? (
               <span
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
@@ -622,15 +613,7 @@ export const SlotAttendancePage: React.FC = () => {
                   • {dateLock.remainingHours ?? 24}h left to edit
                 </span>
               </span>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
-                title="Ready to mark attendance"
-              >
-                <AlertCircle className="w-3.5 h-3.5 text-blue-500" />
-                <span>Ready to Mark</span>
-              </span>
-            )}
+            ) : null}
           </div>
 
           {/* Right: Date Stepper & Save & Sync Button */}

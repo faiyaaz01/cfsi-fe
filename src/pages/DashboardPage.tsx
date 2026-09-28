@@ -1164,22 +1164,12 @@ export const DashboardPage: React.FC = () => {
                         <Lock className="w-3.5 h-3.5" />
                         Locked
                       </span>
-                    ) : isMusterDraftActive ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center gap-1.5 border border-amber-300 dark:border-amber-800/40">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span>Draft in Local Storage</span>
-                      </span>
                     ) : lockStatus.uploadedAt ? (
                       <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Uploaded ({lockStatus.remainingHours ?? 24}h left)
                       </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Ready to Mark
-                      </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
