@@ -63,6 +63,20 @@
     @apply bg-white/70 dark:bg-[#161d27]/70 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-[14px] shadow-glass-light dark:shadow-glass-dark;
   }
 
+  /* Hide default browser calendar picker indicator icon so custom icon is used exclusively */
+  .no-calendar-picker-icon::-webkit-calendar-picker-indicator {
+    display: none !important;
+    -webkit-appearance: none !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+  }
+  .no-calendar-picker-icon::-webkit-inner-spin-button {
+    display: none !important;
+    -webkit-appearance: none !important;
+  }
+
   /* Clean flat card */
   .flat-card {
     @apply bg-white dark:bg-[#161d27] rounded-2xl border border-gray-100 dark:border-white/5 shadow-card-soft transition-all duration-300;

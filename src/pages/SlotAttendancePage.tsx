@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
@@ -185,6 +185,22 @@ export const SlotAttendancePage: React.FC = () => {
   const isTodayDate = (dateStr: string) => {
     const today = new Date().toISOString().split('T')[0];
     return dateStr === today;
+  };
+
+  const slotDateInputRef = useRef<HTMLInputElement>(null);
+
+  const openSlotDatePicker = () => {
+    if (slotDateInputRef.current) {
+      try {
+        if (typeof slotDateInputRef.current.showPicker === 'function') {
+          slotDateInputRef.current.showPicker();
+        } else {
+          slotDateInputRef.current.focus();
+        }
+      } catch {
+        slotDateInputRef.current.focus();
+      }
+    }
   };
 
   // Shift date handler
@@ -620,14 +636,35 @@ export const SlotAttendancePage: React.FC = () => {
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center gap-1.5 px-2 font-bold text-xs sm:text-sm text-gray-900 dark:text-white">
-                <Calendar className="w-4 h-4 text-primary" />
+              <div 
+                onClick={openSlotDatePicker}
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg hover:bg-white/80 dark:hover:bg-white/10 transition-colors cursor-pointer select-none group font-bold text-xs sm:text-sm text-gray-900 dark:text-white"
+                title="Tap to select date"
+              >
+                <Calendar className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
                 <span>{formatDateLabel(activeDate)}</span>
                 {isTodayDate(activeDate) && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary text-white">
                     Today
                   </span>
                 )}
+                <input
+                  ref={slotDateInputRef}
+                  type="date"
+                  value={activeDate}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    const picked = e.target.value;
+                    if (!picked) return;
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (picked > todayStr) {
+                      toast.info('Attendance opens when the day starts. You cannot select upcoming dates.');
+                      return;
+                    }
+                    navigate(`/dashboard/attendance/${picked}/${encodeURIComponent(activeSlot)}`);
+                  }}
+                  className="sr-only"
+                />
               </div>
 
               <button

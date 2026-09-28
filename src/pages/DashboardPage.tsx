@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { 
   LayoutDashboard, 
@@ -364,6 +364,22 @@ export const DashboardPage: React.FC = () => {
   }, [selectedMusterDate]);
 
   // --- 3-SLOT DAILY MUSTER DATE NAVIGATION & HANDLERS ---
+  const musterDateInputRef = useRef<HTMLInputElement>(null);
+
+  const openMusterDatePicker = () => {
+    if (musterDateInputRef.current) {
+      try {
+        if (typeof musterDateInputRef.current.showPicker === 'function') {
+          musterDateInputRef.current.showPicker();
+        } else {
+          musterDateInputRef.current.focus();
+        }
+      } catch {
+        musterDateInputRef.current.focus();
+      }
+    }
+  };
+
   const handlePrevDay = () => {
     try {
       const [year, month, day] = selectedMusterDate.split('-').map(Number);
@@ -1158,12 +1174,21 @@ export const DashboardPage: React.FC = () => {
                       <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="flex items-center gap-1.5 px-2">
-                      <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <div 
+                      onClick={openMusterDatePicker}
+                      className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg hover:bg-white/80 dark:hover:bg-white/10 transition-colors cursor-pointer select-none group"
+                      title="Tap to open calendar"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
                       <input
+                        ref={musterDateInputRef}
                         type="date"
                         value={selectedMusterDate}
                         max={todayDateStr}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openMusterDatePicker();
+                        }}
                         onChange={(e) => {
                           if (e.target.value > todayDateStr) {
                             toast.info('Attendance opens when the day starts. You cannot select upcoming dates.');
@@ -1172,7 +1197,7 @@ export const DashboardPage: React.FC = () => {
                           setSelectedMusterDate(e.target.value);
                           setHasPendingChanges(false);
                         }}
-                        className="bg-transparent text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer"
+                        className="bg-transparent text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer no-calendar-picker-icon [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:appearance-none w-[96px] sm:w-[102px]"
                       />
                     </div>
 
