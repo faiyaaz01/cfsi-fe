@@ -14,6 +14,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const generation = useRef(0);
   const lastRefreshRef = useRef<number>(0);
+  const isRefreshingRef = useRef(false);
   const refresh = async (force = false) => {
     const token = getToken();
     if (!token) {
@@ -22,10 +23,12 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       return;
     }
     const now = Date.now();
-    // Throttle duplicate calls within 3 minutes unless forced or user is not yet loaded
-    if (!force && user && now - lastRefreshRef.current < 180000) {
+    if (isRefreshingRef.current) return;
+    // Throttle duplicate calls within 5 minutes unless forced
+    if (!force && now - lastRefreshRef.current < 300000) {
       return;
     }
+    isRefreshingRef.current = true;
     lastRefreshRef.current = now;
     const request = ++generation.current;
     try {
@@ -33,7 +36,10 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       if (request === generation.current && token === getToken()) setUser(profile);
     } catch {
       if (request === generation.current && token === getToken()) { clearAuth(); setUser(null); }
-    } finally { if (request === generation.current) setLoading(false); }
+    } finally {
+      if (request === generation.current) setLoading(false);
+      isRefreshingRef.current = false;
+    }
   };
   useEffect(() => {
     if (!user) return;
@@ -50,13 +56,15 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     void refresh(true);
     const clear = () => { generation.current++; setUser(null); setLoading(false); };
-    const sync = () => { void refresh(false); };
     const onStorage = () => { void refresh(true); };
     window.addEventListener('auth-cleared', clear);
     window.addEventListener('storage', onStorage);
-    window.addEventListener('focus', sync);
-    const timer = window.setInterval(sync, 180000);
-    return () => { window.removeEventListener('auth-cleared', clear); window.removeEventListener('storage', onStorage); window.removeEventListener('focus', sync); clearInterval(timer); };
+    const timer = window.setInterval(() => { void refresh(false); }, 300000);
+    return () => {
+      window.removeEventListener('auth-cleared', clear);
+      window.removeEventListener('storage', onStorage);
+      clearInterval(timer);
+    };
   }, []);
   const logout = async () => { try { await api.logout(); } finally { clearAuth(); setUser(null); } };
   return <AuthContext.Provider value={{user, loading, refresh, logout}}>{children}</AuthContext.Provider>;
