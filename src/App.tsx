@@ -23,6 +23,7 @@ import { InstituteLoginPage } from './pages/InstituteLoginPage';
 import { PortalPage } from './pages/PortalPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SlotAttendancePage } from './pages/SlotAttendancePage';
+import { TeacherDashboardPage } from './pages/TeacherDashboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PageLoader } from './components/common/PageLoader';
 
@@ -63,12 +64,14 @@ const AppContent: React.FC = () => {
                 <Route path="dashboard/leadership" element={<Navigate to="/dashboard?tab=users" replace />} />
                 <Route path="users" element={<Navigate to="/dashboard?tab=users" replace />} />
               </Route>
-              <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<PortalPage />} /></Route>
+              <Route element={<AuthGuard roles={['teacher']} />}><Route path="teacher/dashboard" element={<TeacherDashboardPage />} /></Route>
               <Route element={<AuthGuard roles={['leader']} />}><Route path="leader/dashboard" element={<Navigate to="/student/dashboard" replace />} /></Route>
               <Route element={<AuthGuard roles={['student', 'leader']} />}><Route path="student/dashboard" element={<PortalPage />} /></Route>
               <Route element={<AuthGuard roles={['student', 'teacher', 'admin', 'leader']} />}><Route path="profile" element={<ProfilePage />} /></Route>
-              <Route element={<AuthGuard roles={['admin', 'teacher', 'leader']} />}>
+              <Route element={<AuthGuard roles={['admin']} />}>
                 <Route path="student-data" element={<StudentDataPage />} />
+              </Route>
+              <Route element={<AuthGuard roles={['admin', 'teacher', 'leader']} />}>
                 <Route path="attendance/:date/:slot" element={<SlotAttendancePage />} />
                 <Route path="dashboard/attendance/:date/:slot" element={<SlotAttendancePage />} />
               </Route>

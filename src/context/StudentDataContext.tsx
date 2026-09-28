@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AttendanceRecord, AttendanceSlot, AttendanceStatus } from '../types';
 import { api, getToken, getAttendanceStreamUrl } from '../lib/api';
 
@@ -47,7 +47,7 @@ interface StudentDataContextType {
   getAttendanceByStudent: (studentId: string) => AttendanceRecord[];
   getAttendanceByDate: (date: string) => AttendanceRecord[];
   getStudentAttendanceSummary: (studentId: string) => AttendanceSummary;
-  isDateLocked: (date: string) => { locked: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number };
+  isDateLocked: (date: string) => { locked: boolean; isFuture?: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number; message?: string };
   hasDateDraft: (date: string) => boolean;
   discardDateDraft: (date: string) => Promise<void>;
   toggleDateLock: (date: string, lock: boolean) => Promise<void>;
@@ -102,13 +102,21 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [loading, setLoading] = useState<boolean>(false);
   const [draftVersion, setDraftVersion] = useState<number>(0);
 
+  const lastFetchRef = useRef<number>(0);
+
   // Fetch attendance records from backend MongoDB and merge local drafts
-  const fetchAttendance = useCallback(async () => {
+  const fetchAttendance = useCallback(async (force = false) => {
     const token = getToken();
     if (!token) {
       setAttendance([]);
       return;
     }
+    const now = Date.now();
+    // Throttle duplicate calls within 15 seconds unless explicitly forced
+    if (!force && now - lastFetchRef.current < 15000) {
+      return;
+    }
+    lastFetchRef.current = now;
     try {
       setLoading(true);
       const remoteAtt = await api.getAttendance();
@@ -151,18 +159,25 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       localStorage.removeItem('cfsi_attendance');
     } catch {}
 
-    void fetchAttendance();
+    void fetchAttendance(true);
 
     const handleAuthSync = () => {
-      void fetchAttendance();
+      void fetchAttendance(true);
+    };
+
+    const handleFocusSync = () => {
+      // Only refresh on focus if more than 45 seconds have elapsed since last fetch
+      if (Date.now() - lastFetchRef.current > 45000) {
+        void fetchAttendance(false);
+      }
     };
 
     window.addEventListener('storage', handleAuthSync);
     window.addEventListener('auth-cleared', handleAuthSync);
-    window.addEventListener('focus', handleAuthSync);
+    window.addEventListener('focus', handleFocusSync);
     window.addEventListener('attendance-refresh', handleAuthSync);
 
-    // Real-time Server-Sent Events (SSE) Stream Subscription
+    // Real-time Server-Sent Events (SSE) Stream Subscription with safe reconnect guard
     let eventSource: EventSource | null = null;
     try {
       const streamUrl = getAttendanceStreamUrl();
@@ -171,30 +186,34 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         try {
           const data = JSON.parse(event.data);
           if (data.event === 'attendance_updated' || data.event === 'attendance_deleted') {
-            void fetchAttendance();
+            void fetchAttendance(true);
           }
         } catch {
           // ignore keepalive/ping
         }
       };
       eventSource.onerror = () => {
-        // SSE will reconnect automatically
+        // Close failed connection so serverless instances aren't hammered repeatedly
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
       };
     } catch (e) {
       console.warn('Real-time attendance stream unavailable:', e);
     }
 
-    // Secondary heartbeat fallback poll (every 10s if window is active)
+    // Polite heartbeat poll (every 60s if window is active, instead of 10s)
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible' && getToken()) {
-        void fetchAttendance();
+        void fetchAttendance(false);
       }
-    }, 10000);
+    }, 60000);
 
     return () => {
       window.removeEventListener('storage', handleAuthSync);
       window.removeEventListener('auth-cleared', handleAuthSync);
-      window.removeEventListener('focus', handleAuthSync);
+      window.removeEventListener('focus', handleFocusSync);
       window.removeEventListener('attendance-refresh', handleAuthSync);
       if (eventSource) {
         eventSource.close();
@@ -479,21 +498,19 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     await fetchAttendance();
   };
 
-  // Check whether attendance records for a specific date are locked (> 24h since upload)
-  const isDateLocked = useCallback((date: string): { locked: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number } => {
+  // Check whether attendance records for a specific date are locked (48-hour editing window starting from Slot 1: 08:00 AM IST)
+  const isDateLocked = useCallback((date: string): { locked: boolean; isFuture?: boolean; uploadedAt?: string; canEditUntil?: string; remainingHours?: number; message?: string } => {
     // 1. Explicit admin override check
     if (adminDateLockOverrides[date] !== undefined) {
       const isManualLocked = adminDateLockOverrides[date];
       return {
         locked: isManualLocked,
-        remainingHours: isManualLocked ? 0 : 24,
+        remainingHours: isManualLocked ? 0 : 48,
+        message: isManualLocked ? 'Locked by Administrator' : 'Unlocked by Administrator'
       };
     }
 
     const dayRecords = attendance.filter((r) => r.date === date);
-    if (dayRecords.length === 0) {
-      return { locked: false };
-    }
 
     // Direct flag from backend (e.g. if explicitly unlocked by admin with future deadline)
     const explicitlyUnlocked = dayRecords.find((r) => r.isLocked === false && r.canEditUntil && new Date(r.canEditUntil).getTime() > Date.now());
@@ -505,6 +522,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         uploadedAt: explicitlyUnlocked.uploadedAt,
         canEditUntil: explicitlyUnlocked.canEditUntil,
         remainingHours,
+        message: `Unlocked by Administrator (${remainingHours}h remaining)`
       };
     }
 
@@ -516,40 +534,53 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         uploadedAt: lockedRecord.uploadedAt,
         canEditUntil: lockedRecord.canEditUntil,
         remainingHours: 0,
+        message: 'Attendance locked'
       };
     }
 
-    // Check earliest upload timestamp
-    const uploadedRecords = dayRecords.filter((r) => r.uploadedAt);
-    if (uploadedRecords.length > 0) {
-      const earliestUpload = uploadedRecords.reduce((min, r) => {
-        const t = new Date(r.uploadedAt!).getTime();
-        return t < min ? t : min;
-      }, Infinity);
-
-      if (earliestUpload !== Infinity) {
-        const deadline = earliestUpload + 24 * 60 * 60 * 1000;
+    // 48-hour window starting from Slot 1 (08:00 AM IST) on date
+    try {
+      const parts = date.split('-').map(Number);
+      if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+        const [y, m, d] = parts;
+        // 08:00 AM IST is 02:30 AM UTC
+        const slot1StartUtc = new Date(Date.UTC(y, m - 1, d, 2, 30, 0));
+        const lockDeadlineUtc = new Date(slot1StartUtc.getTime() + 48 * 60 * 60 * 1000);
         const now = Date.now();
-        const diffMs = deadline - now;
+
+        if (now < slot1StartUtc.getTime()) {
+          return {
+            locked: true,
+            isFuture: true,
+            canEditUntil: lockDeadlineUtc.toISOString(),
+            remainingHours: 0,
+            message: `Opens at 08:00 AM IST (Slot 1 start) on ${date}`
+          };
+        }
+
+        const diffMs = lockDeadlineUtc.getTime() - now;
         if (diffMs <= 0) {
           return {
             locked: true,
-            uploadedAt: new Date(earliestUpload).toISOString(),
-            canEditUntil: new Date(deadline).toISOString(),
+            isFuture: false,
+            canEditUntil: lockDeadlineUtc.toISOString(),
             remainingHours: 0,
+            message: `Locked: 48-hour editing window expired`
           };
         }
+
         const remainingHours = Math.max(0, Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10);
         return {
           locked: false,
-          uploadedAt: new Date(earliestUpload).toISOString(),
-          canEditUntil: new Date(deadline).toISOString(),
+          isFuture: false,
+          canEditUntil: lockDeadlineUtc.toISOString(),
           remainingHours,
+          message: `Unlocked: ${remainingHours}h remaining in 48-hour window`
         };
       }
-    }
+    } catch {}
 
-    return { locked: false };
+    return { locked: false, remainingHours: 48 };
   }, [attendance, adminDateLockOverrides]);
 
   // Clear all attendance records on a given date from MongoDB
