@@ -165,16 +165,8 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       void fetchAttendance(true);
     };
 
-    const handleFocusSync = () => {
-      // Only refresh on focus if more than 45 seconds have elapsed since last fetch
-      if (Date.now() - lastFetchRef.current > 45000) {
-        void fetchAttendance(false);
-      }
-    };
-
     window.addEventListener('storage', handleAuthSync);
     window.addEventListener('auth-cleared', handleAuthSync);
-    window.addEventListener('focus', handleFocusSync);
     window.addEventListener('attendance-refresh', handleAuthSync);
 
     // Real-time Server-Sent Events (SSE) Stream Subscription with safe reconnect guard
@@ -203,17 +195,16 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       console.warn('Real-time attendance stream unavailable:', e);
     }
 
-    // Polite heartbeat poll (every 60s if window is active, instead of 10s)
+    // Polite background sync (every 2 minutes if window is active)
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible' && getToken()) {
         void fetchAttendance(false);
       }
-    }, 60000);
+    }, 120000);
 
     return () => {
       window.removeEventListener('storage', handleAuthSync);
       window.removeEventListener('auth-cleared', handleAuthSync);
-      window.removeEventListener('focus', handleFocusSync);
       window.removeEventListener('attendance-refresh', handleAuthSync);
       if (eventSource) {
         eventSource.close();
