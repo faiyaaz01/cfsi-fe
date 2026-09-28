@@ -3,27 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Megaphone, GraduationCap, CalendarDays, MapPin } from 'lucide-react';
 import { useWebContent } from '../../context/WebContentContext';
 
-const DISMISSED_KEY = 'cfsi_notice_dismissed';
-
 export const NoticePopup: React.FC = () => {
-  const { homePageConfig, isLoading } = useWebContent();
-  const [visible, setVisible] = useState(false);
+  const { homePageConfig } = useWebContent();
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  const showNotice = !isLoading && (homePageConfig?.showNoticeBanner ?? false);
+  // Show immediately if enabled in current config without an artificial delay
+  const showNotice = Boolean(homePageConfig?.showNoticeBanner);
   const noticeText = homePageConfig?.noticeBannerText || '';
   const noticeBadge = homePageConfig?.noticeBannerBadge || 'Notice';
 
-  useEffect(() => {
-    if (!showNotice) return;
-    const dismissed = sessionStorage.getItem(DISMISSED_KEY);
-    if (dismissed === noticeText) return;
-    const t = setTimeout(() => setVisible(true), 700);
-    return () => clearTimeout(t);
-  }, [showNotice, noticeText]);
+  const visible = showNotice && !isDismissed;
 
   const dismiss = () => {
-    setVisible(false);
-    sessionStorage.setItem(DISMISSED_KEY, noticeText);
+    setIsDismissed(true);
   };
 
   return (
