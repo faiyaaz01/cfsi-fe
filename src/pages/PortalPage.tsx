@@ -206,9 +206,10 @@ export function PortalPage() {
   }, []);
 
   const lastLoadRef = useRef<number>(0);
-  const load = async (force = false) => {
+  const load = async (force: boolean | React.SyntheticEvent = false) => {
+    const isForced = force === true;
     const now = Date.now();
-    if (!force && now - lastLoadRef.current < 15000) {
+    if (!isForced && now - lastLoadRef.current < 15000) {
       return;
     }
     lastLoadRef.current = now;
