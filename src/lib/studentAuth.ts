@@ -1,6 +1,6 @@
 import { studentsData } from '../data/students';
 import { StudentVerificationRecord } from '../types';
-import { api, clearAuth, getStoredUser } from './api';
+import { api, clearAuth, getStoredUser, getToken } from './api';
 
 export const loginWithBackend = async (username: string, password: string, role?: string) => {
   try {
@@ -92,7 +92,10 @@ export const getLoggedStudent = (): StudentVerificationRecord | null => {
 };
 
 export const logoutStudent = () => {
+  const token = getToken();
   clearAuth();
   api.clearCache();
-  void api.logout().catch(() => {});
+  if (token) {
+    void api.logout(token);
+  }
 };

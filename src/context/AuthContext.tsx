@@ -97,10 +97,13 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     };
   }, []);
   const logout = async () => {
+    const token = getToken();
     clearAuth();
     setUser(null);
     api.clearCache();
-    void api.logout().catch(() => {});
+    if (token) {
+      void api.logout(token);
+    }
   };
   return <AuthContext.Provider value={{user, loading, refresh, logout, setUser}}>{children}</AuthContext.Provider>;
 }

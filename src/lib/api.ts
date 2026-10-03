@@ -172,7 +172,20 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
 }
 
 export const api = {
-  async logout() { await fetchWithAuth('/auth/logout', {method: 'POST'}); },
+  async logout(tokenOverride?: string) {
+    const token = tokenOverride || getToken();
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch {
+      // ignore
+    }
+  },
   async clearCache(prefix?: string) {
     clearApiCache(prefix);
   },
