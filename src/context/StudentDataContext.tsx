@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AttendanceRecord, AttendanceSlot, AttendanceStatus } from '../types';
-import { api, getToken, getAttendanceStreamUrl } from '../lib/api';
+import { api, getToken } from '../lib/api';
 
 interface AttendanceSummary {
   total: number;
@@ -127,6 +127,10 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [loading, setLoading] = useState<boolean>(false);
   const [draftVersion, setDraftVersion] = useState<number>(0);
 
+  // In-memory ref to latest attendance records to keep callback dependencies stable and prevent re-render teardown cascades
+  const attendanceRef = useRef<AttendanceRecord[]>(attendance);
+  attendanceRef.current = attendance;
+
   // In-memory timestamps for cached dates and students
   const loadedDatesRef = useRef<Map<string, number>>(new Map());
   const loadedStudentsRef = useRef<Map<string, number>>(new Map());
@@ -140,7 +144,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const lastFetched = loadedDatesRef.current.get(date) || 0;
     // Serve from memory if fetched in the last 20 seconds unless explicitly forced
     if (!force && now - lastFetched < 20000) {
-      return attendance.filter((r) => r.date === date);
+      return attendanceRef.current.filter((r) => r.date === date);
     }
 
     try {
@@ -163,11 +167,11 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       return dayRecords;
     } catch (err) {
       console.error(`Failed to load attendance for date ${date}:`, err);
-      return attendance.filter((r) => r.date === date);
+      return attendanceRef.current.filter((r) => r.date === date);
     } finally {
       setLoading(false);
     }
-  }, [attendance]);
+  }, []);
 
   // Fetch attendance records specifically for a single student
   const fetchAttendanceForStudent = useCallback(async (studentId: string, force = false): Promise<AttendanceRecord[]> => {
@@ -178,7 +182,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const now = Date.now();
     const lastFetched = loadedStudentsRef.current.get(normId) || 0;
     if (!force && now - lastFetched < 20000) {
-      return attendance.filter(
+      return attendanceRef.current.filter(
         (a) => a.studentId.toUpperCase() === normId || (a.rollNo && a.rollNo.toUpperCase() === normId)
       );
     }
@@ -197,11 +201,11 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       return Array.isArray(serverRecords) ? serverRecords : [];
     } catch (err) {
       console.error(`Failed to load attendance for student ${studentId}:`, err);
-      return attendance.filter(
+      return attendanceRef.current.filter(
         (a) => a.studentId.toUpperCase() === normId || (a.rollNo && a.rollNo.toUpperCase() === normId)
       );
     }
-  }, [attendance]);
+  }, []);
 
   // General bootstrap fetch: student loads their records, staff/admin loads today's records
   const fetchAttendance = useCallback(async (force = false) => {
@@ -238,7 +242,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     await fetchAttendanceForDate(today, force);
   }, [fetchAttendanceForDate]);
 
-  // Initialize and listen to auth changes & real-time SSE updates
+  // Initialize and listen to auth changes & background visibility sync
   useEffect(() => {
     // Purge any legacy localStorage attendance keys
     try {
@@ -251,50 +255,29 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       void fetchAttendance(true);
     };
 
+    const handleVisibilitySync = () => {
+      if (document.visibilityState === 'visible' && getToken()) {
+        void fetchAttendance(false);
+      }
+    };
+
     window.addEventListener('storage', handleAuthSync);
     window.addEventListener('auth-cleared', handleAuthSync);
     window.addEventListener('attendance-refresh', handleAuthSync);
+    document.addEventListener('visibilitychange', handleVisibilitySync);
 
-    // Real-time Server-Sent Events (SSE) Stream Subscription with safe reconnect guard
-    let eventSource: EventSource | null = null;
-    try {
-      const streamUrl = getAttendanceStreamUrl();
-      eventSource = new EventSource(streamUrl);
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'attendance_updated' || data.event === 'attendance_deleted') {
-            void fetchAttendance(true);
-          }
-        } catch {
-          // ignore keepalive/ping
-        }
-      };
-      eventSource.onerror = () => {
-        // Close failed connection so serverless instances aren't hammered repeatedly
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-      };
-    } catch (e) {
-      console.warn('Real-time attendance stream unavailable:', e);
-    }
-
-    // Polite background sync (every 2 minutes if window is active)
+    // Polite background sync (every 3 minutes if window is active)
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible' && getToken()) {
         void fetchAttendance(false);
       }
-    }, 120000);
+    }, 180000);
 
     return () => {
       window.removeEventListener('storage', handleAuthSync);
       window.removeEventListener('auth-cleared', handleAuthSync);
       window.removeEventListener('attendance-refresh', handleAuthSync);
-      if (eventSource) {
-        eventSource.close();
-      }
+      document.removeEventListener('visibilitychange', handleVisibilitySync);
       clearInterval(intervalId);
     };
   }, [fetchAttendance]);

@@ -245,35 +245,17 @@ export function PortalPage() {
   const mode = profile?.mode || user?.mode || 'REGULAR';
   const batch = profile?.batch || '01-Jul';
 
-  // Real-time Server-Sent Events (SSE) listener
+  // Automatic refresh when student switches back to this tab
   useEffect(() => {
-    let eventSource: EventSource | null = null;
-    try {
-      const streamUrl = api.getAttendanceStreamUrl();
-      eventSource = new EventSource(streamUrl);
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'attendance_updated') {
-            load(false);
-          }
-        } catch (err) {
-          console.error('SSE parse error:', err);
-        }
-      };
-      eventSource.onerror = () => {
-        // Close on disconnect to prevent aggressive auto-reconnect storm on serverless
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-      };
-    } catch (err) {
-      console.error('SSE setup error:', err);
-    }
+    const handleVisibilitySync = () => {
+      if (document.visibilityState === 'visible') {
+        load(false);
+      }
+    };
 
+    document.addEventListener('visibilitychange', handleVisibilitySync);
     return () => {
-      if (eventSource) eventSource.close();
+      document.removeEventListener('visibilitychange', handleVisibilitySync);
     };
   }, []);
 
