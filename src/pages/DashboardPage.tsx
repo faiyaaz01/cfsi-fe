@@ -40,7 +40,6 @@ import {
   Globe,
   Award,
   RotateCcw,
-  Phone
 } from 'lucide-react';
 import { useStudentData } from '../context/StudentDataContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -954,10 +953,10 @@ export const DashboardPage: React.FC = () => {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-gray-50/80 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[11px] border-b border-gray-200/60 dark:border-white/10">
-                      <th className="py-3.5 px-4">Student</th>
                       <th className="py-3.5 px-4">Roll No & ID</th>
+                      <th className="py-3.5 px-4">Student</th>
                       <th className="py-3.5 px-4">Course & Batch</th>
-                      <th className="py-3.5 px-4 text-center">Contact</th>
+                      <th className="py-3.5 px-4 text-center">Attendance %</th>
                       <th className="py-3.5 px-4 text-center">Status</th>
                       <th className="py-3.5 px-4 text-center">Action</th>
                     </tr>
@@ -967,18 +966,18 @@ export const DashboardPage: React.FC = () => {
                       Array.from({ length: 6 }).map((_, idx) => (
                         <tr key={idx} className="animate-pulse">
                           <td className="py-3.5 px-4">
+                            <div className="space-y-1.5">
+                              <div className="w-24 h-3.5 rounded bg-gray-200 dark:bg-white/10 animate-shimmer" />
+                              <div className="w-16 h-3 rounded bg-gray-200 dark:bg-white/10 animate-shimmer" />
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
                               <div className="w-11 h-11 rounded-xl bg-gray-200 dark:bg-white/10 animate-shimmer shrink-0" />
                               <div className="space-y-1.5 flex-1">
                                 <div className="w-32 h-4 rounded bg-gray-200 dark:bg-white/10 animate-shimmer" />
                                 <div className="w-20 h-3 rounded bg-gray-200 dark:bg-white/10 animate-shimmer" />
                               </div>
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="space-y-1.5">
-                              <div className="w-24 h-3.5 rounded bg-gray-200 dark:bg-white/10 animate-shimmer" />
-                              <div className="w-16 h-3 rounded bg-gray-200 dark:bg-white/10 animate-shimmer" />
                             </div>
                           </td>
                           <td className="py-3.5 px-4">
@@ -1011,12 +1010,39 @@ export const DashboardPage: React.FC = () => {
                       </tr>
                     ) : (
                       paginatedCadets.map((cadet) => {
+                        // Compute attendance percentage from context attendance records
+                        const studentAttendance = attendance.filter(
+                          (r) => r.studentId === cadet.id || r.studentId === cadet.rollNo
+                        );
+                        const totalSlots = studentAttendance.length;
+                        const presentSlots = studentAttendance.filter((r) => r.status === 'Present').length;
+                        const attendancePct = totalSlots > 0 ? Math.round((presentSlots / totalSlots) * 100) : null;
+
+                        const pctColor =
+                          attendancePct === null
+                            ? 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500'
+                            : attendancePct >= 75
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            : attendancePct >= 50
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                            : 'bg-red-500/10 text-red-600 dark:text-red-400';
+
                         return (
                           <tr
                             key={cadet.id}
                             className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                           >
-                            {/* Student Profile */}
+                            {/* Roll No & ID — FIRST */}
+                            <td className="py-3.5 px-4">
+                              <div className="inline-block px-2 py-0.5 rounded-md text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200">
+                                Roll #{cadet.rollNo}
+                              </div>
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-1">
+                                ID: <span className="font-semibold text-gray-700 dark:text-gray-300">{cadet.id}</span>
+                              </div>
+                            </td>
+
+                            {/* Student Profile — SECOND */}
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-3">
                                 <UserAvatar
@@ -1039,17 +1065,7 @@ export const DashboardPage: React.FC = () => {
                               </div>
                             </td>
 
-                            {/* Identifiers */}
-                            <td className="py-3.5 px-4">
-                              <div className="inline-block px-2 py-0.5 rounded-md text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200">
-                                Roll #{cadet.rollNo}
-                              </div>
-                              <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-1">
-                                ID: <span className="font-semibold text-gray-700 dark:text-gray-300">{cadet.id}</span>
-                              </div>
-                            </td>
-
-                            {/* Course & Batch */}
+                            {/* Course & Batch — THIRD */}
                             <td className="py-3.5 px-4">
                               <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
                                 {cadet.course}
@@ -1059,15 +1075,20 @@ export const DashboardPage: React.FC = () => {
                               </p>
                             </td>
 
-                            {/* Contact Info */}
+                            {/* Attendance % — FOURTH (replaces Contact) */}
                             <td className="py-3.5 px-4 text-center">
-                              {cadet.studentPhone ? (
-                                <span className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2.5 py-1 rounded-lg">
-                                  <Phone className="w-3 h-3 text-primary" />
-                                  <span>{cadet.studentPhone}</span>
-                                </span>
-                              ) : (
-                                <span className="text-[11px] text-gray-400 font-medium">—</span>
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${pctColor}`}>
+                                {attendancePct !== null ? (
+                                  <>
+                                    <TrendingUp className="w-3 h-3" />
+                                    <span>{attendancePct}%</span>
+                                  </>
+                                ) : (
+                                  <span className="text-[11px] font-medium">No Data</span>
+                                )}
+                              </span>
+                              {totalSlots > 0 && (
+                                <div className="text-[10px] text-gray-400 mt-0.5">{presentSlots}/{totalSlots} slots</div>
                               )}
                             </td>
 
