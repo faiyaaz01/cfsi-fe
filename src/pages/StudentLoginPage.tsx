@@ -13,14 +13,14 @@ import {
   Building2
 } from 'lucide-react';
 import { loginWithBackend } from '../lib/studentAuth';
-import { clearAuth } from '../lib/api';
+import { clearAuth, getStoredUser } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
 import { useAuth, homeFor } from '../context/AuthContext';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
 
 export const StudentLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, refresh } = useAuth();
+  const { user, refresh, setUser } = useAuth();
 
   // Form states
   const [rollNo, setRollNo] = useState('');
@@ -62,7 +62,11 @@ export const StudentLoginPage: React.FC = () => {
           return;
         }
 
-        await refresh();
+        const stored = getStoredUser();
+        if (stored) {
+          setUser(stored);
+        }
+        await refresh(true);
 
         if (result.role === 'student' || result.role === 'leader') {
           toast.success(`Welcome back, ${result.student?.name ? result.student.name : 'Cadet'}!`, {
@@ -70,11 +74,11 @@ export const StudentLoginPage: React.FC = () => {
               ? 'Accessing your Cadet Leader & Attendance Duty dashboard.'
               : 'Accessing your attendance muster and student profile.'
           });
-          navigate('/student/dashboard');
+          navigate('/student/dashboard', { replace: true });
         } else if (user) {
-          navigate(homeFor(user));
+          navigate(homeFor(user), { replace: true });
         } else {
-          navigate('/student/dashboard');
+          navigate('/student/dashboard', { replace: true });
         }
       } else {
         setError(

@@ -3,15 +3,32 @@ import { Navigate, Outlet, useLocation, Link } from 'react-router-dom';
 import { api, AuthUser, clearAuth, getToken } from '../lib/api';
 import { BrandLoader } from '../components/common/BrandLoader';
 
-const AuthContext = createContext<{ user: AuthUser | null; loading: boolean; refresh: () => Promise<void>; logout: () => Promise<void> }>(null!);
+const AuthContext = createContext<{ 
+  user: AuthUser | null; 
+  loading: boolean; 
+  refresh: (force?: boolean) => Promise<void>; 
+  logout: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<AuthUser | null>>;
+}>(null!);
 export const useAuth = () => useContext(AuthContext);
 export const homeFor = (user: AuthUser) => 
   user.role === 'admin' ? '/dashboard' : 
   user.role === 'teacher' ? '/teacher/dashboard' : 
   '/student/dashboard';
 export function AuthProvider({ children }: React.PropsWithChildren) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    try {
+      const raw = localStorage.getItem('cfsi_auth_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    const token = getToken();
+    const raw = localStorage.getItem('cfsi_auth_user');
+    return Boolean(token && !raw);
+  });
   const generation = useRef(0);
   const lastRefreshRef = useRef<number>(0);
   const isRefreshingRef = useRef(false);
@@ -24,8 +41,8 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     }
     const now = Date.now();
     if (isRefreshingRef.current) return;
-    // Throttle duplicate calls within 5 minutes unless forced
-    if (!force && now - lastRefreshRef.current < 300000) {
+    // Throttle duplicate calls within 5 minutes unless forced, but never throttle if user is null
+    if (!force && user && now - lastRefreshRef.current < 300000) {
       return;
     }
     isRefreshingRef.current = true;
@@ -33,7 +50,12 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     const request = ++generation.current;
     try {
       const profile = await api.getMe();
-      if (request === generation.current && token === getToken()) setUser(profile);
+      if (request === generation.current && token === getToken()) {
+        setUser(profile);
+        try {
+          localStorage.setItem('cfsi_auth_user', JSON.stringify(profile));
+        } catch {}
+      }
     } catch {
       if (request === generation.current && token === getToken()) { clearAuth(); setUser(null); }
     } finally {
@@ -56,18 +78,26 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     void refresh(true);
     const clear = () => { generation.current++; setUser(null); setLoading(false); };
-    const onStorage = () => { void refresh(true); };
+    const onAuthSync = () => {
+      try {
+        const raw = localStorage.getItem('cfsi_auth_user');
+        if (raw) setUser(JSON.parse(raw));
+      } catch {}
+      void refresh(true);
+    };
     window.addEventListener('auth-cleared', clear);
-    window.addEventListener('storage', onStorage);
+    window.addEventListener('auth-changed', onAuthSync);
+    window.addEventListener('storage', onAuthSync);
     const timer = window.setInterval(() => { void refresh(false); }, 300000);
     return () => {
       window.removeEventListener('auth-cleared', clear);
-      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('auth-changed', onAuthSync);
+      window.removeEventListener('storage', onAuthSync);
       clearInterval(timer);
     };
   }, []);
   const logout = async () => { try { await api.logout(); } finally { clearAuth(); setUser(null); } };
-  return <AuthContext.Provider value={{user, loading, refresh, logout}}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{user, loading, refresh, logout, setUser}}>{children}</AuthContext.Provider>;
 }
 export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {
   const {user, loading} = useAuth();

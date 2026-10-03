@@ -25,7 +25,7 @@ export const CoursesPage: React.FC = () => {
 
   useEffect(() => {
     void fetchCourses();
-  }, [fetchCourses]);
+  }, []);
 
   // If a slug is specified in URL, highlight or pre-open that course
   const activeCourseFromSlug = slug ? courses.find((c) => c.slug === slug) : null;

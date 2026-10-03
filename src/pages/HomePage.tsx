@@ -18,7 +18,7 @@ export const HomePage: React.FC = () => {
     void fetchDisplaySettingsAndHome();
     void fetchCourses();
     void fetchTrainings();
-  }, [fetchDisplaySettingsAndHome, fetchCourses, fetchTrainings]);
+  }, []);
 
   const showHero = homePageConfig?.showHero ?? true;
   const showNews = homePageConfig?.showNewsSection ?? true;

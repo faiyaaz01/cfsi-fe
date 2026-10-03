@@ -21,7 +21,7 @@ export const ImageGalleryPage: React.FC = () => {
 
   useEffect(() => {
     void fetchPhotos();
-  }, [fetchPhotos]);
+  }, []);
 
   const filteredImages = activeCategory === 'All'
     ? photos

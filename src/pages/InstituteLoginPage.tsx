@@ -13,14 +13,14 @@ import {
   KeyRound
 } from 'lucide-react';
 import { loginWithBackend } from '../lib/studentAuth';
-import { clearAuth } from '../lib/api';
+import { clearAuth, getStoredUser } from '../lib/api';
 import { FlatCard } from '../components/common/FlatCard';
 import { useAuth, homeFor } from '../context/AuthContext';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
 
 export const InstituteLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, refresh } = useAuth();
+  const { user, refresh, setUser } = useAuth();
 
   // Form states
   const [username, setUsername] = useState('');
@@ -62,22 +62,26 @@ export const InstituteLoginPage: React.FC = () => {
           return;
         }
 
-        await refresh();
+        const stored = getStoredUser();
+        if (stored) {
+          setUser(stored);
+        }
+        await refresh(true);
 
         if (result.role === 'admin') {
           toast.success('Admin Management Console Unlocked', {
             description: 'Full institutional control and registry access active.'
           });
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         } else if (result.role === 'teacher') {
           toast.success('Faculty Dashboard Unlocked', {
             description: 'Accessing training schedules and muster attendance.'
           });
           navigate('/teacher/dashboard', { replace: true });
         } else if (user) {
-          navigate(homeFor(user));
+          navigate(homeFor(user), { replace: true });
         } else {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
       } else {
         setError(

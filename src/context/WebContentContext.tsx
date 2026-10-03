@@ -327,6 +327,18 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isLoading, setIsLoading] = useState(false);
   const loadedContentRef = useRef<Map<string, number>>(new Map());
 
+  const coursesRef = useRef<Course[]>(courses);
+  coursesRef.current = courses;
+
+  const trainingsRef = useRef<TrainingPost[]>(trainings);
+  trainingsRef.current = trainings;
+
+  const photosRef = useRef<GalleryImage[]>(photos);
+  photosRef.current = photos;
+
+  const videosRef = useRef<VideoItem[]>(videos);
+  videosRef.current = videos;
+
   // Broadcast helper
   const broadcastSync = (type: string) => {
     window.dispatchEvent(new CustomEvent('cfsi_web_content_updated', { detail: { type } }));
@@ -369,17 +381,16 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch {}
   }, [homePageConfig]);
 
-  // On-demand fetchers with 60s memory caching
+  // On-demand fetchers with 60s memory caching and completely stable dependencies
   const fetchCourses = useCallback(async (force = false): Promise<Course[]> => {
     const now = Date.now();
     const last = loadedContentRef.current.get('courses') || 0;
-    if (!force && now - last < 60000 && courses.length > 0) {
-      return courses;
+    if (!force && now - last < 60000) {
+      return coursesRef.current;
     }
+    loadedContentRef.current.set('courses', now);
     try {
-      setIsLoading(true);
       const res = await api.getCourses();
-      loadedContentRef.current.set('courses', now);
       if (Array.isArray(res)) {
         const filtered = filterOutDemoItems(res);
         setCourses(filtered);
@@ -387,22 +398,19 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     } catch (e) {
       console.warn('Failed to fetch courses:', e);
-    } finally {
-      setIsLoading(false);
     }
-    return courses;
-  }, [courses]);
+    return coursesRef.current;
+  }, []);
 
   const fetchTrainings = useCallback(async (force = false): Promise<TrainingPost[]> => {
     const now = Date.now();
     const last = loadedContentRef.current.get('trainings') || 0;
-    if (!force && now - last < 60000 && trainings.length > 0) {
-      return trainings;
+    if (!force && now - last < 60000) {
+      return trainingsRef.current;
     }
+    loadedContentRef.current.set('trainings', now);
     try {
-      setIsLoading(true);
       const res = await api.getDrills();
-      loadedContentRef.current.set('trainings', now);
       if (Array.isArray(res)) {
         const filtered = filterOutDemoItems(res);
         setTrainings(filtered);
@@ -410,22 +418,19 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     } catch (e) {
       console.warn('Failed to fetch drills:', e);
-    } finally {
-      setIsLoading(false);
     }
-    return trainings;
-  }, [trainings]);
+    return trainingsRef.current;
+  }, []);
 
   const fetchPhotos = useCallback(async (force = false): Promise<GalleryImage[]> => {
     const now = Date.now();
     const last = loadedContentRef.current.get('photos') || 0;
-    if (!force && now - last < 60000 && photos.length > 0) {
-      return photos;
+    if (!force && now - last < 60000) {
+      return photosRef.current;
     }
+    loadedContentRef.current.set('photos', now);
     try {
-      setIsLoading(true);
       const res = await api.getPhotos();
-      loadedContentRef.current.set('photos', now);
       if (Array.isArray(res)) {
         const filtered = filterOutDemoItems(res);
         setPhotos(filtered);
@@ -433,22 +438,19 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     } catch (e) {
       console.warn('Failed to fetch photos:', e);
-    } finally {
-      setIsLoading(false);
     }
-    return photos;
-  }, [photos]);
+    return photosRef.current;
+  }, []);
 
   const fetchVideos = useCallback(async (force = false): Promise<VideoItem[]> => {
     const now = Date.now();
     const last = loadedContentRef.current.get('videos') || 0;
-    if (!force && now - last < 60000 && videos.length > 0) {
-      return videos;
+    if (!force && now - last < 60000) {
+      return videosRef.current;
     }
+    loadedContentRef.current.set('videos', now);
     try {
-      setIsLoading(true);
       const res = await api.getVideos();
-      loadedContentRef.current.set('videos', now);
       if (Array.isArray(res)) {
         const filtered = filterOutDemoItems(res);
         setVideos(filtered);
@@ -456,11 +458,9 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     } catch (e) {
       console.warn('Failed to fetch videos:', e);
-    } finally {
-      setIsLoading(false);
     }
-    return videos;
-  }, [videos]);
+    return videosRef.current;
+  }, []);
 
   const fetchDisplaySettingsAndHome = useCallback(async (force = false): Promise<void> => {
     const now = Date.now();
@@ -468,12 +468,12 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!force && now - last < 60000) {
       return;
     }
+    loadedContentRef.current.set('settings_home', now);
     try {
       const [backendSettings, backendHomeConfig] = await Promise.allSettled([
         api.getDisplaySettings(),
         api.getHomePageConfig()
       ]);
-      loadedContentRef.current.set('settings_home', now);
       if (backendSettings.status === 'fulfilled' && backendSettings.value) {
         setDisplaySettings(prev => ({ ...prev, ...backendSettings.value }));
       }

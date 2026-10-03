@@ -225,6 +225,7 @@ export const api = {
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
     } catch {}
+    window.dispatchEvent(new Event('auth-changed'));
 
     return data;
   },

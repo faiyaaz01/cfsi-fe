@@ -18,7 +18,7 @@ export const VideoGalleryPage: React.FC = () => {
 
   useEffect(() => {
     void fetchVideos();
-  }, [fetchVideos]);
+  }, []);
 
   const categories = ['All', 'Practical Drill', 'Search & Rescue', 'Fire Demo', 'Campus Life'];
 
