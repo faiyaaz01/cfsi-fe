@@ -66,8 +66,10 @@ export const InstituteLoginPage: React.FC = () => {
         if (stored) {
           setUser(stored);
         }
-        await refresh(true);
+        // Non-blocking background sync so navigation happens immediately without extra wait
+        void refresh(true);
 
+        const targetUser = stored || user;
         if (result.role === 'admin') {
           toast.success('Admin Management Console Unlocked', {
             description: 'Full institutional control and registry access active.'
@@ -78,8 +80,8 @@ export const InstituteLoginPage: React.FC = () => {
             description: 'Accessing training schedules and muster attendance.'
           });
           navigate('/teacher/dashboard', { replace: true });
-        } else if (user) {
-          navigate(homeFor(user), { replace: true });
+        } else if (targetUser) {
+          navigate(homeFor(targetUser), { replace: true });
         } else {
           navigate('/dashboard', { replace: true });
         }

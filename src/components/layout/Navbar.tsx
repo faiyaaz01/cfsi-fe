@@ -299,10 +299,11 @@ export const Navbar: React.FC = () => {
                       <div className="pt-1.5">
                         <button
                           type="button"
-                          onClick={async () => {
+                          onClick={() => {
+                            const isInstitute = user?.role === 'admin' || user?.role === 'teacher';
                             setProfileDropdownOpen(false);
-                            await logout();
-                            navigate('/student-login');
+                            void logout();
+                            navigate(isInstitute ? '/institute-login' : '/student-login', { replace: true });
                           }}
                           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                         >
@@ -414,10 +415,11 @@ export const Navbar: React.FC = () => {
 
                     <button
                       type="button"
-                      onClick={async () => {
+                      onClick={() => {
+                        const isInstitute = user?.role === 'admin' || user?.role === 'teacher';
                         setMobileMenuOpen(false);
-                        await logout();
-                        navigate('/student-login');
+                        void logout();
+                        navigate(isInstitute ? '/institute-login' : '/student-login', { replace: true });
                       }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
                       title="Sign Out"

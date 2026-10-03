@@ -96,7 +96,12 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       clearInterval(timer);
     };
   }, []);
-  const logout = async () => { try { await api.logout(); } finally { clearAuth(); setUser(null); } };
+  const logout = async () => {
+    clearAuth();
+    setUser(null);
+    api.clearCache();
+    void api.logout().catch(() => {});
+  };
   return <AuthContext.Provider value={{user, loading, refresh, logout, setUser}}>{children}</AuthContext.Provider>;
 }
 export function AuthGuard({ roles }: { roles?: AuthUser['role'][] }) {

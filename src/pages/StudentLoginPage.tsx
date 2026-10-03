@@ -66,8 +66,10 @@ export const StudentLoginPage: React.FC = () => {
         if (stored) {
           setUser(stored);
         }
-        await refresh(true);
+        // Non-blocking background sync so navigation happens immediately without extra wait
+        void refresh(true);
 
+        const targetUser = stored || user;
         if (result.role === 'student' || result.role === 'leader') {
           toast.success(`Welcome back, ${result.student?.name ? result.student.name : 'Cadet'}!`, {
             description: result.role === 'leader'
@@ -75,8 +77,8 @@ export const StudentLoginPage: React.FC = () => {
               : 'Accessing your attendance muster and student profile.'
           });
           navigate('/student/dashboard', { replace: true });
-        } else if (user) {
-          navigate(homeFor(user), { replace: true });
+        } else if (targetUser) {
+          navigate(homeFor(targetUser), { replace: true });
         } else {
           navigate('/student/dashboard', { replace: true });
         }

@@ -92,5 +92,7 @@ export const getLoggedStudent = (): StudentVerificationRecord | null => {
 };
 
 export const logoutStudent = () => {
-  void api.logout().finally(clearAuth);
+  clearAuth();
+  api.clearCache();
+  void api.logout().catch(() => {});
 };
