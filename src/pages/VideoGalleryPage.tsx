@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X, Clock, Video, Tag } from 'lucide-react';
 import { VideoItem } from '../types';
@@ -14,7 +14,11 @@ export const VideoGalleryPage: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   useBodyScrollLock(Boolean(selectedVideo));
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const { videos, isLoading } = useWebContent();
+  const { videos, isLoading, fetchVideos } = useWebContent();
+
+  useEffect(() => {
+    void fetchVideos();
+  }, [fetchVideos]);
 
   const categories = ['All', 'Practical Drill', 'Search & Rescue', 'Fire Demo', 'Campus Life'];
 

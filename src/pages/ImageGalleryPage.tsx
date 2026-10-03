@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image as ImageIcon, X, ChevronLeft, ChevronRight, Calendar, ZoomIn } from 'lucide-react';
 import { SectionHeading } from '../components/common/SectionHeading';
@@ -17,7 +17,11 @@ export const ImageGalleryPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
   useBodyScrollLock(activeLightboxIndex !== null);
-  const { photos, isLoading } = useWebContent();
+  const { photos, isLoading, fetchPhotos } = useWebContent();
+
+  useEffect(() => {
+    void fetchPhotos();
+  }, [fetchPhotos]);
 
   const filteredImages = activeCategory === 'All'
     ? photos

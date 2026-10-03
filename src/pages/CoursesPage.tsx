@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, ShieldAlert, Award, HardHat, Clock, GraduationCap, IndianRupee, CheckCircle2, ArrowRight, Activity, Briefcase, BookOpen } from 'lucide-react';
 import { Course } from '../types';
@@ -21,7 +21,11 @@ const iconMap: Record<string, React.ElementType> = {
 export const CoursesPage: React.FC = () => {
   const { slug } = useParams<{ slug?: string }>();
   const [selectedCourseModal, setSelectedCourseModal] = useState<Course | null>(null);
-  const { courses, isLoading } = useWebContent();
+  const { courses, isLoading, fetchCourses } = useWebContent();
+
+  useEffect(() => {
+    void fetchCourses();
+  }, [fetchCourses]);
 
   // If a slug is specified in URL, highlight or pre-open that course
   const activeCourseFromSlug = slug ? courses.find((c) => c.slug === slug) : null;

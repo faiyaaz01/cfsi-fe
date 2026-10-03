@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Course, TrainingPost, GalleryImage, VideoItem } from '../types';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
@@ -240,6 +240,13 @@ interface WebContentContextType {
   homePageConfig: HomePageConfig;
   updateHomePageConfig: (updated: Partial<HomePageConfig>) => Promise<void>;
   resetHomePageConfig: () => Promise<void>;
+
+  // On-demand fetchers for route-level lazy loading
+  fetchCourses: (force?: boolean) => Promise<Course[]>;
+  fetchTrainings: (force?: boolean) => Promise<TrainingPost[]>;
+  fetchPhotos: (force?: boolean) => Promise<GalleryImage[]>;
+  fetchVideos: (force?: boolean) => Promise<VideoItem[]>;
+  fetchDisplaySettingsAndHome: (force?: boolean) => Promise<void>;
 }
 
 const WebContentContext = createContext<WebContentContextType | undefined>(undefined);
@@ -317,7 +324,8 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return defaultHomePageConfig;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const loadedContentRef = useRef<Map<string, number>>(new Map());
 
   // Broadcast helper
   const broadcastSync = (type: string) => {
@@ -361,35 +369,111 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch {}
   }, [homePageConfig]);
 
-  // Load from backend in real time
-  const refreshAllContent = useCallback(async () => {
-    setIsLoading(true);
+  // On-demand fetchers with 60s memory caching
+  const fetchCourses = useCallback(async (force = false): Promise<Course[]> => {
+    const now = Date.now();
+    const last = loadedContentRef.current.get('courses') || 0;
+    if (!force && now - last < 60000 && courses.length > 0) {
+      return courses;
+    }
     try {
-      const [backendCourses, backendDrills, backendPhotos, backendVideos, backendSettings, backendHomeConfig] = await Promise.allSettled([
-        api.getCourses(),
-        api.getDrills(),
-        api.getPhotos(),
-        api.getVideos(),
+      setIsLoading(true);
+      const res = await api.getCourses();
+      loadedContentRef.current.set('courses', now);
+      if (Array.isArray(res)) {
+        const filtered = filterOutDemoItems(res);
+        setCourses(filtered);
+        return filtered;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch courses:', e);
+    } finally {
+      setIsLoading(false);
+    }
+    return courses;
+  }, [courses]);
+
+  const fetchTrainings = useCallback(async (force = false): Promise<TrainingPost[]> => {
+    const now = Date.now();
+    const last = loadedContentRef.current.get('trainings') || 0;
+    if (!force && now - last < 60000 && trainings.length > 0) {
+      return trainings;
+    }
+    try {
+      setIsLoading(true);
+      const res = await api.getDrills();
+      loadedContentRef.current.set('trainings', now);
+      if (Array.isArray(res)) {
+        const filtered = filterOutDemoItems(res);
+        setTrainings(filtered);
+        return filtered;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch drills:', e);
+    } finally {
+      setIsLoading(false);
+    }
+    return trainings;
+  }, [trainings]);
+
+  const fetchPhotos = useCallback(async (force = false): Promise<GalleryImage[]> => {
+    const now = Date.now();
+    const last = loadedContentRef.current.get('photos') || 0;
+    if (!force && now - last < 60000 && photos.length > 0) {
+      return photos;
+    }
+    try {
+      setIsLoading(true);
+      const res = await api.getPhotos();
+      loadedContentRef.current.set('photos', now);
+      if (Array.isArray(res)) {
+        const filtered = filterOutDemoItems(res);
+        setPhotos(filtered);
+        return filtered;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch photos:', e);
+    } finally {
+      setIsLoading(false);
+    }
+    return photos;
+  }, [photos]);
+
+  const fetchVideos = useCallback(async (force = false): Promise<VideoItem[]> => {
+    const now = Date.now();
+    const last = loadedContentRef.current.get('videos') || 0;
+    if (!force && now - last < 60000 && videos.length > 0) {
+      return videos;
+    }
+    try {
+      setIsLoading(true);
+      const res = await api.getVideos();
+      loadedContentRef.current.set('videos', now);
+      if (Array.isArray(res)) {
+        const filtered = filterOutDemoItems(res);
+        setVideos(filtered);
+        return filtered;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch videos:', e);
+    } finally {
+      setIsLoading(false);
+    }
+    return videos;
+  }, [videos]);
+
+  const fetchDisplaySettingsAndHome = useCallback(async (force = false): Promise<void> => {
+    const now = Date.now();
+    const last = loadedContentRef.current.get('settings_home') || 0;
+    if (!force && now - last < 60000) {
+      return;
+    }
+    try {
+      const [backendSettings, backendHomeConfig] = await Promise.allSettled([
         api.getDisplaySettings(),
         api.getHomePageConfig()
       ]);
-
-      if (backendCourses.status === 'fulfilled' && Array.isArray(backendCourses.value)) {
-        const filtered = filterOutDemoItems(backendCourses.value);
-        setCourses(filtered);
-      }
-      if (backendDrills.status === 'fulfilled' && Array.isArray(backendDrills.value)) {
-        const filtered = filterOutDemoItems(backendDrills.value);
-        setTrainings(filtered);
-      }
-      if (backendPhotos.status === 'fulfilled' && Array.isArray(backendPhotos.value)) {
-        const filtered = filterOutDemoItems(backendPhotos.value);
-        setPhotos(filtered);
-      }
-      if (backendVideos.status === 'fulfilled' && Array.isArray(backendVideos.value)) {
-        const filtered = filterOutDemoItems(backendVideos.value);
-        setVideos(filtered);
-      }
+      loadedContentRef.current.set('settings_home', now);
       if (backendSettings.status === 'fulfilled' && backendSettings.value) {
         setDisplaySettings(prev => ({ ...prev, ...backendSettings.value }));
       }
@@ -397,16 +481,28 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setHomePageConfig(prev => ({ ...prev, ...backendHomeConfig.value }));
       }
     } catch (e) {
-      console.warn('Real-time backend sync notice:', e);
-    } finally {
-      setIsLoading(false);
+      console.warn('Failed to fetch display settings & home config:', e);
     }
   }, []);
 
-  useEffect(() => {
-    refreshAllContent();
+  // Combined refresh for CMS / Web Management
+  const refreshAllContent = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await Promise.allSettled([
+        fetchCourses(true),
+        fetchTrainings(true),
+        fetchPhotos(true),
+        fetchVideos(true),
+        fetchDisplaySettingsAndHome(true)
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchCourses, fetchTrainings, fetchPhotos, fetchVideos, fetchDisplaySettingsAndHome]);
 
-    // Listen to real-time storage events from other tabs
+  // Only listen to cross-tab storage changes, zero eager API calls on startup
+  useEffect(() => {
     const handleSync = (e: StorageEvent) => {
       try {
         if (e.key === STORAGE_COURSES || !e.key) {
@@ -441,7 +537,7 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => {
       window.removeEventListener('storage', handleSync);
     };
-  }, [refreshAllContent]);
+  }, []);
 
   // ==========================================
   // COURSES ACTIONS
@@ -845,6 +941,11 @@ export const WebContentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateHomePageConfig,
         resetHomePageConfig,
         refreshAllContent,
+        fetchCourses,
+        fetchTrainings,
+        fetchPhotos,
+        fetchVideos,
+        fetchDisplaySettingsAndHome,
       }}
     >
       {children}

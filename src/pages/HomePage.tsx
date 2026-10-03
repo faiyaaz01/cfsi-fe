@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HeroSection } from '../components/home/HeroSection';
 import { LatestNewsSection } from '../components/home/LatestNewsSection';
 import { CoursesSection } from '../components/home/CoursesSection';
@@ -12,7 +12,13 @@ import { SEOHead } from '../components/common/SEOHead';
 import { getOrganizationSchema } from '../lib/seoSchemas';
 
 export const HomePage: React.FC = () => {
-  const { displaySettings, homePageConfig } = useWebContent();
+  const { displaySettings, homePageConfig, fetchDisplaySettingsAndHome, fetchCourses, fetchTrainings } = useWebContent();
+
+  useEffect(() => {
+    void fetchDisplaySettingsAndHome();
+    void fetchCourses();
+    void fetchTrainings();
+  }, [fetchDisplaySettingsAndHome, fetchCourses, fetchTrainings]);
 
   const showHero = homePageConfig?.showHero ?? true;
   const showNews = homePageConfig?.showNewsSection ?? true;

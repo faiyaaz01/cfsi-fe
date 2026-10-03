@@ -114,7 +114,6 @@ export const DashboardPage: React.FC = () => {
 
   const isAdmin = user?.role === 'admin';
   const [isTogglingLock, setIsTogglingLock] = useState<boolean>(false);
-  const [totalAttendanceCount, setTotalAttendanceCount] = useState<number>(0);
 
   // --- CADET / STUDENT DIRECTORY STATE ---
   const [cadetSearch, setCadetSearch] = useState('');
@@ -161,7 +160,6 @@ export const DashboardPage: React.FC = () => {
         return a.name.localeCompare(b.name);
       });
       setCadetsList(sorted);
-      api.getAttendanceStats().then((s) => setTotalAttendanceCount(s.total_records)).catch(() => {});
     } catch (err: any) {
       console.warn('Could not fetch cadets from backend:', err);
       setCadetsList([]);
@@ -268,12 +266,12 @@ export const DashboardPage: React.FC = () => {
   const [isUploadingMuster, setIsUploadingMuster] = useState<boolean>(false);
   const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
 
-  // Automatically fetch muster attendance specifically for selectedMusterDate
+  // Automatically fetch muster attendance specifically for selectedMusterDate when Attendance tab is active
   useEffect(() => {
-    if (selectedMusterDate) {
+    if (activeTab === 'attendance' && selectedMusterDate) {
       void fetchAttendanceForDate(selectedMusterDate);
     }
-  }, [selectedMusterDate, fetchAttendanceForDate]);
+  }, [activeTab, selectedMusterDate, fetchAttendanceForDate]);
 
   const handleLogout = () => { void logout(); navigate('/institute-login'); };
 

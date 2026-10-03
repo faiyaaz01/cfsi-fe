@@ -242,45 +242,25 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     await fetchAttendanceForDate(today, force);
   }, [fetchAttendanceForDate]);
 
-  // Initialize and listen to auth changes & background visibility sync
+  // Initialize auth cleanup listener without eager network calls
   useEffect(() => {
     // Purge any legacy localStorage attendance keys
     try {
       localStorage.removeItem('cfsi_attendance');
     } catch {}
 
-    void fetchAttendance(true);
-
-    const handleAuthSync = () => {
-      void fetchAttendance(true);
+    const handleAuthCleared = () => {
+      setAttendance([]);
+      loadedDatesRef.current.clear();
+      loadedStudentsRef.current.clear();
     };
 
-    const handleVisibilitySync = () => {
-      if (document.visibilityState === 'visible' && getToken()) {
-        void fetchAttendance(false);
-      }
-    };
-
-    window.addEventListener('storage', handleAuthSync);
-    window.addEventListener('auth-cleared', handleAuthSync);
-    window.addEventListener('attendance-refresh', handleAuthSync);
-    document.addEventListener('visibilitychange', handleVisibilitySync);
-
-    // Polite background sync (every 3 minutes if window is active)
-    const intervalId = setInterval(() => {
-      if (document.visibilityState === 'visible' && getToken()) {
-        void fetchAttendance(false);
-      }
-    }, 180000);
+    window.addEventListener('auth-cleared', handleAuthCleared);
 
     return () => {
-      window.removeEventListener('storage', handleAuthSync);
-      window.removeEventListener('auth-cleared', handleAuthSync);
-      window.removeEventListener('attendance-refresh', handleAuthSync);
-      document.removeEventListener('visibilitychange', handleVisibilitySync);
-      clearInterval(intervalId);
+      window.removeEventListener('auth-cleared', handleAuthCleared);
     };
-  }, [fetchAttendance]);
+  }, []);
 
   // Attendance Actions - Directly wired to MongoDB
   const addAttendance = async (recordData: Omit<AttendanceRecord, 'id' | 'createdAt'>) => {
