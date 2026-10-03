@@ -73,7 +73,8 @@ export const TeacherDashboardPage: React.FC = () => {
     isDateLocked,
     refreshAttendance,
     hasDateDraft,
-    discardDateDraft
+    discardDateDraft,
+    fetchAttendanceForDate,
   } = useStudentData();
 
   // Live IST Clock (UTC+5:30)
@@ -120,6 +121,13 @@ export const TeacherDashboardPage: React.FC = () => {
       }
     }
   }, [activeDate, todayStr]);
+
+  // Automatically fetch muster attendance specifically for activeDate
+  useEffect(() => {
+    if (activeDate) {
+      void fetchAttendanceForDate(activeDate);
+    }
+  }, [activeDate, fetchAttendanceForDate]);
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState<string>('');

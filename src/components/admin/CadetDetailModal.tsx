@@ -43,7 +43,7 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
 }) => {
   useBodyScrollLock(Boolean(cadet));
   const { user: currentUser } = useAuth();
-  const { getStudentAttendanceSummary, getAttendanceByStudent } = useStudentData();
+  const { getStudentAttendanceSummary, getAttendanceByStudent, fetchAttendanceForStudent } = useStudentData();
   const [modalAttPage, setModalAttPage] = useState(1);
   const [modalAttPageSize, setModalAttPageSize] = useState(5);
 
@@ -111,6 +111,13 @@ export const CadetDetailModal: React.FC<CadetDetailModalProps> = ({
   }, [cadet, initialEditMode]);
 
   const currentCadet = displayCadet || cadet;
+
+  // Fetch attendance records specifically for the viewed cadet
+  useEffect(() => {
+    if (currentCadet?.id) {
+      void fetchAttendanceForStudent(currentCadet.id);
+    }
+  }, [currentCadet?.id, fetchAttendanceForStudent]);
 
   // Handle direct upload/replace of student photo by admin
   const handleStudentPhotoSelected = async (file: File) => {

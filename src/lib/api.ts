@@ -255,6 +255,17 @@ export const api = {
     return Array.isArray(data) ? data.map(normalizeAttendance) : [];
   },
 
+  /** Fetch quick total attendance stats without loading documents */
+  async getAttendanceStats(): Promise<{ total_records: number }> {
+    try {
+      const response = await fetchWithAuth('/attendance/stats');
+      if (!response.ok) return { total_records: 0 };
+      return response.json();
+    } catch {
+      return { total_records: 0 };
+    }
+  },
+
   /** Bulk save 3-slot muster records */
   async saveAttendanceBulk(records: any[]): Promise<AttendanceRecord[]> {
     const response = await fetchWithAuth('/attendance/bulk', {

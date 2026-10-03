@@ -89,7 +89,15 @@ export const SlotAttendancePage: React.FC = () => {
     isDateLocked,
     hasDateDraft,
     discardDateDraft,
+    fetchAttendanceForDate,
   } = useStudentData();
+
+  // Automatically fetch muster attendance specifically for activeDate
+  useEffect(() => {
+    if (activeDate) {
+      void fetchAttendanceForDate(activeDate);
+    }
+  }, [activeDate, fetchAttendanceForDate]);
 
   const getSlotRecord = useCallback(
     (studentId: string, date: string, slot: AttendanceSlot) => {

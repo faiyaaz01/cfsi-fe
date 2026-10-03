@@ -53,6 +53,8 @@ interface StudentDataContextType {
   toggleDateLock: (date: string, lock: boolean) => Promise<void>;
   resetToSeed: () => Promise<void>;
   refreshAttendance: () => Promise<void>;
+  fetchAttendanceForDate: (date: string, force?: boolean) => Promise<AttendanceRecord[]>;
+  fetchAttendanceForStudent: (studentId: string, force?: boolean) => Promise<AttendanceRecord[]>;
 }
 
 const StudentDataContext = createContext<StudentDataContextType | undefined>(undefined);
@@ -97,74 +99,144 @@ const clearDraftForDate = (date: string) => {
   } catch {}
 };
 
-const ATTENDANCE_CACHE_KEY = 'cfsi_attendance_cache';
-
 export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Initial attendance state: load active unsubmitted drafts from localStorage so offline work is never lost!
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
+    const drafts: AttendanceRecord[] = [];
     try {
-      const cached = localStorage.getItem(ATTENDANCE_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      // Purge legacy bloated multi-MB cache if present to liberate browser storage
+      localStorage.removeItem('cfsi_attendance_cache');
+      localStorage.removeItem('cfsi_attendance');
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(DRAFT_PREFIX)) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.records)) {
+              drafts.push(...parsed.records);
+            }
+          }
+        }
       }
     } catch {}
-    return [];
+    return drafts;
   });
+
   const [loading, setLoading] = useState<boolean>(false);
   const [draftVersion, setDraftVersion] = useState<number>(0);
 
-  const lastFetchRef = useRef<number>(0);
+  // In-memory timestamps for cached dates and students
+  const loadedDatesRef = useRef<Map<string, number>>(new Map());
+  const loadedStudentsRef = useRef<Map<string, number>>(new Map());
 
-  // Fetch attendance records from backend MongoDB and merge local drafts
+  // Fetch attendance records specifically for a single date
+  const fetchAttendanceForDate = useCallback(async (date: string, force = false): Promise<AttendanceRecord[]> => {
+    const token = getToken();
+    if (!token || !date) return [];
+
+    const now = Date.now();
+    const lastFetched = loadedDatesRef.current.get(date) || 0;
+    // Serve from memory if fetched in the last 20 seconds unless explicitly forced
+    if (!force && now - lastFetched < 20000) {
+      return attendance.filter((r) => r.date === date);
+    }
+
+    try {
+      setLoading(true);
+      const serverRecords = await api.getAttendance({ date });
+      loadedDatesRef.current.set(date, now);
+
+      // Check if there is an unsubmitted draft for this date and merge it
+      const draft = loadDraftForDate(date);
+      let dayRecords = Array.isArray(serverRecords) ? serverRecords : [];
+      if (draft && Array.isArray(draft.records) && draft.records.length > 0) {
+        dayRecords = [...draft.records];
+      }
+
+      setAttendance((prev) => {
+        const others = prev.filter((r) => r.date !== date);
+        return [...others, ...dayRecords];
+      });
+
+      return dayRecords;
+    } catch (err) {
+      console.error(`Failed to load attendance for date ${date}:`, err);
+      return attendance.filter((r) => r.date === date);
+    } finally {
+      setLoading(false);
+    }
+  }, [attendance]);
+
+  // Fetch attendance records specifically for a single student
+  const fetchAttendanceForStudent = useCallback(async (studentId: string, force = false): Promise<AttendanceRecord[]> => {
+    const token = getToken();
+    if (!token || !studentId) return [];
+
+    const normId = studentId.trim().toUpperCase();
+    const now = Date.now();
+    const lastFetched = loadedStudentsRef.current.get(normId) || 0;
+    if (!force && now - lastFetched < 20000) {
+      return attendance.filter(
+        (a) => a.studentId.toUpperCase() === normId || (a.rollNo && a.rollNo.toUpperCase() === normId)
+      );
+    }
+
+    try {
+      const serverRecords = await api.getAttendance({ studentId });
+      loadedStudentsRef.current.set(normId, now);
+
+      setAttendance((prev) => {
+        const others = prev.filter(
+          (r) => r.studentId.toUpperCase() !== normId && (!r.rollNo || r.rollNo.toUpperCase() !== normId)
+        );
+        return [...others, ...(Array.isArray(serverRecords) ? serverRecords : [])];
+      });
+
+      return Array.isArray(serverRecords) ? serverRecords : [];
+    } catch (err) {
+      console.error(`Failed to load attendance for student ${studentId}:`, err);
+      return attendance.filter(
+        (a) => a.studentId.toUpperCase() === normId || (a.rollNo && a.rollNo.toUpperCase() === normId)
+      );
+    }
+  }, [attendance]);
+
+  // General bootstrap fetch: student loads their records, staff/admin loads today's records
   const fetchAttendance = useCallback(async (force = false) => {
     const token = getToken();
     if (!token) {
       setAttendance([]);
       return;
     }
-    const now = Date.now();
-    // Throttle duplicate calls within 15 seconds unless explicitly forced
-    if (!force && now - lastFetchRef.current < 15000) {
+
+    let userRole = 'student';
+    try {
+      const stored = localStorage.getItem('cfsi_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        userRole = u.role || 'student';
+      }
+    } catch {}
+
+    if (userRole === 'student') {
+      try {
+        setLoading(true);
+        const serverRecords = await api.getAttendance();
+        setAttendance(Array.isArray(serverRecords) ? serverRecords : []);
+      } catch (err) {
+        console.error('Failed to load student attendance:', err);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
-    lastFetchRef.current = now;
-    try {
-      setLoading(true);
-      const remoteAtt = await api.getAttendance();
-      const serverRecords = Array.isArray(remoteAtt) ? remoteAtt : [];
 
-      // Scan localStorage for any active drafts and merge them on top of server records
-      const draftKeys: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(DRAFT_PREFIX)) {
-          draftKeys.push(key);
-        }
-      }
-
-      let merged = [...serverRecords];
-      draftKeys.forEach((key) => {
-        try {
-          const raw = localStorage.getItem(key);
-          if (!raw) return;
-          const draft: LocalAttendanceDraft = JSON.parse(raw);
-          if (draft && draft.date && Array.isArray(draft.records)) {
-            merged = merged.filter((r) => r.date !== draft.date);
-            merged.push(...draft.records);
-          }
-        } catch {}
-      });
-
-      setAttendance(merged);
-      try {
-        localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(merged));
-      } catch {}
-    } catch (err) {
-      console.error('Failed to load attendance from MongoDB:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    // For teachers & admins: prefetch today's attendance muster
+    const today = new Date().toISOString().split('T')[0];
+    await fetchAttendanceForDate(today, force);
+  }, [fetchAttendanceForDate]);
 
   // Initialize and listen to auth changes & real-time SSE updates
   useEffect(() => {
@@ -459,26 +531,16 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // 3. Clear the draft in localStorage for this date
     clearDraftForDate(date);
     setDraftVersion((v) => v + 1);
-    lastFetchRef.current = Date.now(); // Suppress redundant SSE re-fetch on self upload
+    loadedDatesRef.current.set(date, Date.now());
 
-    // 4. Update React state with saved records from server and update local cache
+    // 4. Update React state with saved records from server (clean in-memory update)
     if (Array.isArray(saved) && saved.length > 0) {
       setAttendance((prev) => {
-        const copy = [...prev.filter((r) => r.date !== date)];
-        const next = [...saved, ...copy];
-        try {
-          localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(next));
-        } catch {}
-        return next;
+        const copy = prev.filter((r) => r.date !== date);
+        return [...saved, ...copy];
       });
     } else if (recordsToSync.length === 0) {
-      setAttendance((prev) => {
-        const next = prev.filter((r) => r.date !== date);
-        try {
-          localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(next));
-        } catch {}
-        return next;
-      });
+      setAttendance((prev) => prev.filter((r) => r.date !== date));
     }
 
     return saved;
@@ -497,7 +559,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const discardDateDraft = async (date: string) => {
     clearDraftForDate(date);
     setDraftVersion((v) => v + 1);
-    await fetchAttendance();
+    await fetchAttendanceForDate(date, true);
   };
 
   // Track explicit admin lock/unlock overrides for the current session
@@ -511,7 +573,7 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       await api.unlockDayAttendance(date);
       setAdminDateLockOverrides((prev) => ({ ...prev, [date]: false }));
     }
-    await fetchAttendance();
+    await fetchAttendanceForDate(date, true);
   };
 
   // Check whether attendance records for a specific date are locked (48-hour editing window starting from Slot 1: 08:00 AM IST)
@@ -604,12 +666,13 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     clearDraftForDate(date);
     setDraftVersion((v) => v + 1);
     setAttendance((prev) => prev.filter((r) => r.date !== date));
+    loadedDatesRef.current.set(date, Date.now());
 
     try {
       await api.clearDayAttendance(date);
     } catch (err) {
       console.error('Failed to clear day attendance from MongoDB:', err);
-      void fetchAttendance();
+      void fetchAttendanceForDate(date, true);
     }
   };
 
@@ -672,6 +735,8 @@ export const StudentDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         toggleDateLock,
         resetToSeed,
         refreshAttendance,
+        fetchAttendanceForDate,
+        fetchAttendanceForStudent,
       }}
     >
       {children}

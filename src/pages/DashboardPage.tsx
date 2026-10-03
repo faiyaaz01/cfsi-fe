@@ -109,10 +109,12 @@ export const DashboardPage: React.FC = () => {
     hasDateDraft,
     discardDateDraft,
     toggleDateLock,
+    fetchAttendanceForDate,
   } = useStudentData();
 
   const isAdmin = user?.role === 'admin';
   const [isTogglingLock, setIsTogglingLock] = useState<boolean>(false);
+  const [totalAttendanceCount, setTotalAttendanceCount] = useState<number>(0);
 
   // --- CADET / STUDENT DIRECTORY STATE ---
   const [cadetSearch, setCadetSearch] = useState('');
@@ -159,6 +161,7 @@ export const DashboardPage: React.FC = () => {
         return a.name.localeCompare(b.name);
       });
       setCadetsList(sorted);
+      api.getAttendanceStats().then((s) => setTotalAttendanceCount(s.total_records)).catch(() => {});
     } catch (err: any) {
       console.warn('Could not fetch cadets from backend:', err);
       setCadetsList([]);
@@ -265,6 +268,12 @@ export const DashboardPage: React.FC = () => {
   const [isUploadingMuster, setIsUploadingMuster] = useState<boolean>(false);
   const [hasPendingChanges, setHasPendingChanges] = useState<boolean>(false);
 
+  // Automatically fetch muster attendance specifically for selectedMusterDate
+  useEffect(() => {
+    if (selectedMusterDate) {
+      void fetchAttendanceForDate(selectedMusterDate);
+    }
+  }, [selectedMusterDate, fetchAttendanceForDate]);
 
   const handleLogout = () => { void logout(); navigate('/institute-login'); };
 
@@ -857,7 +866,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5">
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Attendance Records</div>
                   <div className="text-2xl font-black text-primary dark:text-primary-light mt-1">
-                    <CountUp value={attendance.length} />
+                    <CountUp value={totalAttendanceCount || attendance.length} />
                   </div>
                   <div className="text-[11px] text-gray-400 mt-0.5">Total sessions recorded</div>
                 </div>
