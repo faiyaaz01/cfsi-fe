@@ -276,9 +276,9 @@ export const CoursesPage: React.FC = () => {
         )}
 
         {/* Link to Alumni Pass Out Data */}
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div className="p-5 sm:p-8 rounded-3xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div>
-            <h3 className="font-heading font-bold text-xl text-gray-900 dark:text-white">
+            <h3 className="font-heading font-bold text-lg sm:text-xl text-gray-900 dark:text-white">
               Want to check pass-out student records & alumni database?
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -287,7 +287,7 @@ export const CoursesPage: React.FC = () => {
           </div>
           <Link
             to="/student-data"
-            className="px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-primary hover:bg-primary-dark shadow-md transition-all shrink-0"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-primary hover:bg-primary-dark shadow-md transition-all shrink-0 text-center"
           >
             Open Student Directory
           </Link>

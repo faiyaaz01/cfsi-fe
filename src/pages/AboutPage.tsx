@@ -211,10 +211,10 @@ export const AboutPage: React.FC = () => {
               <Flame className="w-3.5 h-3.5" />
               <span>Guiding Lighthouse</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-black text-gray-900 dark:text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl md:text-5xl font-heading font-black text-gray-900 dark:text-white tracking-tight">
               Our Mission & Purpose
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p className="mt-4 text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
               Every fire officer trained at CFSI carries the sacred responsibility of standing between danger and human lives.
             </p>
           </div>
@@ -231,7 +231,7 @@ export const AboutPage: React.FC = () => {
                   viewport={{ once: true, margin: '-50px' }}
                   transition={{ duration: 0.5, delay: index * 0.1, ease: 'easeOut' }}
                 >
-                  <FlatCard className="p-8 h-full flex flex-col justify-between border border-gray-200/80 dark:border-white/10 group hover:border-primary/50">
+                  <FlatCard className="p-5 sm:p-8 h-full flex flex-col justify-between border border-gray-200/80 dark:border-white/10 group hover:border-primary/50">
                     <div>
                       <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light mb-4">
                         {card.badge}
@@ -270,7 +270,7 @@ export const AboutPage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <div className="relative p-8 sm:p-12 rounded-3xl bg-gradient-to-tr from-primary via-[#1a55c2] to-[#124199] text-white shadow-xl overflow-hidden">
+            <div className="relative p-5 sm:p-8 md:p-12 rounded-3xl bg-gradient-to-tr from-primary via-[#1a55c2] to-[#124199] text-white shadow-xl overflow-hidden">
               <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
                 <ShieldAlert className="w-80 h-80 text-white" />
               </div>
@@ -294,7 +294,7 @@ export const AboutPage: React.FC = () => {
         </div>
 
         {/* Infrastructure Highlights */}
-        <div className="p-8 sm:p-12 rounded-3xl bg-gray-50 dark:bg-[#12181f] border border-gray-200/80 dark:border-white/5">
+        <div className="p-5 sm:p-8 md:p-12 rounded-3xl bg-gray-50 dark:bg-[#12181f] border border-gray-200/80 dark:border-white/5">
           <div className="max-w-3xl mb-8">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-accent/10 text-accent mb-2">
               <Building className="w-3.5 h-3.5" />
@@ -329,7 +329,7 @@ export const AboutPage: React.FC = () => {
         <div className="mt-16 text-center">
           <Link
             to="/courses"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 shadow-lg hover:scale-105"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 shadow-lg hover:scale-105"
           >
             <span>Explore All Certified Courses</span>
             <ArrowRight className="w-4 h-4" />

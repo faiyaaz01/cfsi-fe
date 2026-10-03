@@ -346,10 +346,10 @@ export const ContactPage: React.FC = () => {
 
         {/* Vadodara Google Map & Directions Embed */}
         <div className="rounded-3xl overflow-hidden shadow-xl border border-gray-200 dark:border-white/10">
-          <div className="p-4 bg-gray-100 dark:bg-[#161d27] border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200">
-              <MapPin className="w-4 h-4 text-accent" />
-              <span>Campus Map: Akhil Hind Mahila Parishad Building, opp. Nehru Bhawan, Kirtistambh, Vadodara</span>
+          <div className="p-3 sm:p-4 bg-gray-100 dark:bg-[#161d27] border-b border-gray-200 dark:border-white/10 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200 min-w-0">
+              <MapPin className="w-4 h-4 text-accent shrink-0" />
+              <span className="truncate">Campus Map: Akhil Hind Mahila Parishad Building, Vadodara</span>
             </div>
             <a
               href="https://www.google.com/maps/search/?api=1&query=Akhil+Hind+Mahila+Parishad+Building,+opp.+Nehru+Bhawan,+Kirtistambh,+Vadodara,+Gujarat+390001"

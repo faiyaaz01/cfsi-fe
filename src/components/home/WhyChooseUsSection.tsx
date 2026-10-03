@@ -106,7 +106,7 @@ export const WhyChooseUsSection: React.FC = () => {
           </div>
           <Link
             to="/contact"
-            className="px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-primary hover:bg-primary-dark transition-all duration-200 shrink-0 shadow-md hover:scale-105 flex items-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-primary hover:bg-primary-dark transition-all duration-200 shrink-0 shadow-md hover:scale-105 flex items-center justify-center gap-2"
           >
             <span>Request Call Back</span>
             <ArrowRight className="w-4 h-4" />
