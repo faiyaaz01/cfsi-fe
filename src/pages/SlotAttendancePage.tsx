@@ -773,7 +773,7 @@ export const SlotAttendancePage: React.FC = () => {
                 </div>
               </div>
             ) : activeSlotStatus.isBefore ? (
-              <div className="p-4 bg-blue-500/10 border border-blue-500/30 flex items-center justify-between gap-3 text-blue-800 dark:text-blue-200">
+              <div className="p-4 bg-blue-500/10 border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-blue-800 dark:text-blue-200">
                 <div className="flex items-center gap-2.5">
                   <Clock className="w-4 h-4 shrink-0 text-blue-500" />
                   <div>
@@ -785,12 +785,12 @@ export const SlotAttendancePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-lg shrink-0">
+                <span className="text-xs font-mono font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-lg shrink-0 self-start sm:self-auto">
                   Opens in {formatCountdown(activeSlotStatus.timeUntilOpenSecs)}
                 </span>
               </div>
             ) : (
-              <div className="p-4 bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200">
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200">
                 <div className="flex items-center gap-2.5">
                   <Lock className="w-4 h-4 shrink-0 text-amber-600" />
                   <div>
@@ -802,7 +802,7 @@ export const SlotAttendancePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-lg shrink-0">
+                <span className="text-xs font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-lg shrink-0 self-start sm:self-auto">
                   Locked at {activeSlotStatus.lockLabel}
                 </span>
               </div>

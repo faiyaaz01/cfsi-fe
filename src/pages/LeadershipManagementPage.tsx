@@ -388,7 +388,7 @@ export const LeadershipManagementPage: React.FC = () => {
 
   return (
     <div className="py-8 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 space-y-5 sm:space-y-6">
         
         {/* Top Header Navigation */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-white/10">
@@ -400,26 +400,26 @@ export const LeadershipManagementPage: React.FC = () => {
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Admin Dashboard</span>
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <div className="flex items-start gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5">
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-heading font-black text-gray-900 dark:text-white">
-                  Leadership & Faculty Module Management
+                <h1 className="text-base xs:text-xl sm:text-2xl font-heading font-black text-gray-900 dark:text-white leading-snug">
+                  Leadership & Faculty Management
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  Assign system modules, operational slots, and muster permissions to Cadet Leaders and Faculty Teachers.
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Assign modules, slots & permissions to Leaders and Faculty.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setPromoteModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all flex items-center gap-2 shadow-sm shadow-indigo-500/20 active:scale-95 cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all flex items-center justify-center gap-2 shadow-sm shadow-indigo-500/20 active:scale-95 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               <span>Appoint Cadet Leader</span>
@@ -428,91 +428,101 @@ export const LeadershipManagementPage: React.FC = () => {
         </div>
 
         {/* Overview Metric Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-indigo-500/20 bg-indigo-500/[0.03]">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 xs:gap-3 sm:gap-4">
+          <FlatCard hoverEffect={false} className="p-3 xs:p-4 sm:p-5 border border-indigo-500/20 bg-indigo-500/[0.03]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <span className="text-[10px] xs:text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 Cadet Leaders
               </span>
-              <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
-                <Award className="w-4 h-4" />
+              <div className="p-1.5 xs:p-2 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
+                <Award className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-2">
+            <div className="text-xl xs:text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-2">
               <CountUp value={metrics.totalLeaders} />
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-[10px] xs:text-[11px] text-gray-500 dark:text-gray-400 mt-1 truncate">
               Time-locked muster officers
             </div>
           </FlatCard>
 
-          <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-emerald-500/20 bg-emerald-500/[0.03]">
+          <FlatCard hoverEffect={false} className="p-3 xs:p-4 sm:p-5 border border-emerald-500/20 bg-emerald-500/[0.03]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <span className="text-[10px] xs:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 Faculty Teachers
               </span>
-              <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                <BookOpen className="w-4 h-4" />
+              <div className="p-1.5 xs:p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <BookOpen className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
+            <div className="text-xl xs:text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
               <CountUp value={metrics.totalTeachers} />
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-[10px] xs:text-[11px] text-gray-500 dark:text-gray-400 mt-1 truncate">
               Instructors & Academics
             </div>
           </FlatCard>
 
-          <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-blue-500/20 bg-blue-500/[0.03]">
+          <FlatCard hoverEffect={false} className="p-3 xs:p-4 sm:p-5 border border-blue-500/20 bg-blue-500/[0.03]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <span className="text-[10px] xs:text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                 Muster Assigned
               </span>
-              <div className="p-2 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
-                <Clock className="w-4 h-4" />
+              <div className="p-1.5 xs:p-2 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                <Clock className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 mt-2">
+            <div className="text-xl xs:text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 mt-2">
               <CountUp value={metrics.attendanceCount} />
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-[10px] xs:text-[11px] text-gray-500 dark:text-gray-400 mt-1 truncate">
               Authorized for attendance
             </div>
           </FlatCard>
 
-          <FlatCard hoverEffect={false} className="p-4 sm:p-5 border border-amber-500/20 bg-amber-500/[0.03]">
+          <FlatCard hoverEffect={false} className="p-3 xs:p-4 sm:p-5 border border-amber-500/20 bg-amber-500/[0.03]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              <span className="text-[10px] xs:text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                 Practical Drills
               </span>
-              <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                <Flame className="w-4 h-4" />
+              <div className="p-1.5 xs:p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <Flame className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">
+            <div className="text-xl xs:text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-2">
               <CountUp value={metrics.drillCount} />
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-[10px] xs:text-[11px] text-gray-500 dark:text-gray-400 mt-1 truncate">
               Ground training instructors
             </div>
           </FlatCard>
         </div>
 
         {/* Time-Lock Rules Banner */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-xs sm:text-sm">
+        <div className="p-3.5 xs:p-4 sm:p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-xs sm:text-sm">
           <div className="flex items-start gap-3">
             <div className="p-1.5 rounded-lg bg-indigo-600 text-white mt-0.5 shrink-0">
               <Lock className="w-4 h-4" />
             </div>
-            <div className="space-y-1">
-              <p className="font-bold text-indigo-950 dark:text-indigo-200">
+            <div className="space-y-1.5 min-w-0">
+              <p className="font-bold text-xs sm:text-sm text-indigo-950 dark:text-indigo-200">
                 Automated Slot Lock Policy for Cadet Leaders:
               </p>
-              <p className="text-indigo-800 dark:text-indigo-300 text-xs leading-relaxed">
-                Leaders can only mark attendance slot-wise on the current day during the active slot time window:
-                <strong className="mx-1 font-bold underline">Slot 1 (08:00 - 10:00 AM)</strong> locks at <strong>10:20 AM</strong> • 
-                <strong className="mx-1 font-bold underline">Slot 2 (10:30 AM - 01:00 PM)</strong> locks at <strong>01:20 PM</strong> • 
-                <strong className="mx-1 font-bold underline">Slot 3 (02:00 - 05:00 PM)</strong> locks at <strong>05:20 PM</strong>.
+              <div className="flex flex-col sm:flex-row flex-wrap gap-1.5 text-[11px] xs:text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-200 font-medium">
+                  <Clock className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <strong>Slot 1</strong> (08:00 - 10:00 AM) locks at 10:20 AM
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-200 font-medium">
+                  <Clock className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <strong>Slot 2</strong> (10:30 AM - 01:00 PM) locks at 01:20 PM
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-200 font-medium">
+                  <Clock className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <strong>Slot 3</strong> (02:00 - 05:00 PM) locks at 05:20 PM
+                </span>
+              </div>
+              <p className="text-indigo-800/80 dark:text-indigo-300/80 text-[10px] xs:text-xs leading-relaxed">
                 Leaders cannot mark other slots outside their designated time window. Administrators retain master override privileges.
               </p>
             </div>
@@ -520,7 +530,7 @@ export const LeadershipManagementPage: React.FC = () => {
         </div>
 
         {/* Personnel Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -541,14 +551,14 @@ export const LeadershipManagementPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-xl p-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-semibold">
+          <div className="w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center rounded-xl p-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-semibold w-max min-w-full sm:min-w-0">
               {(['all', 'leader', 'teacher'] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRoleFilter(r)}
-                  className={`px-3 py-1.5 rounded-lg capitalize transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg whitespace-nowrap capitalize transition-colors ${
                     roleFilter === r
                       ? 'bg-white dark:bg-white/15 text-primary dark:text-white shadow-sm font-bold'
                       : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
@@ -565,180 +575,313 @@ export const LeadershipManagementPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Personnel Roster & Assignments Table */}
-        <FlatCard hoverEffect={false} className="border border-gray-200/80 dark:border-white/10 shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-gray-50/80 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[11px] border-b border-gray-200/60 dark:border-white/10">
-                  <th className="py-3.5 px-4">Officer / Instructor</th>
-                  <th className="py-3.5 px-4">Role</th>
-                  <th className="py-3.5 px-4">Assigned Modules</th>
-                  <th className="py-3.5 px-4">Allowed Duty Slots</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-right">Assignment Controls</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200/60 dark:divide-white/5">
-                {loading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan={6} className="py-6 px-4">
-                        <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-48 mb-2" />
-                        <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-32" />
-                      </td>
-                    </tr>
-                  ))
-                ) : filteredPersonnel.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-gray-400">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Award className="w-8 h-8 opacity-40 text-indigo-500" />
-                        <p className="font-semibold text-sm">No Leaders or Teachers Found</p>
-                        <p className="text-xs">
-                          {searchQuery
-                            ? 'No matching personnel found.'
-                            : 'Click "Appoint Cadet Leader" above to promote a cadet to the Leadership role.'}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPersonnel.map((person) => {
-                    const assignedMods = person.assigned_modules || (person.role === 'leader' ? ['attendance'] : ['courses', 'attendance']);
-                    const assignedSlots = person.assigned_slots || ['Slot 1', 'Slot 2', 'Slot 3'];
-
-                    return (
-                      <tr key={person.id} className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                        {/* Name & Identity */}
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${
-                              person.role === 'leader'
-                                ? 'from-indigo-500 to-purple-600 text-white'
-                                : 'from-emerald-500 to-teal-600 text-white'
-                            } flex items-center justify-center font-black text-sm shrink-0 shadow-sm`}>
-                              {(person.full_name || person.username).charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
-                                <span>{person.full_name || person.username}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono mt-0.5">
-                                <span>@{person.username}</span>
-                                {person.student_id && (
-                                  <span className="text-primary font-bold">#{person.student_id}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Role Badge */}
-                        <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                            person.role === 'leader'
-                              ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
-                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                          }`}>
-                            {person.role === 'leader' ? <Award className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
-                            <span className="capitalize">{person.role === 'leader' ? 'Cadet Leader' : 'Faculty Teacher'}</span>
-                          </span>
-                        </td>
-
-                        {/* Assigned Modules Pills */}
-                        <td className="py-3.5 px-4">
-                          <div className="flex flex-wrap gap-1.5 max-w-xs">
-                            {assignedMods.map((modId) => {
-                              const mod = AVAILABLE_MODULES.find((m) => m.id === modId);
-                              if (!mod) return null;
-                              const Icon = mod.icon;
-                              return (
-                                <span
-                                  key={modId}
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${mod.bgColor} ${mod.color}`}
-                                  title={mod.description}
-                                >
-                                  <Icon className="w-3 h-3" />
-                                  <span>{mod.name.split(' ')[0]}</span>
-                                </span>
-                              );
-                            })}
-                            {assignedMods.length === 0 && (
-                              <span className="text-[11px] text-gray-400 italic">None Assigned</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Allowed Duty Slots */}
-                        <td className="py-3.5 px-4">
-                          {assignedMods.includes('attendance') ? (
-                            <div className="flex flex-wrap gap-1">
-                              {assignedSlots.map((slot) => (
-                                <span
-                                  key={slot}
-                                  className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold"
-                                >
-                                  {slot}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-gray-400 italic">Muster Inactive</span>
-                          )}
-                        </td>
-
-                        {/* Status */}
-                        <td className="py-3.5 px-4 text-center">
-                          {person.is_active ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              <span>Active</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-500/10 text-gray-500 border border-gray-500/20">
-                              <span>Suspended</span>
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Configure Button & Revoke */}
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(person)}
-                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
-                            >
-                              <Sliders className="w-3.5 h-3.5" />
-                              <span>Assign Modules</span>
-                            </button>
-
-                            {person.role === 'leader' && (
-                              <button
-                                type="button"
-                                onClick={() => handleRevokeLeader(person)}
-                                disabled={savingId === person.id}
-                                className="p-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
-                                title="Revoke Leader role and return to Student"
-                              >
-                                {savingId === person.id ? (
-                                  <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
-                                ) : (
-                                  <UserMinus className="w-4 h-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+        {/* Loading State */}
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse bg-white dark:bg-[#12181f] rounded-2xl border border-gray-200/80 dark:border-white/10 p-4 flex gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-white/10 shrink-0" />
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-40" />
+                  <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-24" />
+                </div>
+              </div>
+            ))}
           </div>
-        </FlatCard>
+        ) : filteredPersonnel.length === 0 ? (
+          <FlatCard hoverEffect={false} className="py-16 text-center border border-gray-200/80 dark:border-white/10">
+            <Award className="w-10 h-10 opacity-30 text-indigo-500 mx-auto mb-3" />
+            <p className="font-semibold text-sm text-gray-700 dark:text-gray-300">No Leaders or Teachers Found</p>
+            <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+              {searchQuery
+                ? 'No matching personnel found.'
+                : 'Click "Appoint Cadet Leader" above to promote a cadet to the Leadership role.'}
+            </p>
+          </FlatCard>
+        ) : (
+          <>
+            {/* Desktop Table View (Hidden on mobile) */}
+            <div className="hidden md:block">
+              <FlatCard hoverEffect={false} className="border border-gray-200/80 dark:border-white/10 shadow-md overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50/80 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[11px] border-b border-gray-200/60 dark:border-white/10">
+                        <th className="py-3.5 px-4">Officer / Instructor</th>
+                        <th className="py-3.5 px-4">Role</th>
+                        <th className="py-3.5 px-4">Assigned Modules</th>
+                        <th className="py-3.5 px-4">Allowed Duty Slots</th>
+                        <th className="py-3.5 px-4 text-center">Status</th>
+                        <th className="py-3.5 px-4 text-right">Assignment Controls</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200/60 dark:divide-white/5">
+                      {filteredPersonnel.map((person) => {
+                        const assignedMods = person.assigned_modules || (person.role === 'leader' ? ['attendance'] : ['courses', 'attendance']);
+                        const assignedSlots = person.assigned_slots || ['Slot 1', 'Slot 2', 'Slot 3'];
+
+                        return (
+                          <tr key={person.id} className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                            {/* Name & Identity */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${
+                                  person.role === 'leader'
+                                    ? 'from-indigo-500 to-purple-600 text-white'
+                                    : 'from-emerald-500 to-teal-600 text-white'
+                                } flex items-center justify-center font-black text-sm shrink-0 shadow-sm`}>
+                                  {(person.full_name || person.username).charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                                    <span>{person.full_name || person.username}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono mt-0.5">
+                                    <span>@{person.username}</span>
+                                    {person.student_id && (
+                                      <span className="text-primary font-bold">#{person.student_id}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Role Badge */}
+                            <td className="py-3.5 px-4">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                                person.role === 'leader'
+                                  ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                              }`}>
+                                {person.role === 'leader' ? <Award className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
+                                <span className="capitalize">{person.role === 'leader' ? 'Cadet Leader' : 'Faculty Teacher'}</span>
+                              </span>
+                            </td>
+
+                            {/* Assigned Modules Pills */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex flex-wrap gap-1.5 max-w-xs">
+                                {assignedMods.map((modId) => {
+                                  const mod = AVAILABLE_MODULES.find((m) => m.id === modId);
+                                  if (!mod) return null;
+                                  const Icon = mod.icon;
+                                  return (
+                                    <span
+                                      key={modId}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${mod.bgColor} ${mod.color}`}
+                                      title={mod.description}
+                                    >
+                                      <Icon className="w-3 h-3" />
+                                      <span>{mod.name.split(' ')[0]}</span>
+                                    </span>
+                                  );
+                                })}
+                                {assignedMods.length === 0 && (
+                                  <span className="text-[11px] text-gray-400 italic">None Assigned</span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Allowed Duty Slots */}
+                            <td className="py-3.5 px-4">
+                              {assignedMods.includes('attendance') ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {assignedSlots.map((slot) => (
+                                    <span
+                                      key={slot}
+                                      className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold"
+                                    >
+                                      {slot}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-gray-400 italic">Muster Inactive</span>
+                              )}
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3.5 px-4 text-center">
+                              {person.is_active ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  <span>Active</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                                  <span>Suspended</span>
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Configure Button & Revoke */}
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(person)}
+                                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                >
+                                  <Sliders className="w-3.5 h-3.5" />
+                                  <span>Assign Modules</span>
+                                </button>
+
+                                {person.role === 'leader' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRevokeLeader(person)}
+                                    disabled={savingId === person.id}
+                                    className="p-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
+                                    title="Revoke Leader role and return to Student"
+                                  >
+                                    {savingId === person.id ? (
+                                      <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
+                                    ) : (
+                                      <UserMinus className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </FlatCard>
+            </div>
+
+            {/* Mobile Cards View (Visible only on screens < md) */}
+            <div className="md:hidden space-y-3">
+              {filteredPersonnel.map((person) => {
+                const assignedMods = person.assigned_modules || (person.role === 'leader' ? ['attendance'] : ['courses', 'attendance']);
+                const assignedSlots = person.assigned_slots || ['Slot 1', 'Slot 2', 'Slot 3'];
+
+                return (
+                  <FlatCard key={person.id} hoverEffect={false} className="p-3.5 xs:p-4 border border-gray-200/80 dark:border-white/10 shadow-sm">
+                    {/* Header: Avatar, Name, Role */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${
+                          person.role === 'leader'
+                            ? 'from-indigo-500 to-purple-600 text-white'
+                            : 'from-emerald-500 to-teal-600 text-white'
+                        } flex items-center justify-center font-black text-sm shrink-0 shadow-sm`}>
+                          {(person.full_name || person.username).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                            {person.full_name || person.username}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono">
+                            <span>@{person.username}</span>
+                            {person.student_id && (
+                              <span className="text-primary font-bold">#{person.student_id}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        person.role === 'leader'
+                          ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                      }`}>
+                        {person.role === 'leader' ? <Award className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />}
+                        <span>{person.role === 'leader' ? 'Leader' : 'Teacher'}</span>
+                      </span>
+                    </div>
+
+                    {/* Assigned Modules */}
+                    <div className="space-y-1.5 py-2.5 border-y border-gray-100 dark:border-white/5">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Assigned Modules:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {assignedMods.map((modId) => {
+                          const mod = AVAILABLE_MODULES.find((m) => m.id === modId);
+                          if (!mod) return null;
+                          const Icon = mod.icon;
+                          return (
+                            <span
+                              key={modId}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${mod.bgColor} ${mod.color}`}
+                            >
+                              <Icon className="w-3 h-3" />
+                              <span>{mod.name.split(' ')[0]}</span>
+                            </span>
+                          );
+                        })}
+                        {assignedMods.length === 0 && (
+                          <span className="text-[11px] text-gray-400 italic">None Assigned</span>
+                        )}
+                      </div>
+
+                      {/* Duty Slots if Attendance is assigned */}
+                      {assignedMods.includes('attendance') && (
+                        <div className="pt-1.5 flex flex-wrap items-center gap-1">
+                          <span className="text-[10px] text-gray-400 font-semibold mr-1">Slots:</span>
+                          {assignedSlots.map((slot) => (
+                            <span
+                              key={slot}
+                              className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold"
+                            >
+                              {slot}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer: Status & Actions */}
+                    <div className="flex items-center justify-between pt-3">
+                      <div>
+                        {person.is_active ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Active</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                            <span>Suspended</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(person)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light hover:bg-primary hover:text-white transition-all inline-flex items-center gap-1 cursor-pointer active:scale-95"
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span>Configure</span>
+                        </button>
+
+                        {person.role === 'leader' && (
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeLeader(person)}
+                            disabled={savingId === person.id}
+                            className="p-1.5 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer active:scale-95"
+                            title="Revoke Leader role"
+                          >
+                            {savingId === person.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
+                            ) : (
+                              <UserMinus className="w-4 h-4" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </FlatCard>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         {/* Configure Modules Modal */}
         <AnimatePresence>

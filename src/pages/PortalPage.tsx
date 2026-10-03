@@ -542,7 +542,7 @@ export function PortalPage() {
 
                   {/* Dropdown Menu */}
                   {dutyDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-4 z-50 text-gray-900 dark:text-white space-y-3 animate-fade-in">
+                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200 dark:border-white/10 shadow-2xl p-4 z-50 text-gray-900 dark:text-white space-y-3 animate-fade-in">
                       {/* Menu Header */}
                       <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/10">
                         <div className="flex items-center gap-2">
@@ -768,10 +768,10 @@ export function PortalPage() {
             </div>
 
             {/* Action Buttons for Selected Slot */}
-            <div className="flex flex-wrap items-center gap-2.5 pt-1 md:pt-6 shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto pt-1 md:pt-6 shrink-0">
               {selectedSlot?.isActive ? (
                 <>
-                  <div className="px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5">
+                  <div className="px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
                     <span className="flex h-2 w-2 relative">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -781,7 +781,7 @@ export function PortalPage() {
 
                   <Link
                     to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(selectedSlot.id)}`}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
                   >
                     <span>Mark {selectedSlot.shortLabel} Attendance</span>
                     <ArrowRight className="w-4 h-4" />
@@ -789,14 +789,14 @@ export function PortalPage() {
                 </>
               ) : selectedSlot?.isAfter ? (
                 <>
-                  <div className="px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5">
+                  <div className="px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5">
                     <Lock className="w-3.5 h-3.5" />
                     <span>Locked at {selectedSlot.lockLabel}</span>
                   </div>
 
                   <Link
                     to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(selectedSlot.id)}`}
-                    className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <span>View Slot Muster</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -804,14 +804,14 @@ export function PortalPage() {
                 </>
               ) : (
                 <>
-                  <div className="px-3 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center gap-1.5">
+                  <div className="px-3 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     <span>Opens {selectedSlot?.timeRange.split('–')[0].trim()}</span>
                   </div>
 
                   <Link
                     to={`/dashboard/attendance/${todayStr}/${encodeURIComponent(selectedSlot?.id || 'Slot 1')}`}
-                    className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <span>Preview Muster</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -825,11 +825,11 @@ export function PortalPage() {
           {/* Selected Slot Information Bar */}
           {selectedSlot && (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-white/5 text-xs text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900 dark:text-white">{selectedSlot.title}:</span>
-                <span className="truncate max-w-md">{selectedSlot.description}</span>
+              <div className="min-w-0">
+                <span className="font-bold text-gray-900 dark:text-white mr-1.5">{selectedSlot.title}:</span>
+                <span className="text-gray-500 dark:text-gray-400">{selectedSlot.description}</span>
               </div>
-              <div className="font-mono text-[11px] text-gray-400 flex items-center gap-3 shrink-0">
+              <div className="font-mono text-[11px] text-gray-400 flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
                 <span>Hours: <strong className="text-gray-700 dark:text-gray-300">{selectedSlot.timeRange}</strong></span>
                 <span>•</span>
                 <span>Cutoff: <strong className="text-amber-600 dark:text-amber-400">{selectedSlot.lockLabel}</strong></span>

@@ -143,20 +143,20 @@ export const LeaderDashboardPage: React.FC = () => {
   const assignedModules = user?.assigned_modules || ['attendance'];
 
   return (
-    <div className="py-8 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="py-6 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 space-y-5 sm:space-y-6">
         
         {/* Leader Welcome & Real-Time Clock Header */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-primary text-white shadow-xl relative overflow-hidden">
+        <div className="p-4 xs:p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-primary text-white shadow-xl relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 pointer-events-none" />
           
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-bold uppercase tracking-wider text-indigo-200 border border-white/10">
                 <Award className="w-3.5 h-3.5 text-amber-400" />
                 <span>Cadet Squad Leadership Portal</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-heading font-black">
+              <h1 className="text-xl xs:text-2xl sm:text-3xl font-heading font-black">
                 Welcome, {user?.full_name || user?.username}!
               </h1>
               <p className="text-xs sm:text-sm text-indigo-100/90 max-w-xl">
@@ -165,12 +165,12 @@ export const LeaderDashboardPage: React.FC = () => {
             </div>
 
             {/* Live Time Card */}
-            <div className="bg-black/30 backdrop-blur-md px-5 py-4 rounded-2xl border border-white/15 flex flex-col items-center md:items-end shrink-0">
+            <div className="bg-black/30 backdrop-blur-md px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl border border-white/15 flex flex-col items-center md:items-end w-full md:w-auto shrink-0">
               <div className="flex items-center gap-2 text-indigo-200 text-xs font-semibold uppercase tracking-wider">
                 <Clock className="w-3.5 h-3.5 animate-pulse text-amber-400" />
                 <span>Institute Live Time (IST)</span>
               </div>
-              <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight mt-0.5">
+              <div className="text-xl xs:text-2xl sm:text-3xl font-black font-mono tracking-tight mt-0.5">
                 {currentTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </div>
               <div className="text-xs text-indigo-200/80 font-medium mt-1">
@@ -186,9 +186,9 @@ export const LeaderDashboardPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 sm:p-8 rounded-3xl bg-emerald-500/10 dark:bg-emerald-500/15 border-2 border-emerald-500/30 text-gray-900 dark:text-white shadow-lg space-y-4"
+              className="p-4 xs:p-6 sm:p-8 rounded-3xl bg-emerald-500/10 dark:bg-emerald-500/15 border-2 border-emerald-500/30 text-gray-900 dark:text-white shadow-lg space-y-4"
             >
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="flex h-3 w-3 relative">
@@ -199,34 +199,34 @@ export const LeaderDashboardPage: React.FC = () => {
                       Attendance Window Open Now
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black font-heading">
+                  <h2 className="text-lg xs:text-xl sm:text-2xl font-black font-heading">
                     {activeSlot.title}
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
                     {activeSlot.description}
                   </p>
-                  <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">
-                    <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-semibold pt-1">
+                    <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono text-[11px] xs:text-xs">
                       Schedule: {activeSlot.timeRange}
                     </span>
-                    <span className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 font-mono">
-                      Locks Permanently at: {activeSlot.lockLabel}
+                    <span className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 font-mono text-[11px] xs:text-xs">
+                      Locks: {activeSlot.lockLabel}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-                  <div className="text-center sm:text-right">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full lg:w-auto shrink-0">
+                  <div className="text-center sm:text-right w-full sm:w-auto">
+                    <span className="text-[10px] xs:text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
                       Time Remaining Before Lock
                     </span>
-                    <span className="text-2xl sm:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xl xs:text-2xl sm:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400">
                       {formatCountdown(activeSlot.remainingSec)}
                     </span>
                   </div>
                   <Link
                     to={`/attendance/${todayStr}/${encodeURIComponent(activeSlot.id)}`}
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95 transition-all"
+                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
                   >
                     <span>Mark {activeSlot.shortLabel} Muster</span>
                     <ArrowRight className="w-4 h-4" />
@@ -235,17 +235,17 @@ export const LeaderDashboardPage: React.FC = () => {
               </div>
             </motion.div>
           ) : (
-            <div className="p-6 sm:p-8 rounded-3xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-gray-900 dark:text-white space-y-3">
+            <div className="p-4 xs:p-6 sm:p-8 rounded-3xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-gray-900 dark:text-white space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-amber-950 dark:text-amber-200">
+                    <h3 className="text-base sm:text-lg font-bold text-amber-950 dark:text-amber-200">
                       Muster Marking Currently Locked
                     </h3>
-                    <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300/90 mt-0.5">
+                    <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300/90 mt-0.5 leading-relaxed">
                       {nextSlot ? (
                         <>
                           Attendance will automatically unlock when <strong>{nextSlot.title}</strong> commences at{' '}
@@ -264,15 +264,15 @@ export const LeaderDashboardPage: React.FC = () => {
 
         {/* 3 Training Slots Overview Grid */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
+          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1">
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>Daily Slot Muster Schedule & Lock Status</span>
             </h3>
-            <span className="text-xs text-gray-400 font-mono">20m Grace Cutoff Applied</span>
+            <span className="text-[11px] text-gray-400 font-mono">20m Grace Cutoff Applied</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {slotEvaluations.map((slot) => {
               const isOpen = slot.isActive;
               const isExpired = slot.isAfter;
@@ -282,7 +282,7 @@ export const LeaderDashboardPage: React.FC = () => {
                 <FlatCard
                   key={slot.id}
                   hoverEffect={isOpen}
-                  className={`p-5 border transition-all flex flex-col justify-between ${
+                  className={`p-4 sm:p-5 border transition-all flex flex-col justify-between ${
                     isOpen
                       ? 'border-emerald-500/50 bg-emerald-500/[0.03] shadow-md ring-2 ring-emerald-500/20'
                       : isExpired
@@ -323,14 +323,14 @@ export const LeaderDashboardPage: React.FC = () => {
                       </p>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 space-y-1 text-xs">
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 space-y-1 text-xs">
                       <div className="flex justify-between text-gray-600 dark:text-gray-300">
                         <span>Slot Hours:</span>
-                        <span className="font-bold font-mono">{slot.timeRange}</span>
+                        <span className="font-bold font-mono text-[11px] sm:text-xs">{slot.timeRange}</span>
                       </div>
                       <div className="flex justify-between text-gray-600 dark:text-gray-300">
                         <span>Cutoff Lock:</span>
-                        <span className="font-bold font-mono text-amber-600 dark:text-amber-400">{slot.lockLabel}</span>
+                        <span className="font-bold font-mono text-amber-600 dark:text-amber-400 text-[11px] sm:text-xs">{slot.lockLabel}</span>
                       </div>
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export const LeaderDashboardPage: React.FC = () => {
                     {isOpen ? (
                       <Link
                         to={`/attendance/${todayStr}/${encodeURIComponent(slot.id)}`}
-                        className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                        className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer active:scale-95"
                       >
                         <span>Open & Mark Muster</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export const LeaderDashboardPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => navigate(`/attendance/${todayStr}/${encodeURIComponent(slot.id)}`)}
-                        className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                       >
                         <Lock className="w-3 h-3" />
                         <span>View Past Muster (Locked)</span>
@@ -372,11 +372,11 @@ export const LeaderDashboardPage: React.FC = () => {
             <span>Assigned Training & Squad Modules</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {/* Module: Attendance */}
-            <div className="p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div className="space-y-2">
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 w-fit">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 w-fit">
                   <Clock className="w-5 h-5" />
                 </div>
                 <h4 className="font-bold text-sm text-gray-900 dark:text-white">
@@ -399,9 +399,9 @@ export const LeaderDashboardPage: React.FC = () => {
 
             {/* Module: Tactical Drills */}
             {assignedModules.includes('drills') && (
-              <div className="p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
                 <div className="space-y-2">
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 w-fit">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 w-fit">
                     <Flame className="w-5 h-5" />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900 dark:text-white">
@@ -425,9 +425,9 @@ export const LeaderDashboardPage: React.FC = () => {
 
             {/* Module: Cadet Directory */}
             {assignedModules.includes('roster') && (
-              <div className="p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
                 <div className="space-y-2">
-                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 w-fit">
+                  <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 w-fit">
                     <Users className="w-5 h-5" />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900 dark:text-white">
@@ -451,9 +451,9 @@ export const LeaderDashboardPage: React.FC = () => {
 
             {/* Module: Bulletins */}
             {assignedModules.includes('news') && (
-              <div className="p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161d27] border border-gray-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between">
                 <div className="space-y-2">
-                  <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 w-fit">
+                  <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 w-fit">
                     <Newspaper className="w-5 h-5" />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900 dark:text-white">
