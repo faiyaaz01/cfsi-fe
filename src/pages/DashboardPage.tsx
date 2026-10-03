@@ -40,6 +40,7 @@ import {
   Globe,
   Award,
   RotateCcw,
+  Phone
 } from 'lucide-react';
 import { useStudentData } from '../context/StudentDataContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -956,7 +957,7 @@ export const DashboardPage: React.FC = () => {
                       <th className="py-3.5 px-4">Roll No & ID</th>
                       <th className="py-3.5 px-4">Student</th>
                       <th className="py-3.5 px-4">Course & Batch</th>
-                      <th className="py-3.5 px-4 text-center">Attendance %</th>
+                      <th className="py-3.5 px-4 text-center">Contact</th>
                       <th className="py-3.5 px-4 text-center">Status</th>
                       <th className="py-3.5 px-4 text-center">Action</th>
                     </tr>
@@ -1010,23 +1011,6 @@ export const DashboardPage: React.FC = () => {
                       </tr>
                     ) : (
                       paginatedCadets.map((cadet) => {
-                        // Compute attendance percentage from context attendance records
-                        const studentAttendance = attendance.filter(
-                          (r) => r.studentId === cadet.id || r.studentId === cadet.rollNo
-                        );
-                        const totalSlots = studentAttendance.length;
-                        const presentSlots = studentAttendance.filter((r) => r.status === 'Present').length;
-                        const attendancePct = totalSlots > 0 ? Math.round((presentSlots / totalSlots) * 100) : null;
-
-                        const pctColor =
-                          attendancePct === null
-                            ? 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-gray-500'
-                            : attendancePct >= 75
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : attendancePct >= 50
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                            : 'bg-red-500/10 text-red-600 dark:text-red-400';
-
                         return (
                           <tr
                             key={cadet.id}
@@ -1075,20 +1059,15 @@ export const DashboardPage: React.FC = () => {
                               </p>
                             </td>
 
-                            {/* Attendance % — FOURTH (replaces Contact) */}
+                            {/* Contact — FOURTH */}
                             <td className="py-3.5 px-4 text-center">
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${pctColor}`}>
-                                {attendancePct !== null ? (
-                                  <>
-                                    <TrendingUp className="w-3 h-3" />
-                                    <span>{attendancePct}%</span>
-                                  </>
-                                ) : (
-                                  <span className="text-[11px] font-medium">No Data</span>
-                                )}
-                              </span>
-                              {totalSlots > 0 && (
-                                <div className="text-[10px] text-gray-400 mt-0.5">{presentSlots}/{totalSlots} slots</div>
+                              {cadet.studentPhone ? (
+                                <span className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2.5 py-1 rounded-lg">
+                                  <Phone className="w-3 h-3 text-primary" />
+                                  <span>{cadet.studentPhone}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-gray-400 font-medium">—</span>
                               )}
                             </td>
 
