@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +16,7 @@ import { SectionHeading } from '../components/common/SectionHeading';
 import { GlassCard } from '../components/common/GlassCard';
 import { FlatCard } from '../components/common/FlatCard';
 import { coursesData } from '../data/courses';
+import { useWebContent } from '../context/WebContentContext';
 import cfsiLogo from '../assets/cfsi-logo.jpg';
 import { SEOHead } from '../components/common/SEOHead';
 import { getOrganizationSchema, getBreadcrumbSchema } from '../lib/seoSchemas';
@@ -32,6 +33,14 @@ const contactSchema = z.object({
 type ContactFormValues = z.infer<typeof contactSchema>;
 
 export const ContactPage: React.FC = () => {
+  const { courses, fetchCourses } = useWebContent();
+
+  useEffect(() => {
+    void fetchCourses();
+  }, [fetchCourses]);
+
+  const activeCourseList = courses && courses.length > 0 ? courses : coursesData;
+
   const {
     register,
     handleSubmit,
@@ -100,19 +109,19 @@ export const ContactPage: React.FC = () => {
           >
             <GlassCard hoverEffect={false} className="p-4 xs:p-6 sm:p-8 space-y-5 sm:space-y-6">
               
-              <div className="flex items-center gap-3.5">
-                <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-primary to-accent shadow-md shrink-0">
+              <div className="flex items-center gap-3 sm:gap-3.5">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-primary to-accent shadow-md shrink-0">
                   <img
                     src={cfsiLogo}
                     alt="Central Fire Safety Institute Logo"
                     className="w-full h-full object-cover rounded-full bg-white"
                   />
                 </div>
-                <div>
-                  <h3 className="font-heading font-extrabold text-xl text-gray-900 dark:text-white">
+                <div className="min-w-0">
+                  <h3 className="font-heading font-extrabold text-lg sm:text-xl text-gray-900 dark:text-white truncate">
                     Campus Headquarters
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold truncate">
                     Central Fire Safety Institute
                   </p>
                 </div>
@@ -282,8 +291,10 @@ export const ContactPage: React.FC = () => {
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#161d27] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                     >
                       <option value="">Select a Course</option>
-                      {coursesData.map((c) => (
-                        <option key={c.id} value={c.title}>{c.title} ({c.duration})</option>
+                      {activeCourseList.map((c) => (
+                        <option key={c.id || c.title} value={c.title}>
+                          {c.title} {c.duration ? `(${c.duration})` : ''}
+                        </option>
                       ))}
                       <option value="General Inquiry / Corporate Drill">General Inquiry / Corporate Drill</option>
                     </select>
